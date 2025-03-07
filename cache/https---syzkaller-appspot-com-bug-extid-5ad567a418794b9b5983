@@ -1,0 +1,1293 @@
+
+
+<!doctype html>
+<html>
+<head>
+	
+	<link rel="stylesheet" href="/static/style.css"/>
+	<script src="/static/common.js"></script>
+	
+		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-116117799-1"></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag() { dataLayer.push(arguments); }
+			gtag('js', new Date());
+			gtag('config', 'UA-116117799-1');
+		</script>
+	
+
+	<title>KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</title>
+</head>
+<body>
+	
+	<header id="topbar">
+		<table class="position_table">
+			<tr>
+				<td>
+					<h1><a href="/upstream">syzbot</a></h1>
+				</td>
+				<td class="namespace_td">
+					<select class="namespace" onchange="window.location.href = '/' + this.value + '';">
+						
+							<option value="android-5-10" >Android 5.10</option>
+							<option value="android-5-15" >Android 5.15</option>
+							<option value="android-54" >Android 5.4</option>
+							<option value="android-6-1" >Android 6.1</option>
+							<option value="freebsd" >FreeBSD</option>
+							<option value="upstream" selected="1">Linux</option>
+							<option value="linux-5.15" >Linux 5.15</option>
+							<option value="linux-6.1" >Linux 6.1</option>
+							<option value="netbsd" >NetBSD</option>
+							<option value="openbsd" >OpenBSD</option>
+							<option value="gvisor" >gVisor</option></select>
+				</td>
+				<td class="search">
+					
+					
+						<a href="https://syzkaller.appspot.com/_ah/conflogin?continue=https://syzkaller.appspot.com/bug%3Fextid%3D5ad567a418794b9b5983">sign-in</a> |
+					
+					<a href="https://groups.google.com/forum/#!forum/syzkaller" target="_blank">mailing list</a> |
+					<a href="https://github.com/google/syzkaller" target="_blank">source</a> |
+					<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md" target="_blank">docs</a>
+				</td>
+			</tr>
+		</table>
+		
+		<div class="navigation">
+			<div class="navigation_tab">
+				<a href='/upstream'><span style="color:DeepPink;">🐞</span> Open [1655]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/subsystems'><span style="color:DeepPink;">≡</span> Subsystems</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/fixed'><span style="color:ForestGreen;">🐞</span> Fixed [6082]</a>
+			</div>
+
+			<div class="navigation_tab" href='/upstream/invalid'>
+				<a href='/upstream/invalid'><span style="color:RoyalBlue;">🐞</span> Invalid [15106]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/backports'><span style="color:ForestGreen;">⬇</span> Missing Backports [157]</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/graph/crashes'><span style="color:ForestGreen;">≡</span> Crashes</a>
+			</div>
+
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Graphs</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href='/upstream/graph/bugs'>Kernel&nbsp;Health</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/found-bugs'>Bugs/Month</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/lifetimes'>Bug&nbsp;Lifetimes</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/fuzzing'>Fuzzing</a>
+				</div>
+			</div>
+
+			
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Coverage</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href="/upstream/graph/coverage?period=quarter">Total</a>
+					<a class="navigation_tab"
+						href="/upstream/coverage?period=month">Repo&nbsp;Heatmap</a>
+					
+						<a class="navigation_tab"
+							href="/upstream/coverage/subsystems?period=month">Subsystems&nbsp;Heatmap</a>
+					
+				</div>
+			</div>
+			
+			
+			<div class="navigation_tab navigation_right">
+				<a href='mailto:syzkaller@googlegroups.com'><span style="color:ForestGreen;">💬</span> Send us feedback</a>
+			</div>
+			
+		</div>
+		
+	</header>
+	<br>
+
+
+	<b>KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</b><br><br>
+	Status: <a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000000a9b7d05d6ee565f%40google.com">fixed on 2023/02/24 13:50</a><br>
+	
+		
+			Subsystems: 
+				<span class="bug-label"><a href="/upstream/s/bpf">bpf</a></span>
+		<br>
+		
+	<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md#labels">[Documentation on labels]</a><br>
+	
+	
+	Reported-by: syzbot&#43;5ad567a418794b9b5983@syzkaller.appspotmail.com<br>
+	
+		<b>Fix commit:</b> 
+
+	<span class="mono">
+		
+			b293dcc473d2
+		
+		<a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=b293dcc473d22a62dc6d78de2b15e4f49515db56">bpf: Use VM_MAP instead of VM_ALLOC for ringbuf</a>
+	</span>
+
+<br>
+		
+	
+	First crash: 1133d, last: 1126d<br>
+	
+	<div>
+		<div class="bug-bisection-info">
+
+	
+	
+	
+		
+			<b>Cause bisection: introduced by</b>
+		
+		<b>(<a href="https://syzkaller.appspot.com/x/bisect.txt?x=128cb900700000">bisect log</a>)</b> <span class="bad"></span>:<br>
+		<span class="mono">
+		
+		commit c34cdf846c1298de1c0f7fbe04820fe96c45068c<br>
+		Author: Andrey Konovalov &lt;andreyknvl@google.com&gt;<br>
+		Date:   Wed Feb 2 01:04:27 2022 &#43;0000<br>
+		<br>
+		&nbsp;&nbsp;<a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/commit/?id=c34cdf846c1298de1c0f7fbe04820fe96c45068c">kasan, vmalloc: unpoison VM_ALLOC pages after mapping</a><br>
+		</span><br>
+	
+	
+		Crash: <a href="https://syzkaller.appspot.com/x/report.txt?x=118cb900700000">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</a> (<a href="https://syzkaller.appspot.com/x/log.txt?x=168cb900700000">log</a>)<br>
+		Repro: <a href="/text?tag=ReproC&x=130ef35bb00000">C</a>
+		<a href="/text?tag=ReproSyz&x=1450d9f0700000">syz</a>
+		<a href="/text?tag=KernelConfig&x=b8d8750556896349">.config</a><br>
+	
+
+	
+	&nbsp;&nbsp;
+	
+
+</div>
+		
+		<div class="bug-bisection-stop"></div>
+	</div>
+
+	
+	<div class="collapsible collapsible-show">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Discussions (5)</span>
+		</div>
+		<div class="content">
+			
+			
+			
+
+<table class="list_table">
+	<thead>
+	<tr>
+		<th>Title</th>
+		<th>Replies (including bot)</th>
+		<th>Last reply</th>
+	</tr>
+	</thead>
+	<tbody>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/20220207103757.232676988@linuxfoundation.org/T/">[PATCH 5.10 00/74] 5.10.99-rc1 review</a></td>
+			<td class="stat">85 (85)</td>
+			<td class="stat">2022/02/09 19:08</td>
+		</tr>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/20220207103804.053675072@linuxfoundation.org/T/">[PATCH 5.16 000/126] 5.16.8-rc1 review</a></td>
+			<td class="stat">130 (130)</td>
+			<td class="stat">2022/02/07 13:38</td>
+		</tr>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/20220207103802.280120990@linuxfoundation.org/T/">[PATCH 5.15 000/110] 5.15.22-rc1 review</a></td>
+			<td class="stat">112 (112)</td>
+			<td class="stat">2022/02/07 12:29</td>
+		</tr>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/20220202060158.6260-1-houtao1@huawei.com/T/">[PATCH bpf-next v2] bpf: use VM_MAP instead of VM_ALLOC for ringbuf</a></td>
+			<td class="stat">5 (5)</td>
+			<td class="stat">2022/02/03 07:30</td>
+		</tr>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/0000000000000a9b7d05d6ee565f@google.com/T/">[syzbot] KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</a></td>
+			<td class="stat">3 (7)</td>
+			<td class="stat">2022/02/02 14:55</td>
+		</tr>
+	
+	</tbody>
+</table>
+
+
+			
+			
+		</div>
+	</div>
+	
+	<div class="collapsible collapsible-hide">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Last patch testing requests (1)</span>
+		</div>
+		<div class="content">
+			
+			
+
+	<table class="list_table">
+		<caption id="jobs"><a class="plain" href="#jobs"></a></caption>
+		<thead>
+		<tr>
+			
+			<th>Created</th>
+			<th>Duration</th>
+			<th>User</th>
+			<th>Patch</th>
+			<th>Repo</th>
+			
+			<th>Result</th>
+		</tr>
+		</thead>
+		<tbody>
+		
+			<tr>
+				
+				<td class="time"><a href="https://groups.google.com/d/msgid/syzkaller-bugs/8d1abb6f-17c3-4323-d56b-a910092e9989%40iogearbox.net">2022/02/02 12:20</a></td>
+				<td class="time" title="started: 2022/02/02 14:37&#013;finished: 2022/02/02 14:48">
+					10m
+				</td>
+				<td>
+					
+						daniel@iogearbox.net
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/dborkman/bpf.git pr/rb-vmap"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/dborkman/bpf.git/commit/?id=48f52cba8400016c2fc1bbef3e35464fc90ba4c1">git://git.kernel.org/pub/scm/linux/kernel/git/dborkman/bpf.git pr/rb-vmap</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+					
+					
+					
+					
+					
+				</td>
+			</tr>
+		
+		</tbody>
+	</table>
+
+
+			
+			
+			
+		</div>
+	</div>
+	
+
+	
+	<br><b>Sample crash report:</b><br>
+	<div id="crash_div"><pre>==================================================================
+BUG: KASAN: vmalloc-out-of-bounds in bpf_ringbuf_area_alloc <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/bpf/ringbuf.c?id=6abab1b81b657ca74b7c443e832d95c87901e75b#n110'>kernel/bpf/ringbuf.c:110</a> [inline]
+BUG: KASAN: vmalloc-out-of-bounds in bpf_ringbuf_alloc <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/bpf/ringbuf.c?id=6abab1b81b657ca74b7c443e832d95c87901e75b#n133'>kernel/bpf/ringbuf.c:133</a> [inline]
+BUG: KASAN: vmalloc-out-of-bounds in ringbuf_map_alloc <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/bpf/ringbuf.c?id=6abab1b81b657ca74b7c443e832d95c87901e75b#n172'>kernel/bpf/ringbuf.c:172</a> [inline]
+BUG: KASAN: vmalloc-out-of-bounds in ringbuf_map_alloc+0x725/0x7b0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/bpf/ringbuf.c?id=6abab1b81b657ca74b7c443e832d95c87901e75b#n148'>kernel/bpf/ringbuf.c:148</a>
+Write of size 8 at addr ffffc9000c7a9078 by task syz-executor070/3595
+
+CPU: 0 PID: 3595 Comm: syz-executor070 Not tainted 5.17.0-rc2-next-20220202-syzkaller #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 01/01/2011
+Call Trace:
+ &lt;TASK&gt;
+ __dump_stack <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/lib/dump_stack.c?id=6abab1b81b657ca74b7c443e832d95c87901e75b#n88'>lib/dump_stack.c:88</a> [inline]
+ dump_stack_lvl+0xcd/0x134 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/lib/dump_stack.c?id=6abab1b81b657ca74b7c443e832d95c87901e75b#n106'>lib/dump_stack.c:106</a>
+ print_address_description.constprop.0.cold+0xf/0x3e0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/kasan/report.c?id=6abab1b81b657ca74b7c443e832d95c87901e75b#n255'>mm/kasan/report.c:255</a>
+ __kasan_report <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/kasan/report.c?id=6abab1b81b657ca74b7c443e832d95c87901e75b#n442'>mm/kasan/report.c:442</a> [inline]
+ kasan_report.cold+0x83/0xdf <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/kasan/report.c?id=6abab1b81b657ca74b7c443e832d95c87901e75b#n459'>mm/kasan/report.c:459</a>
+ bpf_ringbuf_area_alloc <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/bpf/ringbuf.c?id=6abab1b81b657ca74b7c443e832d95c87901e75b#n110'>kernel/bpf/ringbuf.c:110</a> [inline]
+ bpf_ringbuf_alloc <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/bpf/ringbuf.c?id=6abab1b81b657ca74b7c443e832d95c87901e75b#n133'>kernel/bpf/ringbuf.c:133</a> [inline]
+ ringbuf_map_alloc <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/bpf/ringbuf.c?id=6abab1b81b657ca74b7c443e832d95c87901e75b#n172'>kernel/bpf/ringbuf.c:172</a> [inline]
+ ringbuf_map_alloc+0x725/0x7b0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/bpf/ringbuf.c?id=6abab1b81b657ca74b7c443e832d95c87901e75b#n148'>kernel/bpf/ringbuf.c:148</a>
+ find_and_alloc_map <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/bpf/syscall.c?id=6abab1b81b657ca74b7c443e832d95c87901e75b#n128'>kernel/bpf/syscall.c:128</a> [inline]
+ map_create <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/bpf/syscall.c?id=6abab1b81b657ca74b7c443e832d95c87901e75b#n863'>kernel/bpf/syscall.c:863</a> [inline]
+ __sys_bpf+0xc0f/0x5f10 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/bpf/syscall.c?id=6abab1b81b657ca74b7c443e832d95c87901e75b#n4622'>kernel/bpf/syscall.c:4622</a>
+ __do_sys_bpf <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/bpf/syscall.c?id=6abab1b81b657ca74b7c443e832d95c87901e75b#n4744'>kernel/bpf/syscall.c:4744</a> [inline]
+ __se_sys_bpf <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/bpf/syscall.c?id=6abab1b81b657ca74b7c443e832d95c87901e75b#n4742'>kernel/bpf/syscall.c:4742</a> [inline]
+ __x64_sys_bpf+0x75/0xb0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/bpf/syscall.c?id=6abab1b81b657ca74b7c443e832d95c87901e75b#n4742'>kernel/bpf/syscall.c:4742</a>
+ do_syscall_x64 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/arch/x86/entry/common.c?id=6abab1b81b657ca74b7c443e832d95c87901e75b#n50'>arch/x86/entry/common.c:50</a> [inline]
+ do_syscall_64+0x35/0xb0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/arch/x86/entry/common.c?id=6abab1b81b657ca74b7c443e832d95c87901e75b#n80'>arch/x86/entry/common.c:80</a>
+ entry_SYSCALL_64_after_hwframe+0x44/0xae
+RIP: 0033:0x7f26ddd0a029
+Code: 28 c3 e8 2a 14 00 00 66 2e 0f 1f 84 00 00 00 00 00 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 &lt;48&gt; 3d 01 f0 ff ff 73 01 c3 48 c7 c1 c0 ff ff ff f7 d8 64 89 01 48
+RSP: 002b:00007fff911fde88 EFLAGS: 00000246 ORIG_RAX: 0000000000000141
+RAX: ffffffffffffffda RBX: 0000000000000000 RCX: 00007f26ddd0a029
+RDX: 0000000000000048 RSI: 0000000020000280 RDI: 0000000000000000
+RBP: 00007f26ddcce010 R08: 0000000000000000 R09: 0000000000000000
+R10: 00000000ffffffff R11: 0000000000000246 R12: 00007f26ddcce0a0
+R13: 0000000000000000 R14: 0000000000000000 R15: 0000000000000000
+ &lt;/TASK&gt;
+
+
+Memory state around the buggy address:
+ ffffc9000c7a8f00: f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8
+ ffffc9000c7a8f80: f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8
+&gt;ffffc9000c7a9000: f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8
+                                                                ^
+ ffffc9000c7a9080: f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8
+ ffffc9000c7a9100: f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8 f8
+==================================================================
+</pre></div><br>
+	
+
+	
+
+<table class="list_table">
+	<caption>Crashes (541):</caption>
+		<thead>
+		<tr>
+			<th><a onclick="return sortTable(this, 'Time', textSort, true)" href="#">Time</a></th>
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+			<th><a onclick="return sortTable(this, 'Commit', textSort)" href="#">Commit</a></th>
+			<th><a onclick="return sortTable(this, 'Syzkaller', textSort)" href="#">Syzkaller</a></th>
+			<th><a onclick="return sortTable(this, 'Config', textSort)" href="#">Config</a></th>
+			<th><a onclick="return sortTable(this, 'Log', textSort)" href="#">Log</a></th>
+			<th><a onclick="return sortTable(this, 'Report', reproSort)" href="#">Report</a></th>
+			<th><a onclick="return sortTable(this, 'Syz repro', reproSort)" href="#">Syz repro</a></th>
+			<th><a onclick="return sortTable(this, 'C repro', textSort)" href="#">C repro</a></th>
+			<th><a onclick="return sortTable(this, 'VM info', textSort)" href="#">VM info</a></th>
+			<th><a onclick="return sortTable(this, 'Assets', textSort)" href="#">Assets</a> (<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot_assets.md">help?</a>)</th>
+			<th><a onclick="return sortTable(this, 'Manager', textSort)" href="#">Manager</a></th>
+			<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		</tr>
+		</thead>
+		<tbody>
+		
+		<tr>
+			<td class="time">2022/02/02 12:10</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="6abab1b81b657ca74b7c443e832d95c87901e75b
+	2022/02/02 03:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=6abab1b81b657ca74b7c443e832d95c87901e75b">6abab1b81b65</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/4ebb27982f8984ed57466f87099acc0b250a1b5c">4ebb2798</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b8d8750556896349">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13f4b900700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17f175b8700000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=1450d9f0700000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=130ef35bb00000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/04 04:33</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="2d3d8c7643a56bfe2e808f97d5a4360d49f3b45b
+	2022/02/03 04:46"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=2d3d8c7643a56bfe2e808f97d5a4360d49f3b45b">2d3d8c7643a5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/30646bfed4b28f1c023ab44ae5c777dca493f629">30646bfe</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=27a9abf2c11167c7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11b01a84700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=168e3534700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=92e8136e9d9ed2aa">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/04 04:14</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="2d3d8c7643a56bfe2e808f97d5a4360d49f3b45b
+	2022/02/03 04:46"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=2d3d8c7643a56bfe2e808f97d5a4360d49f3b45b">2d3d8c7643a5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/30646bfed4b28f1c023ab44ae5c777dca493f629">30646bfe</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=27a9abf2c11167c7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=148e3534700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1693617c700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=560cfaf0c23df1b8">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/04 03:03</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="2d3d8c7643a56bfe2e808f97d5a4360d49f3b45b
+	2022/02/03 04:46"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=2d3d8c7643a56bfe2e808f97d5a4360d49f3b45b">2d3d8c7643a5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/30646bfed4b28f1c023ab44ae5c777dca493f629">30646bfe</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=27a9abf2c11167c7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=160e3534700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16522710700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=110b0d416efc672c">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/03 19:11</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="2d3d8c7643a56bfe2e808f97d5a4360d49f3b45b
+	2022/02/03 04:46"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=2d3d8c7643a56bfe2e808f97d5a4360d49f3b45b">2d3d8c7643a5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/4ebb27982f8984ed57466f87099acc0b250a1b5c">4ebb2798</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=27a9abf2c11167c7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1249ed7c700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16dbe8dc700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=eefee70ce9dc0755">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/03 18:22</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="2d3d8c7643a56bfe2e808f97d5a4360d49f3b45b
+	2022/02/03 04:46"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=2d3d8c7643a56bfe2e808f97d5a4360d49f3b45b">2d3d8c7643a5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/4ebb27982f8984ed57466f87099acc0b250a1b5c">4ebb2798</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=27a9abf2c11167c7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=139aa624700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=155d9d14700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=110b0d416efc672c">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/03 15:32</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="2d3d8c7643a56bfe2e808f97d5a4360d49f3b45b
+	2022/02/03 04:46"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=2d3d8c7643a56bfe2e808f97d5a4360d49f3b45b">2d3d8c7643a5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/4ebb27982f8984ed57466f87099acc0b250a1b5c">4ebb2798</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=27a9abf2c11167c7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15841634700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1094f1cc700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=488c20f30502a064">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/03 13:53</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="2d3d8c7643a56bfe2e808f97d5a4360d49f3b45b
+	2022/02/03 04:46"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=2d3d8c7643a56bfe2e808f97d5a4360d49f3b45b">2d3d8c7643a5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/4ebb27982f8984ed57466f87099acc0b250a1b5c">4ebb2798</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=27a9abf2c11167c7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=158ff514700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16d719cc700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7ce667c8003edb29">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/03 13:04</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="2d3d8c7643a56bfe2e808f97d5a4360d49f3b45b
+	2022/02/03 04:46"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=2d3d8c7643a56bfe2e808f97d5a4360d49f3b45b">2d3d8c7643a5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/4ebb27982f8984ed57466f87099acc0b250a1b5c">4ebb2798</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=27a9abf2c11167c7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16263e20700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=126d300c700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=50740f0f7fa004ca">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/03 05:13</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="6abab1b81b657ca74b7c443e832d95c87901e75b
+	2022/02/02 03:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=6abab1b81b657ca74b7c443e832d95c87901e75b">6abab1b81b65</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/4ebb27982f8984ed57466f87099acc0b250a1b5c">4ebb2798</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b8d8750556896349">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1119f468700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1605f480700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=2ab4039ecc65e11c">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/03 03:28</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="6abab1b81b657ca74b7c443e832d95c87901e75b
+	2022/02/02 03:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=6abab1b81b657ca74b7c443e832d95c87901e75b">6abab1b81b65</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/4ebb27982f8984ed57466f87099acc0b250a1b5c">4ebb2798</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b8d8750556896349">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=167f0c58700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1621097c700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=a2bba782aacc0ff5">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/03 02:06</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="6abab1b81b657ca74b7c443e832d95c87901e75b
+	2022/02/02 03:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=6abab1b81b657ca74b7c443e832d95c87901e75b">6abab1b81b65</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/4ebb27982f8984ed57466f87099acc0b250a1b5c">4ebb2798</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b8d8750556896349">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15ed6ecc700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17b393b7b00000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=560cfaf0c23df1b8">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/02 23:41</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="6abab1b81b657ca74b7c443e832d95c87901e75b
+	2022/02/02 03:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=6abab1b81b657ca74b7c443e832d95c87901e75b">6abab1b81b65</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/4ebb27982f8984ed57466f87099acc0b250a1b5c">4ebb2798</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b8d8750556896349">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11745624700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=124711c8700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=a782938ae11fbce3">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/02 22:22</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="6abab1b81b657ca74b7c443e832d95c87901e75b
+	2022/02/02 03:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=6abab1b81b657ca74b7c443e832d95c87901e75b">6abab1b81b65</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/4ebb27982f8984ed57466f87099acc0b250a1b5c">4ebb2798</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b8d8750556896349">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=124497b8700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=157a7e42700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=488c20f30502a064">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/02 19:43</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="6abab1b81b657ca74b7c443e832d95c87901e75b
+	2022/02/02 03:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=6abab1b81b657ca74b7c443e832d95c87901e75b">6abab1b81b65</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/4ebb27982f8984ed57466f87099acc0b250a1b5c">4ebb2798</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b8d8750556896349">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17fe9cb8700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13392cb8700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=eefee70ce9dc0755">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/02 15:56</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="6abab1b81b657ca74b7c443e832d95c87901e75b
+	2022/02/02 03:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=6abab1b81b657ca74b7c443e832d95c87901e75b">6abab1b81b65</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/4ebb27982f8984ed57466f87099acc0b250a1b5c">4ebb2798</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b8d8750556896349">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12e69c24700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1293fa8fb00000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=4f7c69802b9ff901">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/02 15:37</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="6abab1b81b657ca74b7c443e832d95c87901e75b
+	2022/02/02 03:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=6abab1b81b657ca74b7c443e832d95c87901e75b">6abab1b81b65</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/4ebb27982f8984ed57466f87099acc0b250a1b5c">4ebb2798</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b8d8750556896349">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12dd375bb00000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13c5535bb00000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=a782938ae11fbce3">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/02 13:51</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="6abab1b81b657ca74b7c443e832d95c87901e75b
+	2022/02/02 03:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=6abab1b81b657ca74b7c443e832d95c87901e75b">6abab1b81b65</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/4ebb27982f8984ed57466f87099acc0b250a1b5c">4ebb2798</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b8d8750556896349">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12937fa8700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=164ef35bb00000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=4ffb080a7441c8e2">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/02 11:32</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="6abab1b81b657ca74b7c443e832d95c87901e75b
+	2022/02/02 03:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=6abab1b81b657ca74b7c443e832d95c87901e75b">6abab1b81b65</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/4ebb27982f8984ed57466f87099acc0b250a1b5c">4ebb2798</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b8d8750556896349">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14f175b8700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=157bac14700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7ce667c8003edb29">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/02 10:12</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="6abab1b81b657ca74b7c443e832d95c87901e75b
+	2022/02/02 03:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=6abab1b81b657ca74b7c443e832d95c87901e75b">6abab1b81b65</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/4ebb27982f8984ed57466f87099acc0b250a1b5c">4ebb2798</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b8d8750556896349">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1022789fb00000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15e4b99fb00000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b8ef9e1519655e18">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/02 09:34</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="6abab1b81b657ca74b7c443e832d95c87901e75b
+	2022/02/02 03:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=6abab1b81b657ca74b7c443e832d95c87901e75b">6abab1b81b65</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/4ebb27982f8984ed57466f87099acc0b250a1b5c">4ebb2798</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b8d8750556896349">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11eb62cbb00000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=155af398700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7ea772b750adfd01">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/02 04:05</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="711428e8f370eff043ae549572b8141987861583
+	2022/02/01 04:32"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=711428e8f370eff043ae549572b8141987861583">711428e8f370</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/4ebb27982f8984ed57466f87099acc0b250a1b5c">4ebb2798</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a9a7db1ff785d5c0">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=179b1698700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14853798700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=fbc9fda6245866b4">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/01 21:09</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="711428e8f370eff043ae549572b8141987861583
+	2022/02/01 04:32"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=711428e8f370eff043ae549572b8141987861583">711428e8f370</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c1c1631dc5fb629cdde3d49f7a2393a63d595957">c1c1631d</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a9a7db1ff785d5c0">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16f9919fb00000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16369cb8700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ee861a114930823e">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/01 19:58</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="711428e8f370eff043ae549572b8141987861583
+	2022/02/01 04:32"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=711428e8f370eff043ae549572b8141987861583">711428e8f370</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c1c1631dc5fb629cdde3d49f7a2393a63d595957">c1c1631d</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a9a7db1ff785d5c0">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=137b3c20700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10966f48700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b751e2115e224f47">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/01 08:53</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="887a333c44eb67973622e530e43cd5e4cf9af927
+	2022/01/31 05:01"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=887a333c44eb67973622e530e43cd5e4cf9af927">887a333c44eb</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6b7c57fe456c070981403f31bb6dfcb2ad2a92c3">6b7c57fe</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a9a7db1ff785d5c0">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12afb648700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=110df4b8700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=62876061e560a52c">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/01 07:43</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="887a333c44eb67973622e530e43cd5e4cf9af927
+	2022/01/31 05:01"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=887a333c44eb67973622e530e43cd5e4cf9af927">887a333c44eb</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6b7c57fe456c070981403f31bb6dfcb2ad2a92c3">6b7c57fe</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a9a7db1ff785d5c0">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=129a6bc0700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=120bc0f0700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=110b0d416efc672c">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/01 06:24</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="887a333c44eb67973622e530e43cd5e4cf9af927
+	2022/01/31 05:01"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=887a333c44eb67973622e530e43cd5e4cf9af927">887a333c44eb</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6b7c57fe456c070981403f31bb6dfcb2ad2a92c3">6b7c57fe</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a9a7db1ff785d5c0">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17b838f0700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11fdb698700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=78e366ba760153be">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/01 05:08</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="887a333c44eb67973622e530e43cd5e4cf9af927
+	2022/01/31 05:01"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=887a333c44eb67973622e530e43cd5e4cf9af927">887a333c44eb</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6b7c57fe456c070981403f31bb6dfcb2ad2a92c3">6b7c57fe</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a9a7db1ff785d5c0">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=106ea200700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=149d0348700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7ea772b750adfd01">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/01 04:21</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="887a333c44eb67973622e530e43cd5e4cf9af927
+	2022/01/31 05:01"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=887a333c44eb67973622e530e43cd5e4cf9af927">887a333c44eb</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6b7c57fe456c070981403f31bb6dfcb2ad2a92c3">6b7c57fe</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a9a7db1ff785d5c0">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1248fa04700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11d325d4700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b8ef9e1519655e18">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/01 03:52</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="887a333c44eb67973622e530e43cd5e4cf9af927
+	2022/01/31 05:01"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=887a333c44eb67973622e530e43cd5e4cf9af927">887a333c44eb</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6b7c57fe456c070981403f31bb6dfcb2ad2a92c3">6b7c57fe</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a9a7db1ff785d5c0">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1558fa98700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=134ee69fb00000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=105e1a5ff8cb1e4d">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/01/31 20:10</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="887a333c44eb67973622e530e43cd5e4cf9af927
+	2022/01/31 05:01"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=887a333c44eb67973622e530e43cd5e4cf9af927">887a333c44eb</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6b7c57fe456c070981403f31bb6dfcb2ad2a92c3">6b7c57fe</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=5b9a0ecc5bf47f06">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14212cb8700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=147ce8f0700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b751e2115e224f47">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/01/31 19:14</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="887a333c44eb67973622e530e43cd5e4cf9af927
+	2022/01/31 05:01"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=887a333c44eb67973622e530e43cd5e4cf9af927">887a333c44eb</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6b7c57fe456c070981403f31bb6dfcb2ad2a92c3">6b7c57fe</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=5b9a0ecc5bf47f06">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16188c30700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=120af6d4700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7d23dccee03f6b43">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/01/31 18:56</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="887a333c44eb67973622e530e43cd5e4cf9af927
+	2022/01/31 05:01"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=887a333c44eb67973622e530e43cd5e4cf9af927">887a333c44eb</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6b7c57fe456c070981403f31bb6dfcb2ad2a92c3">6b7c57fe</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=5b9a0ecc5bf47f06">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1637f9d4700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=127897d4700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7db235e11ed00096">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/01/31 16:11</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="887a333c44eb67973622e530e43cd5e4cf9af927
+	2022/01/31 05:01"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=887a333c44eb67973622e530e43cd5e4cf9af927">887a333c44eb</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6b7c57fe456c070981403f31bb6dfcb2ad2a92c3">6b7c57fe</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=5b9a0ecc5bf47f06">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17779014700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10eb43c0700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=acab78fd11f77045">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/01/31 15:08</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="887a333c44eb67973622e530e43cd5e4cf9af927
+	2022/01/31 05:01"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=887a333c44eb67973622e530e43cd5e4cf9af927">887a333c44eb</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6b7c57fe456c070981403f31bb6dfcb2ad2a92c3">6b7c57fe</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=5b9a0ecc5bf47f06">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1276f3e4700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=164b62cbb00000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b8ef9e1519655e18">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/01/31 14:02</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="887a333c44eb67973622e530e43cd5e4cf9af927
+	2022/01/31 05:01"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=887a333c44eb67973622e530e43cd5e4cf9af927">887a333c44eb</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6b7c57fe456c070981403f31bb6dfcb2ad2a92c3">6b7c57fe</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=5b9a0ecc5bf47f06">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13cd8fd0700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=138305c0700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=92e8136e9d9ed2aa">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/01/31 06:52</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="b605fdc54c2b28c30ef06d9db99282d8a32ae4be
+	2022/01/28 04:27"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=b605fdc54c2b28c30ef06d9db99282d8a32ae4be">b605fdc54c2b</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/495e00c5a4233cb6a8fe235003841bcc172ba755">495e00c5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=da5090473475f3ca">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=147537e4700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16662f0fb00000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=eefee70ce9dc0755">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/01/31 05:20</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="b605fdc54c2b28c30ef06d9db99282d8a32ae4be
+	2022/01/28 04:27"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=b605fdc54c2b28c30ef06d9db99282d8a32ae4be">b605fdc54c2b</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/495e00c5a4233cb6a8fe235003841bcc172ba755">495e00c5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=da5090473475f3ca">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=114084b8700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1147ebe0700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=2ab4039ecc65e11c">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/01/31 03:41</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="b605fdc54c2b28c30ef06d9db99282d8a32ae4be
+	2022/01/28 04:27"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=b605fdc54c2b28c30ef06d9db99282d8a32ae4be">b605fdc54c2b</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/495e00c5a4233cb6a8fe235003841bcc172ba755">495e00c5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=da5090473475f3ca">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17b0fa98700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11d45a98700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7ce667c8003edb29">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/01/31 02:26</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="b605fdc54c2b28c30ef06d9db99282d8a32ae4be
+	2022/01/28 04:27"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=b605fdc54c2b28c30ef06d9db99282d8a32ae4be">b605fdc54c2b</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/495e00c5a4233cb6a8fe235003841bcc172ba755">495e00c5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=da5090473475f3ca">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11c62f0fb00000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10a7a8bfb00000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7ea772b750adfd01">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/01/31 01:23</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="b605fdc54c2b28c30ef06d9db99282d8a32ae4be
+	2022/01/28 04:27"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=b605fdc54c2b28c30ef06d9db99282d8a32ae4be">b605fdc54c2b</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/495e00c5a4233cb6a8fe235003841bcc172ba755">495e00c5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=da5090473475f3ca">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10427cb8700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12a0d9d4700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=4f7c69802b9ff901">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/01/31 00:19</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="b605fdc54c2b28c30ef06d9db99282d8a32ae4be
+	2022/01/28 04:27"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=b605fdc54c2b28c30ef06d9db99282d8a32ae4be">b605fdc54c2b</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/495e00c5a4233cb6a8fe235003841bcc172ba755">495e00c5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=da5090473475f3ca">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=108571e0700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=127631d4700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=c73865e4aa4e01a4">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/01/30 23:30</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="b605fdc54c2b28c30ef06d9db99282d8a32ae4be
+	2022/01/28 04:27"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=b605fdc54c2b28c30ef06d9db99282d8a32ae4be">b605fdc54c2b</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/495e00c5a4233cb6a8fe235003841bcc172ba755">495e00c5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=da5090473475f3ca">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10bb7fc4700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=175fdd5bb00000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=67a9056f90f432a8">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/01/30 21:59</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="b605fdc54c2b28c30ef06d9db99282d8a32ae4be
+	2022/01/28 04:27"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=b605fdc54c2b28c30ef06d9db99282d8a32ae4be">b605fdc54c2b</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/495e00c5a4233cb6a8fe235003841bcc172ba755">495e00c5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=da5090473475f3ca">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10f778b7b00000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16d9ee48700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=50740f0f7fa004ca">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/01/28 05:38</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="b605fdc54c2b28c30ef06d9db99282d8a32ae4be
+	2022/01/28 04:27"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=b605fdc54c2b28c30ef06d9db99282d8a32ae4be">b605fdc54c2b</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/495e00c5a4233cb6a8fe235003841bcc172ba755">495e00c5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=da5090473475f3ca">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11bd995bb00000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1762db3fb00000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7db235e11ed00096">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: vmalloc-out-of-bounds Write in ringbuf_map_alloc</td>
+		</tr>
+		
+		</tbody>
+</table>
+<i>* <s>Struck through</s> repros no longer work on HEAD.</i>
+
+
+</body>
+</html>

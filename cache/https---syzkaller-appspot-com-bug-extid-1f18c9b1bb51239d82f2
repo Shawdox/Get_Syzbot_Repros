@@ -1,0 +1,941 @@
+
+
+<!doctype html>
+<html>
+<head>
+	
+	<link rel="stylesheet" href="/static/style.css"/>
+	<script src="/static/common.js"></script>
+	
+		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-116117799-1"></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag() { dataLayer.push(arguments); }
+			gtag('js', new Date());
+			gtag('config', 'UA-116117799-1');
+		</script>
+	
+
+	<title>BUG: stack guard page was hit in sys_openat</title>
+</head>
+<body>
+	
+	<header id="topbar">
+		<table class="position_table">
+			<tr>
+				<td>
+					<h1><a href="/upstream">syzbot</a></h1>
+				</td>
+				<td class="namespace_td">
+					<select class="namespace" onchange="window.location.href = '/' + this.value + '';">
+						
+							<option value="android-5-10" >Android 5.10</option>
+							<option value="android-5-15" >Android 5.15</option>
+							<option value="android-54" >Android 5.4</option>
+							<option value="android-6-1" >Android 6.1</option>
+							<option value="freebsd" >FreeBSD</option>
+							<option value="upstream" selected="1">Linux</option>
+							<option value="linux-5.15" >Linux 5.15</option>
+							<option value="linux-6.1" >Linux 6.1</option>
+							<option value="netbsd" >NetBSD</option>
+							<option value="openbsd" >OpenBSD</option>
+							<option value="gvisor" >gVisor</option></select>
+				</td>
+				<td class="search">
+					
+					
+						<a href="https://syzkaller.appspot.com/_ah/conflogin?continue=https://syzkaller.appspot.com/bug%3Fextid%3D1f18c9b1bb51239d82f2">sign-in</a> |
+					
+					<a href="https://groups.google.com/forum/#!forum/syzkaller" target="_blank">mailing list</a> |
+					<a href="https://github.com/google/syzkaller" target="_blank">source</a> |
+					<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md" target="_blank">docs</a>
+				</td>
+			</tr>
+		</table>
+		
+		<div class="navigation">
+			<div class="navigation_tab">
+				<a href='/upstream'><span style="color:DeepPink;">🐞</span> Open [1659]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/subsystems'><span style="color:DeepPink;">≡</span> Subsystems</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/fixed'><span style="color:ForestGreen;">🐞</span> Fixed [6081]</a>
+			</div>
+
+			<div class="navigation_tab" href='/upstream/invalid'>
+				<a href='/upstream/invalid'><span style="color:RoyalBlue;">🐞</span> Invalid [15101]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/backports'><span style="color:ForestGreen;">⬇</span> Missing Backports [157]</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/graph/crashes'><span style="color:ForestGreen;">≡</span> Crashes</a>
+			</div>
+
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Graphs</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href='/upstream/graph/bugs'>Kernel&nbsp;Health</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/found-bugs'>Bugs/Month</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/lifetimes'>Bug&nbsp;Lifetimes</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/fuzzing'>Fuzzing</a>
+				</div>
+			</div>
+
+			
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Coverage</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href="/upstream/graph/coverage?period=quarter">Total</a>
+					<a class="navigation_tab"
+						href="/upstream/coverage?period=month">Repo&nbsp;Heatmap</a>
+					
+						<a class="navigation_tab"
+							href="/upstream/coverage/subsystems?period=month">Subsystems&nbsp;Heatmap</a>
+					
+				</div>
+			</div>
+			
+			
+			<div class="navigation_tab navigation_right">
+				<a href='mailto:syzkaller@googlegroups.com'><span style="color:ForestGreen;">💬</span> Send us feedback</a>
+			</div>
+			
+		</div>
+		
+	</header>
+	<br>
+
+
+	<b>BUG: stack guard page was hit in sys_openat</b><br><br>
+	Status: <a href="https://groups.google.com/d/msgid/syzkaller-bugs/6792ffb7.050a0220.3ab881.0005.GAE@google.com">upstream: reported C repro on 2025/01/24 02:49</a><br>
+	
+		
+			Subsystems: 
+				<span class="bug-label"><a href="/upstream/s/mm">mm</a></span>
+				<span class="bug-label"><a href="/upstream/s/v9fs">v9fs</a></span>
+		<br>
+		
+	<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md#labels">[Documentation on labels]</a><br>
+	
+	
+	Reported-by: syzbot&#43;1f18c9b1bb51239d82f2@syzkaller.appspotmail.com<br>
+	
+	First crash: 45d, last: 44d<br>
+	
+	<div>
+		<div class="bug-bisection-info">
+
+	
+	
+	
+		
+			<b>Cause bisection: introduced by</b>
+		
+		<b>(<a href="https://syzkaller.appspot.com/x/bisect.txt?x=10d4b1f8580000">bisect log</a>)</b> <span class="bad"></span>:<br>
+		<span class="mono">
+		
+		commit 4acb665cf4f3e5436844f17ece0a8a55ce688c7b<br>
+		Author: David Howells &lt;dhowells@redhat.com&gt;<br>
+		Date:   Fri Dec 13 13:50:08 2024 &#43;0000<br>
+		<br>
+		&nbsp;&nbsp;<a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=4acb665cf4f3e5436844f17ece0a8a55ce688c7b">netfs: Work around recursion by abandoning retry if nothing read</a><br>
+		</span><br>
+	
+	
+		Crash: <a href="https://syzkaller.appspot.com/x/report.txt?x=12d4b1f8580000">BUG: stack guard page was hit in sys_openat</a> (<a href="https://syzkaller.appspot.com/x/log.txt?x=14d4b1f8580000">log</a>)<br>
+		Repro: <a href="/text?tag=ReproC&x=129252b0580000">C</a>
+		<a href="/text?tag=ReproSyz&x=17808824580000">syz</a>
+		<a href="/text?tag=KernelConfig&x=d7f05e16f48c5834">.config</a><br>
+	
+
+	
+	&nbsp;&nbsp;
+	
+
+</div>
+		<div class="bug-bisection-info">
+
+	
+	
+	
+		
+			
+				<b>Fix bisection: fixed by</b>
+			
+		
+		<b>(<a href="https://syzkaller.appspot.com/x/bisect.txt?x=15cb3ae4580000">bisect log</a>)</b> <span class="bad"></span>:<br>
+		<span class="mono">
+		
+		commit e2d46f2ec332533816417b60933954173f602121<br>
+		Author: David Howells &lt;dhowells@redhat.com&gt;<br>
+		Date:   Mon Dec 16 20:41:17 2024 &#43;0000<br>
+		<br>
+		&nbsp;&nbsp;<a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=e2d46f2ec332533816417b60933954173f602121">netfs: Change the read result collector to only use one work item</a><br>
+		</span><br>
+	
+	
+
+	
+	&nbsp;&nbsp;
+	
+
+</div>
+		<div class="bug-bisection-stop"></div>
+	</div>
+
+	
+	<div class="collapsible collapsible-show">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Discussions (1)</span>
+		</div>
+		<div class="content">
+			
+			
+			
+
+<table class="list_table">
+	<thead>
+	<tr>
+		<th>Title</th>
+		<th>Replies (including bot)</th>
+		<th>Last reply</th>
+	</tr>
+	</thead>
+	<tbody>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/6792ffb7.050a0220.3ab881.0005.GAE@google.com/T/">[syzbot] [v9fs?] BUG: stack guard page was hit in sys_openat</a></td>
+			<td class="stat">1 (4)</td>
+			<td class="stat">2025/02/21 13:20</td>
+		</tr>
+	
+	</tbody>
+</table>
+
+
+			
+			
+		</div>
+	</div>
+	
+	<div class="collapsible collapsible-hide">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Similar bugs (1)</span>
+		</div>
+		<div class="content">
+			
+
+
+<table class="list_table">
+	
+	<thead>
+	<tr>
+		
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+		
+		<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		<th><a onclick="return sortTable(this, 'Repro', reproSort)" href="#">Repro</a></th>
+		<th><a onclick="return sortTable(this, 'Cause bisect', textSort)" href="#">Cause bisect</a></th>
+		<th><a onclick="return sortTable(this, 'Fix bisect', textSort)" href="#">Fix bisect</a></th>
+		<th><a onclick="return sortTable(this, 'Count', numSort)" href="#">Count</a></th>
+		<th><a onclick="return sortTable(this, 'Last', timeSort)" href="#">Last</a></th>
+		<th><a onclick="return sortTable(this, 'Reported', timeSort)" href="#">Reported</a></th>
+		
+		
+		
+			<th><a onclick="return sortTable(this, 'Patched', patchedSort)" href="#">Patched</a></th>
+		
+		
+			<th><a onclick="return sortTable(this, 'Status', textSort)" href="#">Status</a></th>
+		
+		
+	</tr>
+	</thead>
+	<tbody>
+	
+		<tr>
+			<td>android-5-10</td>
+			<td class="title">
+				<a href="/bug?extid=0bd0c3d0e2ada1e364f6">BUG: stack guard page was hit in sys_openat</a>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status">error</td>
+			<td class="bisect_status"></td>
+			<td class="stat ">4</td>
+			<td class="stat">1036d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-android-bugs/00000000000042920d05de2ba258%40google.com">1036d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/2</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-android-bugs/00000000000042920d05de2ba258%40google.com">closed as dup on 2022/05/04 16:05</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+	</tbody>
+</table>
+
+
+
+			
+			
+			
+			
+		</div>
+	</div>
+	
+	<div class="collapsible collapsible-hide">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Last patch testing requests (5)</span>
+		</div>
+		<div class="content">
+			
+			
+
+	<table class="list_table">
+		<caption id="jobs"><a class="plain" href="#jobs"></a></caption>
+		<thead>
+		<tr>
+			
+			<th>Created</th>
+			<th>Duration</th>
+			<th>User</th>
+			<th>Patch</th>
+			<th>Repo</th>
+			
+			<th>Result</th>
+		</tr>
+		</thead>
+		<tbody>
+		
+			<tr>
+				
+				<td class="time">2025/02/03 22:25</td>
+				<td class="time" title="started: 2025/02/04 05:34&#013;finished: 2025/02/04 05:57">
+					23m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=0de63bb7d91975e73338300a57c54b93d3cc151c">upstream</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=108e23df980000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/02/03 22:25</td>
+				<td class="time" title="started: 2025/02/03 23:20&#013;finished: 2025/02/03 23:43">
+					23m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=0de63bb7d91975e73338300a57c54b93d3cc151c">upstream</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=17fdb764580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/02/03 22:25</td>
+				<td class="time" title="started: 2025/02/03 22:56&#013;finished: 2025/02/03 23:20">
+					23m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=0de63bb7d91975e73338300a57c54b93d3cc151c">upstream</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=166db764580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/02/03 22:25</td>
+				<td class="time" title="started: 2025/02/03 22:25&#013;finished: 2025/02/03 22:56">
+					31m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=0de63bb7d91975e73338300a57c54b93d3cc151c">upstream</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=16b89d18580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/01/24 09:38</td>
+				<td class="time" title="started: 2025/01/24 09:38&#013;finished: 2025/01/24 10:00">
+					21m
+				</td>
+				<td>
+					
+						dhowells@redhat.com
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git ca56a74a31e26d81a481304ed2f631e65883372b"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=ca56a74a31e26d81a481304ed2f631e65883372b">git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git ca56a74a31e26d81a481304ed2f631e65883372b</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=12b53ab0580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+		</tbody>
+	</table>
+
+
+			
+			
+			
+		</div>
+	</div>
+	
+
+	
+	<br><b>Sample crash report:</b><br>
+	<div id="crash_div"><pre>BUG: TASK stack guard page was hit at ffffc9000308ff88 (stack is ffffc90003090000..ffffc90003098000)
+Oops: stack guard page: 0000 [#1] PREEMPT SMP KASAN NOPTI
+CPU: 0 UID: 0 PID: 5811 Comm: syz-executor387 Not tainted 6.13.0-rc7-syzkaller-00209-g9528d418de4d #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 12/27/2024
+RIP: 0010:__lock_acquire+0x24/0x3c40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/locking/lockdep.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n5077'>kernel/locking/lockdep.c:5077</a>
+Code: 90 90 90 90 90 90 41 57 41 56 41 89 f6 41 55 41 54 49 89 fc 55 89 d5 53 44 89 cb 48 81 ec f0 00 00 00 48 8b 84 24 28 01 00 00 &lt;44&gt; 89 04 24 48 c7 84 24 90 00 00 00 b3 8a b5 41 48 c7 84 24 98 00
+RSP: 0018:ffffc9000308ff98 EFLAGS: 00010082
+RAX: 0000000000000000 RBX: 0000000000000000 RCX: 0000000000000000
+RDX: 0000000000000001 RSI: 0000000000000000 RDI: ffff8880b8644c58
+RBP: 0000000000000001 R08: 0000000000000001 R09: 0000000000000000
+R10: ffffffff905f7c97 R11: 0000000000000003 R12: ffff8880b8644c58
+R13: ffff8880b8644c58 R14: 0000000000000000 R15: 0000000000000000
+FS:  000055556c371480(0000) GS:ffff8880b8600000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: ffffc9000308ff88 CR3: 0000000078d02000 CR4: 00000000003526f0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+Call Trace:
+ &lt;#DF&gt;
+ &lt;/#DF&gt;
+ &lt;TASK&gt;
+ lock_acquire.part.0+0x11b/0x380 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/locking/lockdep.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n5849'>kernel/locking/lockdep.c:5849</a>
+ __raw_spin_trylock <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/spinlock_api_smp.h?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n90'>include/linux/spinlock_api_smp.h:90</a> [inline]
+ _raw_spin_trylock+0x63/0x80 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/locking/spinlock.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n138'>kernel/locking/spinlock.c:138</a>
+ spin_trylock <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/spinlock.h?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n361'>include/linux/spinlock.h:361</a> [inline]
+ rmqueue_pcplist <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/page_alloc.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n3032'>mm/page_alloc.c:3032</a> [inline]
+ rmqueue <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/page_alloc.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n3076'>mm/page_alloc.c:3076</a> [inline]
+ get_page_from_freelist+0x350/0x2f80 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/page_alloc.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n3473'>mm/page_alloc.c:3473</a>
+ __alloc_pages_noprof+0x223/0x25b0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/page_alloc.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n4753'>mm/page_alloc.c:4753</a>
+ alloc_pages_mpol_noprof+0x2c8/0x620 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/mempolicy.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n2269'>mm/mempolicy.c:2269</a>
+ alloc_slab_page <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n2423'>mm/slub.c:2423</a> [inline]
+ allocate_slab <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n2589'>mm/slub.c:2589</a> [inline]
+ new_slab+0x2c9/0x410 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n2642'>mm/slub.c:2642</a>
+ ___slab_alloc+0xd7d/0x17a0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n3830'>mm/slub.c:3830</a>
+ __slab_alloc.constprop.0+0x56/0xb0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n3920'>mm/slub.c:3920</a>
+ __slab_alloc_node <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n3995'>mm/slub.c:3995</a> [inline]
+ slab_alloc_node <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n4156'>mm/slub.c:4156</a> [inline]
+ __do_kmalloc_node <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n4297'>mm/slub.c:4297</a> [inline]
+ __kmalloc_noprof+0x2ec/0x510 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n4310'>mm/slub.c:4310</a>
+ kmalloc_noprof <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/slab.h?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n905'>include/linux/slab.h:905</a> [inline]
+ p9_fcall_init+0x97/0x260 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/9p/client.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n233'>net/9p/client.c:233</a>
+ p9_tag_alloc+0x17a/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/9p/client.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n298'>net/9p/client.c:298</a>
+ p9_client_prepare_req+0x19f/0x4d0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/9p/client.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n644'>net/9p/client.c:644</a>
+ p9_client_rpc+0x1c3/0xc10 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/9p/client.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n691'>net/9p/client.c:691</a>
+ p9_client_read_once+0x24f/0x820 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/9p/client.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n1575'>net/9p/client.c:1575</a>
+ p9_client_read+0x13f/0x1b0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/9p/client.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n1534'>net/9p/client.c:1534</a>
+ v9fs_issue_read+0x115/0x340 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/9p/vfs_addr.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n76'>fs/9p/vfs_addr.c:76</a>
+ netfs_retry_read_subrequests <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n62'>fs/netfs/read_retry.c:62</a> [inline]
+ netfs_retry_reads+0x1512/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n235'>fs/netfs/read_retry.c:235</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_retry_reads+0x15a4/0x1d40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_retry.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n238'>fs/netfs/read_retry.c:238</a>
+ netfs_rreq_assess+0x5d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n374'>fs/netfs/read_collect.c:374</a>
+ netfs_rreq_terminated+0xe5/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/read_collect.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n409'>fs/netfs/read_collect.c:409</a>
+ netfs_dispatch_unbuffered_reads <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/direct_read.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n103'>fs/netfs/direct_read.c:103</a> [inline]
+ netfs_unbuffered_read <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/direct_read.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n127'>fs/netfs/direct_read.c:127</a> [inline]
+ netfs_unbuffered_read_iter_locked+0x12e1/0x19a0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/direct_read.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n221'>fs/netfs/direct_read.c:221</a>
+ netfs_unbuffered_read_iter+0xc5/0x100 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/netfs/direct_read.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n256'>fs/netfs/direct_read.c:256</a>
+ v9fs_file_read_iter+0xbf/0x100 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/9p/vfs_file.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n361'>fs/9p/vfs_file.c:361</a>
+ __kernel_read+0x3f1/0xb50 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/read_write.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n523'>fs/read_write.c:523</a>
+ integrity_kernel_read+0x7f/0xb0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/security/integrity/iint.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n28'>security/integrity/iint.c:28</a>
+ ima_calc_file_hash_tfm+0x2c9/0x3e0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/security/integrity/ima/ima_crypto.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n480'>security/integrity/ima/ima_crypto.c:480</a>
+ ima_calc_file_shash <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/security/integrity/ima/ima_crypto.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n511'>security/integrity/ima/ima_crypto.c:511</a> [inline]
+ ima_calc_file_hash+0x1ba/0x490 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/security/integrity/ima/ima_crypto.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n568'>security/integrity/ima/ima_crypto.c:568</a>
+ ima_collect_measurement+0x89f/0xa40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/security/integrity/ima/ima_api.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n293'>security/integrity/ima/ima_api.c:293</a>
+ process_measurement+0x1271/0x2370 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/security/integrity/ima/ima_main.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n372'>security/integrity/ima/ima_main.c:372</a>
+ ima_file_check+0xbd/0x100 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/security/integrity/ima/ima_main.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n572'>security/integrity/ima/ima_main.c:572</a>
+ security_file_post_open+0x8e/0x210 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/security/security.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n3121'>security/security.c:3121</a>
+ do_open <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namei.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n3830'>fs/namei.c:3830</a> [inline]
+ path_openat+0x1419/0x2d60 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namei.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n3987'>fs/namei.c:3987</a>
+ do_filp_open+0x20c/0x470 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namei.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n4014'>fs/namei.c:4014</a>
+ do_sys_openat2+0x17a/0x1e0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/open.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n1402'>fs/open.c:1402</a>
+ do_sys_open <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/open.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n1417'>fs/open.c:1417</a> [inline]
+ __do_sys_openat <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/open.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n1433'>fs/open.c:1433</a> [inline]
+ __se_sys_openat <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/open.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n1428'>fs/open.c:1428</a> [inline]
+ __x64_sys_openat+0x175/0x210 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/open.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n1428'>fs/open.c:1428</a>
+ do_syscall_x64 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n52'>arch/x86/entry/common.c:52</a> [inline]
+ do_syscall_64+0xcd/0x250 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n83'>arch/x86/entry/common.c:83</a>
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+RIP: 0033:0x7fe490f95c49
+Code: d8 5b c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 40 00 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 &lt;48&gt; 3d 01 f0 ff ff 73 01 c3 48 c7 c1 b8 ff ff ff f7 d8 64 89 01 48
+RSP: 002b:00007ffd8855d5e8 EFLAGS: 00000246 ORIG_RAX: 0000000000000101
+RAX: ffffffffffffffda RBX: 0000000000000003 RCX: 00007fe490f95c49
+RDX: 0000000000020842 RSI: 000000002000c380 RDI: 00000000ffffff9c
+RBP: 00007fe490fdd570 R08: 00007fe490fdd5a0 R09: 00007fe490fdd5a0
+R10: 0000000000000000 R11: 0000000000000246 R12: 00007fe490fdd4f5
+R13: 0000000000000001 R14: 00007fe491010420 R15: 0000000000000003
+ &lt;/TASK&gt;
+Modules linked in:
+---[ end trace 0000000000000000 ]---
+RIP: 0010:__lock_acquire+0x24/0x3c40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/locking/lockdep.c?id=9528d418de4d83c7ada69314ddd8d4427b1f703a#n5077'>kernel/locking/lockdep.c:5077</a>
+Code: 90 90 90 90 90 90 41 57 41 56 41 89 f6 41 55 41 54 49 89 fc 55 89 d5 53 44 89 cb 48 81 ec f0 00 00 00 48 8b 84 24 28 01 00 00 &lt;44&gt; 89 04 24 48 c7 84 24 90 00 00 00 b3 8a b5 41 48 c7 84 24 98 00
+RSP: 0018:ffffc9000308ff98 EFLAGS: 00010082
+RAX: 0000000000000000 RBX: 0000000000000000 RCX: 0000000000000000
+RDX: 0000000000000001 RSI: 0000000000000000 RDI: ffff8880b8644c58
+RBP: 0000000000000001 R08: 0000000000000001 R09: 0000000000000000
+R10: ffffffff905f7c97 R11: 0000000000000003 R12: ffff8880b8644c58
+R13: ffff8880b8644c58 R14: 0000000000000000 R15: 0000000000000000
+FS:  000055556c371480(0000) GS:ffff8880b8600000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: ffffc9000308ff88 CR3: 0000000078d02000 CR4: 00000000003526f0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+----------------
+Code disassembly (best guess):
+   0:	90                   	nop
+   1:	90                   	nop
+   2:	90                   	nop
+   3:	90                   	nop
+   4:	90                   	nop
+   5:	90                   	nop
+   6:	41 57                	push   %r15
+   8:	41 56                	push   %r14
+   a:	41 89 f6             	mov    %esi,%r14d
+   d:	41 55                	push   %r13
+   f:	41 54                	push   %r12
+  11:	49 89 fc             	mov    %rdi,%r12
+  14:	55                   	push   %rbp
+  15:	89 d5                	mov    %edx,%ebp
+  17:	53                   	push   %rbx
+  18:	44 89 cb             	mov    %r9d,%ebx
+  1b:	48 81 ec f0 00 00 00 	sub    $0xf0,%rsp
+  22:	48 8b 84 24 28 01 00 	mov    0x128(%rsp),%rax
+  29:	00
+* 2a:	44 89 04 24          	mov    %r8d,(%rsp) &lt;-- trapping instruction
+  2e:	48 c7 84 24 90 00 00 	movq   $0x41b58ab3,0x90(%rsp)
+  35:	00 b3 8a b5 41
+  3a:	48                   	rex.W
+  3b:	c7                   	.byte 0xc7
+  3c:	84 24 98             	test   %ah,(%rax,%rbx,4)
+</pre></div><br>
+	
+
+	
+
+<table class="list_table">
+	<caption>Crashes (6):</caption>
+		<thead>
+		<tr>
+			<th><a onclick="return sortTable(this, 'Time', textSort, true)" href="#">Time</a></th>
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+			<th><a onclick="return sortTable(this, 'Commit', textSort)" href="#">Commit</a></th>
+			<th><a onclick="return sortTable(this, 'Syzkaller', textSort)" href="#">Syzkaller</a></th>
+			<th><a onclick="return sortTable(this, 'Config', textSort)" href="#">Config</a></th>
+			<th><a onclick="return sortTable(this, 'Log', textSort)" href="#">Log</a></th>
+			<th><a onclick="return sortTable(this, 'Report', reproSort)" href="#">Report</a></th>
+			<th><a onclick="return sortTable(this, 'Syz repro', reproSort)" href="#">Syz repro</a></th>
+			<th><a onclick="return sortTable(this, 'C repro', textSort)" href="#">C repro</a></th>
+			<th><a onclick="return sortTable(this, 'VM info', textSort)" href="#">VM info</a></th>
+			<th><a onclick="return sortTable(this, 'Assets', textSort)" href="#">Assets</a> (<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot_assets.md">help?</a>)</th>
+			<th><a onclick="return sortTable(this, 'Manager', textSort)" href="#">Manager</a></th>
+			<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		</tr>
+		</thead>
+		<tbody>
+		
+		<tr>
+			<td class="time">2025/01/20 07:31</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9528d418de4d83c7ada69314ddd8d4427b1f703a
+	2025/01/19 17:33"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9528d418de4d83c7ada69314ddd8d4427b1f703a">9528d418de4d</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2cb035c8f931efff4a020b164e657f16f51934b">f2cb035c</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d7f05e16f48c5834">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=149252b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10550964580000">report</a></td>
+			<td class="repro stale_repro">
+				<a href="/text?tag=ReproSyz&amp;x=17808824580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=177cac38580000">log</a>
+			</td>
+			<td class="repro stale_repro"><a href="/text?tag=ReproC&amp;x=129252b0580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/00bcc6e6ccca/disk-9528d418.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9a3be632c086/vmlinux-9528d418.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/513818683d52/bzImage-9528d418.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-selinux-root</td>
+			<td class="manager">BUG: stack guard page was hit in sys_openat</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/20 06:16</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9528d418de4d83c7ada69314ddd8d4427b1f703a
+	2025/01/19 17:33"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9528d418de4d83c7ada69314ddd8d4427b1f703a">9528d418de4d</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2cb035c8f931efff4a020b164e657f16f51934b">f2cb035c</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d7f05e16f48c5834">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10c039df980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15e452b0580000">report</a></td>
+			<td class="repro stale_repro">
+				<a href="/text?tag=ReproSyz&amp;x=14e131f8580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=14c039df980000">log</a>
+			</td>
+			<td class="repro stale_repro"><a href="/text?tag=ReproC&amp;x=138a9024580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/00bcc6e6ccca/disk-9528d418.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9a3be632c086/vmlinux-9528d418.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/513818683d52/bzImage-9528d418.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-selinux-root</td>
+			<td class="manager">BUG: stack guard page was hit in sys_openat</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/20 05:02</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9528d418de4d83c7ada69314ddd8d4427b1f703a
+	2025/01/19 17:33"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9528d418de4d83c7ada69314ddd8d4427b1f703a">9528d418de4d</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2cb035c8f931efff4a020b164e657f16f51934b">f2cb035c</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d7f05e16f48c5834">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13154618580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=105f92b0580000">report</a></td>
+			<td class="repro stale_repro">
+				<a href="/text?tag=ReproSyz&amp;x=10c631f8580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=17bbd9df980000">log</a>
+			</td>
+			<td class="repro stale_repro"><a href="/text?tag=ReproC&amp;x=14349024580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/00bcc6e6ccca/disk-9528d418.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9a3be632c086/vmlinux-9528d418.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/513818683d52/bzImage-9528d418.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-selinux-root</td>
+			<td class="manager">BUG: stack guard page was hit in sys_openat</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/20 03:44</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9528d418de4d83c7ada69314ddd8d4427b1f703a
+	2025/01/19 17:33"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9528d418de4d83c7ada69314ddd8d4427b1f703a">9528d418de4d</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2cb035c8f931efff4a020b164e657f16f51934b">f2cb035c</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d7f05e16f48c5834">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10b392b0580000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=103c31f8580000">report</a></td>
+			<td class="repro stale_repro">
+				<a href="/text?tag=ReproSyz&amp;x=17109024580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=115e4618580000">log</a>
+			</td>
+			<td class="repro stale_repro"><a href="/text?tag=ReproC&amp;x=10edd9df980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/00bcc6e6ccca/disk-9528d418.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9a3be632c086/vmlinux-9528d418.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/513818683d52/bzImage-9528d418.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-selinux-root</td>
+			<td class="manager">BUG: stack guard page was hit in sys_openat</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/20 02:37</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9528d418de4d83c7ada69314ddd8d4427b1f703a
+	2025/01/19 17:33"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9528d418de4d83c7ada69314ddd8d4427b1f703a">9528d418de4d</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2cb035c8f931efff4a020b164e657f16f51934b">f2cb035c</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d7f05e16f48c5834">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17571024580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14aa4618580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=4e88cc4441c6307">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/00bcc6e6ccca/disk-9528d418.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9a3be632c086/vmlinux-9528d418.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/513818683d52/bzImage-9528d418.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-selinux-root</td>
+			<td class="manager">BUG: stack guard page was hit in sys_openat</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/20 22:19</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ffd294d346d185b70e28b1a28abe367bbfe53c04
+	2025/01/19 23:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ffd294d346d185b70e28b1a28abe367bbfe53c04">ffd294d346d1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6e87cfa299c98d36e79e8b8718a4126899a3ba2f">6e87cfa2</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=88da85736adb8c92">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1601d2b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1101d2b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-ffd294d3.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ab1d8ddaa6bd/vmlinux-ffd294d3.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8aadb123ffff/bzImage-ffd294d3.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">BUG: stack guard page was hit in sys_openat</td>
+		</tr>
+		
+		</tbody>
+</table>
+<i>* <s>Struck through</s> repros no longer work on HEAD.</i>
+
+
+</body>
+</html>

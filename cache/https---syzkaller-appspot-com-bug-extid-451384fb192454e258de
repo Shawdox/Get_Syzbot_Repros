@@ -1,0 +1,1135 @@
+
+
+<!doctype html>
+<html>
+<head>
+	
+	<link rel="stylesheet" href="/static/style.css"/>
+	<script src="/static/common.js"></script>
+	
+		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-116117799-1"></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag() { dataLayer.push(arguments); }
+			gtag('js', new Date());
+			gtag('config', 'UA-116117799-1');
+		</script>
+	
+
+	<title>kernel BUG in txLock</title>
+</head>
+<body>
+	
+	<header id="topbar">
+		<table class="position_table">
+			<tr>
+				<td>
+					<h1><a href="/upstream">syzbot</a></h1>
+				</td>
+				<td class="namespace_td">
+					<select class="namespace" onchange="window.location.href = '/' + this.value + '';">
+						
+							<option value="android-5-10" >Android 5.10</option>
+							<option value="android-5-15" >Android 5.15</option>
+							<option value="android-54" >Android 5.4</option>
+							<option value="android-6-1" >Android 6.1</option>
+							<option value="freebsd" >FreeBSD</option>
+							<option value="upstream" selected="1">Linux</option>
+							<option value="linux-5.15" >Linux 5.15</option>
+							<option value="linux-6.1" >Linux 6.1</option>
+							<option value="netbsd" >NetBSD</option>
+							<option value="openbsd" >OpenBSD</option>
+							<option value="gvisor" >gVisor</option></select>
+				</td>
+				<td class="search">
+					
+					
+						<a href="https://syzkaller.appspot.com/_ah/conflogin?continue=https://syzkaller.appspot.com/bug%3Fextid%3D451384fb192454e258de">sign-in</a> |
+					
+					<a href="https://groups.google.com/forum/#!forum/syzkaller" target="_blank">mailing list</a> |
+					<a href="https://github.com/google/syzkaller" target="_blank">source</a> |
+					<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md" target="_blank">docs</a>
+				</td>
+			</tr>
+		</table>
+		
+		<div class="navigation">
+			<div class="navigation_tab">
+				<a href='/upstream'><span style="color:DeepPink;">🐞</span> Open [1655]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/subsystems'><span style="color:DeepPink;">≡</span> Subsystems</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/fixed'><span style="color:ForestGreen;">🐞</span> Fixed [6082]</a>
+			</div>
+
+			<div class="navigation_tab" href='/upstream/invalid'>
+				<a href='/upstream/invalid'><span style="color:RoyalBlue;">🐞</span> Invalid [15105]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/backports'><span style="color:ForestGreen;">⬇</span> Missing Backports [157]</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/graph/crashes'><span style="color:ForestGreen;">≡</span> Crashes</a>
+			</div>
+
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Graphs</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href='/upstream/graph/bugs'>Kernel&nbsp;Health</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/found-bugs'>Bugs/Month</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/lifetimes'>Bug&nbsp;Lifetimes</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/fuzzing'>Fuzzing</a>
+				</div>
+			</div>
+
+			
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Coverage</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href="/upstream/graph/coverage?period=quarter">Total</a>
+					<a class="navigation_tab"
+						href="/upstream/coverage?period=month">Repo&nbsp;Heatmap</a>
+					
+						<a class="navigation_tab"
+							href="/upstream/coverage/subsystems?period=month">Subsystems&nbsp;Heatmap</a>
+					
+				</div>
+			</div>
+			
+			
+			<div class="navigation_tab navigation_right">
+				<a href='mailto:syzkaller@googlegroups.com'><span style="color:ForestGreen;">💬</span> Send us feedback</a>
+			</div>
+			
+		</div>
+		
+	</header>
+	<br>
+
+
+	<b>kernel BUG in txLock</b><br><br>
+	Status: <a href="https://groups.google.com/d/msgid/syzkaller-bugs/00000000000079c7640604eefa47%40google.com">fixed on 2024/02/16 19:40</a><br>
+	
+		
+			Subsystems: 
+				<span class="bug-label"><a href="/upstream/s/jfs">jfs</a></span>
+		<br>
+		
+	<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md#labels">[Documentation on labels]</a><br>
+	
+	
+	Reported-by: syzbot&#43;451384fb192454e258de@syzkaller.appspotmail.com<br>
+	
+		<b>Fix commit:</b> 
+
+	<span class="mono">
+		
+			6f861765464f
+		
+		<a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=6f861765464f43a71462d52026fbddfc858239a5">fs: Block writes to mounted block devices</a>
+	</span>
+
+<br>
+		
+	
+	First crash: 548d, last: 426d<br>
+	
+	<div>
+		<div class="bug-bisection-info">
+
+	
+	
+	
+		
+			<b>Cause bisection: the issue happens on the oldest tested release</b>
+		
+		<b>(<a href="https://syzkaller.appspot.com/x/bisect.txt?x=1355caa4680000">bisect log</a>)</b><br>
+	
+	
+		Crash: <a href="https://syzkaller.appspot.com/x/report.txt?x=10d5caa4680000">kernel BUG in txLock</a> (<a href="https://syzkaller.appspot.com/x/log.txt?x=1755caa4680000">log</a>)<br>
+		Repro: <a href="/text?tag=ReproC&x=15276fb8680000">C</a>
+		<a href="/text?tag=ReproSyz&x=140b48c8680000">syz</a>
+		<a href="/text?tag=KernelConfig&x=ff0db7a15ba54ead">.config</a><br>
+	
+
+	
+	&nbsp;&nbsp;
+	
+
+</div>
+		<div class="bug-bisection-info">
+
+	
+	
+	
+		
+			
+				<b>Fix bisection: fixed by</b>
+			
+		
+		<b>(<a href="https://syzkaller.appspot.com/x/bisect.txt?x=1588d6ec180000">bisect log</a>)</b> <span class="bad"></span>:<br>
+		<span class="mono">
+		
+		commit 6f861765464f43a71462d52026fbddfc858239a5<br>
+		Author: Jan Kara &lt;jack@suse.cz&gt;<br>
+		Date:   Wed Nov 1 17:43:10 2023 &#43;0000<br>
+		<br>
+		&nbsp;&nbsp;<a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=6f861765464f43a71462d52026fbddfc858239a5">fs: Block writes to mounted block devices</a><br>
+		</span><br>
+	
+	
+
+	
+	&nbsp;&nbsp;
+	
+
+</div>
+		<div class="bug-bisection-stop"></div>
+	</div>
+
+	
+	<div class="collapsible collapsible-show">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Discussions (1)</span>
+		</div>
+		<div class="content">
+			
+			
+			
+
+<table class="list_table">
+	<thead>
+	<tr>
+		<th>Title</th>
+		<th>Replies (including bot)</th>
+		<th>Last reply</th>
+	</tr>
+	</thead>
+	<tbody>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/00000000000079c7640604eefa47@google.com/T/">[syzbot] [jfs?] kernel BUG in txLock</a></td>
+			<td class="stat">1 (3)</td>
+			<td class="stat">2024/02/13 10:24</td>
+		</tr>
+	
+	</tbody>
+</table>
+
+
+			
+			
+		</div>
+	</div>
+	
+	<div class="collapsible collapsible-hide">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Similar bugs (3)</span>
+		</div>
+		<div class="content">
+			
+
+
+<table class="list_table">
+	
+	<thead>
+	<tr>
+		
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+		
+		<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		<th><a onclick="return sortTable(this, 'Repro', reproSort)" href="#">Repro</a></th>
+		<th><a onclick="return sortTable(this, 'Cause bisect', textSort)" href="#">Cause bisect</a></th>
+		<th><a onclick="return sortTable(this, 'Fix bisect', textSort)" href="#">Fix bisect</a></th>
+		<th><a onclick="return sortTable(this, 'Count', numSort)" href="#">Count</a></th>
+		<th><a onclick="return sortTable(this, 'Last', timeSort)" href="#">Last</a></th>
+		<th><a onclick="return sortTable(this, 'Reported', timeSort)" href="#">Reported</a></th>
+		
+		
+		
+			<th><a onclick="return sortTable(this, 'Patched', patchedSort)" href="#">Patched</a></th>
+		
+		
+			<th><a onclick="return sortTable(this, 'Status', textSort)" href="#">Status</a></th>
+		
+		
+	</tr>
+	</thead>
+	<tbody>
+	
+		<tr>
+			<td>linux-5.15</td>
+			<td class="title">
+				<a href="/bug?extid=e6e2bba5438f57dd796a">kernel BUG in txLock (2)</a>
+					<span class="bug-label"><a href="/linux-5.15?label=origin%3Aupstream">origin:upstream</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">2</td>
+			<td class="stat">8d14h</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/674446b8.050a0220.1cc393.0073.GAE@google.com">101d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/3</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/674446b8.050a0220.1cc393.0073.GAE@google.com">upstream: reported C repro on 2024/11/25 09:43</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>linux-5.15</td>
+			<td class="title">
+				<a href="/bug?id=b91863b8f7583599c9013526e31321626c142902">kernel BUG in txLock</a>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">1</td>
+			<td class="stat">546d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/0000000000007e36e70604c152fb%40google.com">546d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/3</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/0000000000007e36e70604c152fb%40google.com">auto-obsoleted due to no activity on 2023/12/16 09:17</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=a843f6ae2130a987d63b">kernel BUG in txLock (2)</a>
+					<span class="bug-label"><a href="/upstream/s/jfs">jfs</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status">error</td>
+			<td class="bisect_status"></td>
+			<td class="stat ">4</td>
+			<td class="stat">3d14h</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000002cabeb0614b447e9%40google.com">343d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000002cabeb0614b447e9%40google.com">upstream: reported C repro on 2024/03/28 08:26</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+	</tbody>
+</table>
+
+
+
+			
+			
+			
+			
+		</div>
+	</div>
+	
+	<div class="collapsible collapsible-hide">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Last patch testing requests (8)</span>
+		</div>
+		<div class="content">
+			
+			
+
+	<table class="list_table">
+		<caption id="jobs"><a class="plain" href="#jobs"></a></caption>
+		<thead>
+		<tr>
+			
+			<th>Created</th>
+			<th>Duration</th>
+			<th>User</th>
+			<th>Patch</th>
+			<th>Repo</th>
+			
+			<th>Result</th>
+		</tr>
+		</thead>
+		<tbody>
+		
+			<tr>
+				
+				<td class="time">2024/02/02 01:11</td>
+				<td class="time" title="started: 2024/02/02 01:11&#013;finished: 2024/02/02 01:33">
+					21m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=021533194476035883300d60fbb3136426ac8ea5">upstream</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=13834bf8180000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/01/19 11:47</td>
+				<td class="time" title="started: 2024/01/19 12:10&#013;finished: 2024/01/19 12:29">
+					19m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=9d1694dc91ce7b80bc96d6d8eaf1a1eca668d847">upstream</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=1768c407e80000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/01/19 11:47</td>
+				<td class="time" title="started: 2024/01/19 11:47&#013;finished: 2024/01/19 12:10">
+					22m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=9d1694dc91ce7b80bc96d6d8eaf1a1eca668d847">upstream</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=164da70be80000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/01/19 04:37</td>
+				<td class="time" title="started: 2024/01/19 04:37&#013;finished: 2024/01/19 04:54">
+					16m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=9d1694dc91ce7b80bc96d6d8eaf1a1eca668d847">upstream</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=110ca48be80000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/01/05 03:50</td>
+				<td class="time" title="started: 2024/01/05 04:06&#013;finished: 2024/01/05 04:25">
+					18m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=1f874787ed9a2d78ed59cb21d0d90ac0178eceb0">upstream</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=177c5a41e80000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=137c5a41e80000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/01/05 03:50</td>
+				<td class="time" title="started: 2024/01/05 03:50&#013;finished: 2024/01/05 04:06">
+					15m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=1f874787ed9a2d78ed59cb21d0d90ac0178eceb0">upstream</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=13341639e80000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=15341639e80000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2023/09/21 08:16</td>
+				<td class="time" title="started: 2023/09/21 08:27&#013;finished: 2023/09/21 08:39">
+					12m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=42dc814987c1feb6410904e58cfd4c36c4146150">upstream</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=141cd4d2680000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=101cd4d2680000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2023/09/21 08:16</td>
+				<td class="time" title="started: 2023/09/21 08:16&#013;finished: 2023/09/21 08:27">
+					10m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=42dc814987c1feb6410904e58cfd4c36c4146150">upstream</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=11d79cf4680000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=16d79cf4680000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+		</tbody>
+	</table>
+
+
+			
+			
+			
+		</div>
+	</div>
+	
+	<div class="collapsible collapsible-hide">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Fix bisection attempts (3)</span>
+		</div>
+		<div class="content">
+			
+			
+
+	<table class="list_table">
+		<caption id="jobs"><a class="plain" href="#jobs"></a></caption>
+		<thead>
+		<tr>
+			
+			<th>Created</th>
+			<th>Duration</th>
+			<th>User</th>
+			<th>Patch</th>
+			<th>Repo</th>
+			
+			<th>Result</th>
+		</tr>
+		</thead>
+		<tbody>
+		
+			<tr>
+				
+				<td class="time">2024/02/13 03:36</td>
+				<td class="time" title="started: 2024/02/13 03:36&#013;finished: 2024/02/13 09:35">
+					5h58m
+				</td>
+				<td>
+					
+						bisect fix
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=65d6e954e37872fd9afb5ef3fc0481bb3c2f20f4">upstream</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+							(1)
+						
+					
+					
+						<a href="https://syzkaller.appspot.com/x/bisect.txt?x=1588d6ec180000">job log</a>
+					
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2023/11/23 23:09</td>
+				<td class="time" title="started: 2023/11/23 23:09&#013;finished: 2023/11/24 00:58">
+					1h49m
+				</td>
+				<td>
+					
+						bisect fix
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=65d6e954e37872fd9afb5ef3fc0481bb3c2f20f4">upstream</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+							(0)
+						
+					
+					
+						<a href="https://syzkaller.appspot.com/x/bisect.txt?x=111faf5ce80000">job log</a>
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=151faf5ce80000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2023/10/21 11:27</td>
+				<td class="time" title="started: 2023/10/21 11:27&#013;finished: 2023/10/21 13:23">
+					1h55m
+				</td>
+				<td>
+					
+						bisect fix
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=65d6e954e37872fd9afb5ef3fc0481bb3c2f20f4">upstream</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+							(0)
+						
+					
+					
+						<a href="https://syzkaller.appspot.com/x/bisect.txt?x=13f99835680000">job log</a>
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=17f99835680000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+		</tbody>
+	</table>
+
+
+			
+			
+			
+		</div>
+	</div>
+	
+
+	
+	<br><b>Sample crash report:</b><br>
+	<div id="crash_div"><pre>Locker&#39;s tblock: ffffc900025d8210: 00000004 00000024 00000023 00000000
+Tlock: ffffc900028090d8: 00020004 20208040 197ac4d8 ffff8880
+Tlock: ffffc900028090e8: 68fb96b0 ffff8880 03140000 05002000
+Tlock: ffffc900028090f8: 03060a00 0000050d 00000000 00000000
+Tlock: ffffc90002809108: 00000000 00000000 00000000 00000000
+Tlock: ffffc90002809118: 00000000 00000000
+------------[ cut here ]------------
+kernel BUG at <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/jfs/jfs_txnmgr.c?id=9ace34a8e446c1a566f3b0a3e0c4c483987e39a6#n834'>fs/jfs/jfs_txnmgr.c:834</a>!
+invalid opcode: 0000 [#1] PREEMPT SMP KASAN
+CPU: 1 PID: 5152 Comm: syz-executor162 Not tainted 6.7.0-rc4-syzkaller-00039-g9ace34a8e446 #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 11/10/2023
+RIP: 0010:txLock+0x1ddd/0x2120 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/jfs/jfs_txnmgr.c?id=9ace34a8e446c1a566f3b0a3e0c4c483987e39a6#n834'>fs/jfs/jfs_txnmgr.c:834</a>
+Code: 89 e9 41 b8 04 00 00 00 b9 10 00 00 00 6a 00 ba 01 00 00 00 48 c7 c6 e0 42 0b 8b 48 c7 c7 20 42 0b 8b 6a 48 e8 94 37 65 01 90 &lt;0f&gt; 0b 48 8b 7c 24 20 e8 27 f0 e0 fe e9 2d f5 ff ff 4c 89 ff e8 da
+RSP: 0018:ffffc9000458f420 EFLAGS: 00010286
+RAX: 0000000000000000 RBX: ffffffff8d53dda0 RCX: ffffffff8462795c
+RDX: fffff520008b1e59 RSI: ffffffff84627a13 RDI: 0000000000000006
+RBP: ffffc900028090d8 R08: 0000000000000006 R09: 0000000000000050
+R10: 0000000000000048 R11: 0000000000000001 R12: 0000000000000003
+R13: 0000000000000010 R14: ffffc900028090da R15: ffff8880197ac4d8
+FS:  00007fa4aea726c0(0000) GS:ffff8880b9900000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 00007fa4aea72d58 CR3: 000000001ee30000 CR4: 0000000000350ef0
+Call Trace:
+ &lt;TASK&gt;
+ dtSplitRoot+0x491/0x1760 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/jfs/jfs_dtree.c?id=9ace34a8e446c1a566f3b0a3e0c4c483987e39a6#n1919'>fs/jfs/jfs_dtree.c:1919</a>
+ dtSplitUp+0x1298/0x5850 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/jfs/jfs_dtree.c?id=9ace34a8e446c1a566f3b0a3e0c4c483987e39a6#n985'>fs/jfs/jfs_dtree.c:985</a>
+ dtInsert+0x872/0xb00 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/jfs/jfs_dtree.c?id=9ace34a8e446c1a566f3b0a3e0c4c483987e39a6#n863'>fs/jfs/jfs_dtree.c:863</a>
+ jfs_create+0x63c/0xb40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/jfs/namei.c?id=9ace34a8e446c1a566f3b0a3e0c4c483987e39a6#n137'>fs/jfs/namei.c:137</a>
+ vfs_create <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namei.c?id=9ace34a8e446c1a566f3b0a3e0c4c483987e39a6#n3179'>fs/namei.c:3179</a> [inline]
+ vfs_create+0x4bf/0x730 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namei.c?id=9ace34a8e446c1a566f3b0a3e0c4c483987e39a6#n3163'>fs/namei.c:3163</a>
+ do_mknodat+0x3d1/0x5d0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namei.c?id=9ace34a8e446c1a566f3b0a3e0c4c483987e39a6#n4034'>fs/namei.c:4034</a>
+ __do_sys_mknodat <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namei.c?id=9ace34a8e446c1a566f3b0a3e0c4c483987e39a6#n4062'>fs/namei.c:4062</a> [inline]
+ __se_sys_mknodat <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namei.c?id=9ace34a8e446c1a566f3b0a3e0c4c483987e39a6#n4059'>fs/namei.c:4059</a> [inline]
+ __x64_sys_mknodat+0xad/0xe0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namei.c?id=9ace34a8e446c1a566f3b0a3e0c4c483987e39a6#n4059'>fs/namei.c:4059</a>
+ do_syscall_x64 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=9ace34a8e446c1a566f3b0a3e0c4c483987e39a6#n52'>arch/x86/entry/common.c:52</a> [inline]
+ do_syscall_64+0x40/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=9ace34a8e446c1a566f3b0a3e0c4c483987e39a6#n83'>arch/x86/entry/common.c:83</a>
+ entry_SYSCALL_64_after_hwframe+0x63/0x6b
+RIP: 0033:0x7fa4aead6c59
+Code: 28 00 00 00 75 05 48 83 c4 28 c3 e8 b1 18 00 00 90 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 &lt;48&gt; 3d 01 f0 ff ff 73 01 c3 48 c7 c1 b0 ff ff ff f7 d8 64 89 01 48
+RSP: 002b:00007fa4aea72218 EFLAGS: 00000246 ORIG_RAX: 0000000000000103
+RAX: ffffffffffffffda RBX: 00007fa4aeb646d8 RCX: 00007fa4aead6c59
+RDX: 0000000000000000 RSI: 0000000020000100 RDI: 0000000000000004
+RBP: 00007fa4aeb646d0 R08: 0000000000000000 R09: 0000000000000000
+R10: 0000000000000700 R11: 0000000000000246 R12: 00007fa4aeb2b06b
+R13: 0030656c69662f2e R14: 7261637369646f6e R15: 6573726168636f69
+ &lt;/TASK&gt;
+Modules linked in:
+---[ end trace 0000000000000000 ]---
+RIP: 0010:txLock+0x1ddd/0x2120 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/jfs/jfs_txnmgr.c?id=9ace34a8e446c1a566f3b0a3e0c4c483987e39a6#n834'>fs/jfs/jfs_txnmgr.c:834</a>
+Code: 89 e9 41 b8 04 00 00 00 b9 10 00 00 00 6a 00 ba 01 00 00 00 48 c7 c6 e0 42 0b 8b 48 c7 c7 20 42 0b 8b 6a 48 e8 94 37 65 01 90 &lt;0f&gt; 0b 48 8b 7c 24 20 e8 27 f0 e0 fe e9 2d f5 ff ff 4c 89 ff e8 da
+RSP: 0018:ffffc9000458f420 EFLAGS: 00010286
+RAX: 0000000000000000 RBX: ffffffff8d53dda0 RCX: ffffffff8462795c
+RDX: fffff520008b1e59 RSI: ffffffff84627a13 RDI: 0000000000000006
+RBP: ffffc900028090d8 R08: 0000000000000006 R09: 0000000000000050
+R10: 0000000000000048 R11: 0000000000000001 R12: 0000000000000003
+R13: 0000000000000010 R14: ffffc900028090da R15: ffff8880197ac4d8
+FS:  00007fa4aea726c0(0000) GS:ffff8880b9900000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 00007fa4aea72d58 CR3: 000000001ee30000 CR4: 0000000000350ef0
+</pre></div><br>
+	
+
+	
+
+<table class="list_table">
+	<caption>Crashes (10):</caption>
+		<thead>
+		<tr>
+			<th><a onclick="return sortTable(this, 'Time', textSort, true)" href="#">Time</a></th>
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+			<th><a onclick="return sortTable(this, 'Commit', textSort)" href="#">Commit</a></th>
+			<th><a onclick="return sortTable(this, 'Syzkaller', textSort)" href="#">Syzkaller</a></th>
+			<th><a onclick="return sortTable(this, 'Config', textSort)" href="#">Config</a></th>
+			<th><a onclick="return sortTable(this, 'Log', textSort)" href="#">Log</a></th>
+			<th><a onclick="return sortTable(this, 'Report', reproSort)" href="#">Report</a></th>
+			<th><a onclick="return sortTable(this, 'Syz repro', reproSort)" href="#">Syz repro</a></th>
+			<th><a onclick="return sortTable(this, 'C repro', textSort)" href="#">C repro</a></th>
+			<th><a onclick="return sortTable(this, 'VM info', textSort)" href="#">VM info</a></th>
+			<th><a onclick="return sortTable(this, 'Assets', textSort)" href="#">Assets</a> (<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot_assets.md">help?</a>)</th>
+			<th><a onclick="return sortTable(this, 'Manager', textSort)" href="#">Manager</a></th>
+			<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		</tr>
+		</thead>
+		<tbody>
+		
+		<tr>
+			<td class="time">2023/12/08 03:49</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9ace34a8e446c1a566f3b0a3e0c4c483987e39a6
+	2023/12/07 20:42"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9ace34a8e446c1a566f3b0a3e0c4c483987e39a6">9ace34a8e446</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/28b24332d95f2f7df44ec7e7a5e0025bcadc6277">28b24332</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b50bd31249191be8">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10ce938ce80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=162ffedae80000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=14617a82e80000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=12b730cae80000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4007dcd6dc15/disk-9ace34a8.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/081564f1ba01/vmlinux-9ace34a8.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8d3f1b531a19/bzImage-9ace34a8.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3e92c486eca9/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">kernel BUG in txLock</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/12/07 07:34</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="bee0e7762ad2c6025b9f5245c040fcc36ef2bde8
+	2023/12/04 21:54"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=bee0e7762ad2c6025b9f5245c040fcc36ef2bde8">bee0e7762ad2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/e3299f55e91df371c35ba414e53898a130068a0e">e3299f55</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b50bd31249191be8">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16b46e0ee80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1456938ce80000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=13e97c02e80000">syz</a>
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/60bbaa813a5c/disk-bee0e776.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/af1b4528631c/vmlinux-bee0e776.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9927f8cd1450/bzImage-bee0e776.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/39fc5e593fce/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">kernel BUG in txLock</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/12/22 03:35</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a4aebe936554dac6a91e5d091179c934f8325708
+	2023/12/21 05:30"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a4aebe936554dac6a91e5d091179c934f8325708">a4aebe936554</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/4f9530a3b62297342999c9097c77dde726522618">4f9530a3</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=567389efc5be568c">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=129e8d9ee80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16b354d9e80000">report</a></td>
+			<td class="repro stale_repro">
+				<a href="/text?tag=ReproSyz&amp;x=1083b679e80000">syz</a>
+				
+			</td>
+			<td class="repro stale_repro"><a href="/text?tag=ReproC&amp;x=15044de9e80000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/507de3dbdc56/disk-a4aebe93.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/10a57d9a959b/vmlinux-a4aebe93.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9f1f02c351dd/bzImage-a4aebe93.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/44f0c04fc2b3/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-badwrites-root</td>
+			<td class="manager">kernel BUG in txLock</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/12/20 18:13</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="55cb5f43689d7a9ea5bf35ef050f12334f197347
+	2023/12/19 20:25"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=55cb5f43689d7a9ea5bf35ef050f12334f197347">55cb5f43689d</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/3ad490ea48468e50fe91f6f6b2ca4cbc74d924bf">3ad490ea</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=567389efc5be568c">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=132b1ac9e80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=102fcac9e80000">report</a></td>
+			<td class="repro stale_repro">
+				<a href="/text?tag=ReproSyz&amp;x=15a935d6e80000">syz</a>
+				
+			</td>
+			<td class="repro stale_repro"><a href="/text?tag=ReproC&amp;x=124ee216e80000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c1c11cef565c/disk-55cb5f43.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/85ec6b03d494/vmlinux-55cb5f43.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/325ba7058e03/bzImage-55cb5f43.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e0f44b7f76bf/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-badwrites-root</td>
+			<td class="manager">kernel BUG in txLock</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/09/06 12:18</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="65d6e954e37872fd9afb5ef3fc0481bb3c2f20f4
+	2023/09/05 20:00"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=65d6e954e37872fd9afb5ef3fc0481bb3c2f20f4">65d6e954e378</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0b6286dc40e114a33a60c7fbbddbe7fcffc1bb4c">0b6286dc</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ff0db7a15ba54ead">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15853c0c680000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=155844fc680000">report</a></td>
+			<td class="repro stale_repro">
+				<a href="/text?tag=ReproSyz&amp;x=140b48c8680000">syz</a>
+				
+			</td>
+			<td class="repro stale_repro"><a href="/text?tag=ReproC&amp;x=15276fb8680000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d2f8f959540a/disk-65d6e954.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6f0285edec65/vmlinux-65d6e954.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/61d3ef608e62/bzImage-65d6e954.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4db3738411e6/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in txLock</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/09/05 16:00</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="3f86ed6ec0b390c033eae7f9c487a3fea268e027
+	2023/09/04 22:38"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=3f86ed6ec0b390c033eae7f9c487a3fea268e027">3f86ed6ec0b3</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0b6286dc40e114a33a60c7fbbddbe7fcffc1bb4c">0b6286dc</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ff0db7a15ba54ead">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11350008680000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1650df7c680000">report</a></td>
+			<td class="repro stale_repro">
+				<a href="/text?tag=ReproSyz&amp;x=12496e20680000">syz</a>
+				
+			</td>
+			<td class="repro stale_repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6f4f710c5033/disk-3f86ed6e.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/555548fedbdc/vmlinux-3f86ed6e.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c06d7c39bbc0/bzImage-3f86ed6e.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f5314112ce94/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in txLock</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/09/07 07:49</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="744a759492b5c57ff24a6e8aabe47b17ad8ee964
+	2023/09/06 16:24"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=744a759492b5c57ff24a6e8aabe47b17ad8ee964">744a759492b5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/723248446556f80ee1e869fe7569fe4a7ed4feca">72324844</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ed626705db308b2d">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=155c28a4680000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1624ec20680000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=449499851b57756b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4cd3ef7a61fb/disk-744a7594.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dfb7ed3ce6d6/vmlinux-744a7594.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e4c0866ee45c/bzImage-744a7594.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in txLock</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/09/07 02:10</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="744a759492b5c57ff24a6e8aabe47b17ad8ee964
+	2023/09/06 16:24"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=744a759492b5c57ff24a6e8aabe47b17ad8ee964">744a759492b5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/723248446556f80ee1e869fe7569fe4a7ed4feca">72324844</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ed626705db308b2d">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1541cf47a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1340e4fc680000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=449499851b57756b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4cd3ef7a61fb/disk-744a7594.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dfb7ed3ce6d6/vmlinux-744a7594.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e4c0866ee45c/bzImage-744a7594.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in txLock</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/09/06 11:48</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="65d6e954e37872fd9afb5ef3fc0481bb3c2f20f4
+	2023/09/05 20:00"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=65d6e954e37872fd9afb5ef3fc0481bb3c2f20f4">65d6e954e378</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0b6286dc40e114a33a60c7fbbddbe7fcffc1bb4c">0b6286dc</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ff0db7a15ba54ead">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=158177f4680000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1622f700680000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=bfce545388ca5a20">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d2f8f959540a/disk-65d6e954.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6f0285edec65/vmlinux-65d6e954.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/61d3ef608e62/bzImage-65d6e954.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in txLock</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/09/05 15:34</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="3f86ed6ec0b390c033eae7f9c487a3fea268e027
+	2023/09/04 22:38"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=3f86ed6ec0b390c033eae7f9c487a3fea268e027">3f86ed6ec0b3</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0b6286dc40e114a33a60c7fbbddbe7fcffc1bb4c">0b6286dc</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ff0db7a15ba54ead">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13279234680000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10afc334680000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=70af0748c6d11b29">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6f4f710c5033/disk-3f86ed6e.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/555548fedbdc/vmlinux-3f86ed6e.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c06d7c39bbc0/bzImage-3f86ed6e.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in txLock</td>
+		</tr>
+		
+		</tbody>
+</table>
+<i>* <s>Struck through</s> repros no longer work on HEAD.</i>
+
+
+</body>
+</html>

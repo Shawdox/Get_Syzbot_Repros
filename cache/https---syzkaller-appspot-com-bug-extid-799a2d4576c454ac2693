@@ -1,0 +1,1615 @@
+
+
+<!doctype html>
+<html>
+<head>
+	
+	<link rel="stylesheet" href="/static/style.css"/>
+	<script src="/static/common.js"></script>
+	
+		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-116117799-1"></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag() { dataLayer.push(arguments); }
+			gtag('js', new Date());
+			gtag('config', 'UA-116117799-1');
+		</script>
+	
+
+	<title>possible deadlock in binder_alloc_free_page</title>
+</head>
+<body>
+	
+	<header id="topbar">
+		<table class="position_table">
+			<tr>
+				<td>
+					<h1><a href="/upstream">syzbot</a></h1>
+				</td>
+				<td class="namespace_td">
+					<select class="namespace" onchange="window.location.href = '/' + this.value + '';">
+						
+							<option value="android-5-10" >Android 5.10</option>
+							<option value="android-5-15" >Android 5.15</option>
+							<option value="android-54" >Android 5.4</option>
+							<option value="android-6-1" >Android 6.1</option>
+							<option value="freebsd" >FreeBSD</option>
+							<option value="upstream" selected="1">Linux</option>
+							<option value="linux-5.15" >Linux 5.15</option>
+							<option value="linux-6.1" >Linux 6.1</option>
+							<option value="netbsd" >NetBSD</option>
+							<option value="openbsd" >OpenBSD</option>
+							<option value="gvisor" >gVisor</option></select>
+				</td>
+				<td class="search">
+					
+					
+						<a href="https://syzkaller.appspot.com/_ah/conflogin?continue=https://syzkaller.appspot.com/bug%3Fextid%3D799a2d4576c454ac2693">sign-in</a> |
+					
+					<a href="https://groups.google.com/forum/#!forum/syzkaller" target="_blank">mailing list</a> |
+					<a href="https://github.com/google/syzkaller" target="_blank">source</a> |
+					<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md" target="_blank">docs</a>
+				</td>
+			</tr>
+		</table>
+		
+		<div class="navigation">
+			<div class="navigation_tab">
+				<a href='/upstream'><span style="color:DeepPink;">🐞</span> Open [1659]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/subsystems'><span style="color:DeepPink;">≡</span> Subsystems</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/fixed'><span style="color:ForestGreen;">🐞</span> Fixed [6081]</a>
+			</div>
+
+			<div class="navigation_tab" href='/upstream/invalid'>
+				<a href='/upstream/invalid'><span style="color:RoyalBlue;">🐞</span> Invalid [15101]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/backports'><span style="color:ForestGreen;">⬇</span> Missing Backports [157]</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/graph/crashes'><span style="color:ForestGreen;">≡</span> Crashes</a>
+			</div>
+
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Graphs</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href='/upstream/graph/bugs'>Kernel&nbsp;Health</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/found-bugs'>Bugs/Month</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/lifetimes'>Bug&nbsp;Lifetimes</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/fuzzing'>Fuzzing</a>
+				</div>
+			</div>
+
+			
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Coverage</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href="/upstream/graph/coverage?period=quarter">Total</a>
+					<a class="navigation_tab"
+						href="/upstream/coverage?period=month">Repo&nbsp;Heatmap</a>
+					
+						<a class="navigation_tab"
+							href="/upstream/coverage/subsystems?period=month">Subsystems&nbsp;Heatmap</a>
+					
+				</div>
+			</div>
+			
+			
+			<div class="navigation_tab navigation_right">
+				<a href='mailto:syzkaller@googlegroups.com'><span style="color:ForestGreen;">💬</span> Send us feedback</a>
+			</div>
+			
+		</div>
+		
+	</header>
+	<br>
+
+
+	<b>possible deadlock in binder_alloc_free_page</b><br><br>
+	Status: <a href="https://groups.google.com/d/msgid/syzkaller-bugs/6782483e.050a0220.216c54.001d.GAE@google.com">upstream: reported syz repro on 2025/01/11 10:30</a><br>
+	
+		
+			Subsystems: 
+				<span class="bug-label"><a href="/upstream/s/kernel">kernel</a></span>
+		<br>
+		
+	<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md#labels">[Documentation on labels]</a><br>
+	
+	
+	Reported-by: syzbot&#43;799a2d4576c454ac2693@syzkaller.appspotmail.com<br>
+	
+	First crash: 57d, last: 51d<br>
+	
+	<div>
+		<div class="bug-bisection-info">
+
+	
+	
+	
+		
+			<b>Cause bisection: introduced by</b>
+		
+		<b>(<a href="https://syzkaller.appspot.com/x/bisect.txt?x=17f82dc4580000">bisect log</a>)</b> <span class="bad">[merge commit]</span>:<br>
+		<span class="mono">
+		
+		commit b14977ffa2e0264ef6bae1533bee373f4e1cd624<br>
+		Author: Stephen Rothwell &lt;sfr@canb.auug.org.au&gt;<br>
+		Date:   Tue Jan 7 03:41:24 2025 &#43;0000<br>
+		<br>
+		&nbsp;&nbsp;<a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/commit/?id=b14977ffa2e0264ef6bae1533bee373f4e1cd624">Merge branch &#39;char-misc-next&#39; of git://git.kernel.org/pub/scm/linux/kernel/git/gregkh/char-misc.git</a><br>
+		</span><br>
+	
+	
+		Crash: <a href="https://syzkaller.appspot.com/x/report.txt?x=14042dc4580000">possible deadlock in binder_alloc_free_page</a> (<a href="https://syzkaller.appspot.com/x/log.txt?x=10042dc4580000">log</a>)<br>
+		Repro: 
+		<a href="/text?tag=ReproSyz&x=160e9c18580000">syz</a>
+		<a href="/text?tag=KernelConfig&x=63fa2c9d5e12faef">.config</a><br>
+	
+
+	
+	&nbsp;&nbsp;
+	
+
+</div>
+		
+		<div class="bug-bisection-stop"></div>
+	</div>
+
+	
+	<div class="collapsible collapsible-show">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Discussions (1)</span>
+		</div>
+		<div class="content">
+			
+			
+			
+
+<table class="list_table">
+	<thead>
+	<tr>
+		<th>Title</th>
+		<th>Replies (including bot)</th>
+		<th>Last reply</th>
+	</tr>
+	</thead>
+	<tbody>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/6782483e.050a0220.216c54.001d.GAE@google.com/T/">[syzbot] [kernel?] possible deadlock in binder_alloc_free_page</a></td>
+			<td class="stat">5 (9)</td>
+			<td class="stat">2025/02/19 18:41</td>
+		</tr>
+	
+	</tbody>
+</table>
+
+
+			
+			
+		</div>
+	</div>
+	
+	<div class="collapsible collapsible-hide">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Last patch testing requests (13)</span>
+		</div>
+		<div class="content">
+			
+			
+
+	<table class="list_table">
+		<caption id="jobs"><a class="plain" href="#jobs"></a></caption>
+		<thead>
+		<tr>
+			
+			<th>Created</th>
+			<th>Duration</th>
+			<th>User</th>
+			<th>Patch</th>
+			<th>Repo</th>
+			
+			<th>Result</th>
+		</tr>
+		</thead>
+		<tbody>
+		
+			<tr>
+				
+				<td class="time">2025/01/28 17:12</td>
+				<td class="time" title="started: 2025/01/29 11:53&#013;finished: 2025/01/29 12:09">
+					15m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="linux-next"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/commit/?id=da7e6047a6264af16d2cb82bed9b6caa33eaf56a">linux-next</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/error.txt?x=13b86924580000">error</a>
+					
+					
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/01/28 17:12</td>
+				<td class="time" title="started: 2025/01/29 11:37&#013;finished: 2025/01/29 11:57">
+					20m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="linux-next"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/commit/?id=da7e6047a6264af16d2cb82bed9b6caa33eaf56a">linux-next</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/error.txt?x=120256b0580000">error</a>
+					
+					
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/01/28 17:12</td>
+				<td class="time" title="started: 2025/01/29 06:24&#013;finished: 2025/01/29 11:45">
+					5h20m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="linux-next"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/commit/?id=da7e6047a6264af16d2cb82bed9b6caa33eaf56a">linux-next</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/error.txt?x=1619d364580000">error</a>
+					
+					
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/01/28 17:12</td>
+				<td class="time" title="started: 2025/01/28 22:05&#013;finished: 2025/01/29 02:41">
+					4h35m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="linux-next"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/commit/?id=9a87ce288fe30f268b3a598422fe76af9bb2c2d2">linux-next</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/error.txt?x=17263918580000">error</a>
+					
+					
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/01/28 17:12</td>
+				<td class="time" title="started: 2025/01/28 17:12&#013;finished: 2025/01/28 22:05">
+					4h53m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="linux-next"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/commit/?id=9a87ce288fe30f268b3a598422fe76af9bb2c2d2">linux-next</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/error.txt?x=14bd16b0580000">error</a>
+					
+					
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/01/27 17:25</td>
+				<td class="time" title="started: 2025/01/27 19:48&#013;finished: 2025/01/27 20:11">
+					23m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="linux-next"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/commit/?id=5ffa57f6eecefababb8cbe327222ef171943b183">linux-next</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/error.txt?x=15dd8ddf980000">error</a>
+					
+					
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/01/27 17:25</td>
+				<td class="time" title="started: 2025/01/27 19:44&#013;finished: 2025/01/27 19:59">
+					15m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="linux-next"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/commit/?id=5ffa57f6eecefababb8cbe327222ef171943b183">linux-next</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/error.txt?x=16592e24580000">error</a>
+					
+					
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/01/27 17:25</td>
+				<td class="time" title="started: 2025/01/27 19:24&#013;finished: 2025/01/27 19:48">
+					23m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="linux-next"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/commit/?id=5ffa57f6eecefababb8cbe327222ef171943b183">linux-next</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/error.txt?x=14a7a6b0580000">error</a>
+					
+					
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/01/27 17:25</td>
+				<td class="time" title="started: 2025/01/27 17:35&#013;finished: 2025/01/27 19:35">
+					2h00m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="linux-next"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/commit/?id=5ffa57f6eecefababb8cbe327222ef171943b183">linux-next</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/error.txt?x=128a5118580000">error</a>
+					
+					
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/01/27 17:25</td>
+				<td class="time" title="started: 2025/01/27 17:25&#013;finished: 2025/01/27 19:24">
+					1h58m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="linux-next"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/commit/?id=5ffa57f6eecefababb8cbe327222ef171943b183">linux-next</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/error.txt?x=15a58ddf980000">error</a>
+					
+					
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/01/12 01:49</td>
+				<td class="time" title="started: 2025/01/12 01:49&#013;finished: 2025/01/12 02:05">
+					15m
+				</td>
+				<td>
+					
+						hdanton@sina.com
+					
+				</td>
+				<td><a href="/text?tag=Patch&x=157f5ef8580000">patch</a></td>
+				<td class="kernel" title="linux-next"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/commit/?id=2b88851f583d3c4e40bcd40cfe1965241ec229dd">linux-next</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/error.txt?x=1420def8580000">error</a>
+					
+					
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/01/12 00:11</td>
+				<td class="time" title="started: 2025/01/12 00:11&#013;finished: 2025/01/12 00:32">
+					20m
+				</td>
+				<td>
+					
+						hdanton@sina.com
+					
+				</td>
+				<td><a href="/text?tag=Patch&x=15bc2bc4580000">patch</a></td>
+				<td class="kernel" title="linux-next"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/commit/?id=2b88851f583d3c4e40bcd40cfe1965241ec229dd">linux-next</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/error.txt?x=13a22bc4580000">error</a>
+					
+					
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/01/11 13:15</td>
+				<td class="time" title="started: 2025/01/11 13:15&#013;finished: 2025/01/11 13:31">
+					16m
+				</td>
+				<td>
+					
+						hdanton@sina.com
+					
+				</td>
+				<td><a href="/text?tag=Patch&x=17359ef8580000">patch</a></td>
+				<td class="kernel" title="linux-next"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/commit/?id=2b88851f583d3c4e40bcd40cfe1965241ec229dd">linux-next</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/error.txt?x=162d9ef8580000">error</a>
+					
+					
+					
+					
+					
+				</td>
+			</tr>
+		
+		</tbody>
+	</table>
+
+
+			
+			
+			
+		</div>
+	</div>
+	
+
+	
+	<br><b>Sample crash report:</b><br>
+	<div id="crash_div"><pre>======================================================
+WARNING: possible circular locking dependency detected
+6.13.0-rc6-next-20250107-syzkaller #0 Not tainted
+------------------------------------------------------
+syz.0.16/6005 is trying to acquire lock:
+ffff88807f2835c8 (vm_lock){++++}-{0:0}, at: binder_alloc_free_page+0x150/0xd50 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/drivers/android/binder_alloc.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n1156'>drivers/android/binder_alloc.c:1156</a>
+
+but task is already holding lock:
+ffff88802eac0830 (&amp;l-&gt;lock){+.+.}-{3:3}, at: spin_lock <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/include/linux/spinlock.h?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n351'>include/linux/spinlock.h:351</a> [inline]
+ffff88802eac0830 (&amp;l-&gt;lock){+.+.}-{3:3}, at: lock_list_lru_of_memcg+0x24c/0x4d0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/list_lru.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n77'>mm/list_lru.c:77</a>
+
+which lock already depends on the new lock.
+
+
+the existing dependency chain (in reverse order) is:
+
+-&gt; #4 (&amp;l-&gt;lock){+.+.}-{3:3}:
+       lock_acquire+0x1ed/0x550 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/locking/lockdep.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n5851'>kernel/locking/lockdep.c:5851</a>
+       __raw_spin_lock <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/include/linux/spinlock_api_smp.h?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n133'>include/linux/spinlock_api_smp.h:133</a> [inline]
+       _raw_spin_lock+0x2e/0x40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/locking/spinlock.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n154'>kernel/locking/spinlock.c:154</a>
+       spin_lock <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/include/linux/spinlock.h?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n351'>include/linux/spinlock.h:351</a> [inline]
+       lock_list_lru_of_memcg+0x24c/0x4d0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/list_lru.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n77'>mm/list_lru.c:77</a>
+       list_lru_add+0x59/0x270 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/list_lru.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n163'>mm/list_lru.c:163</a>
+       list_lru_add_obj+0x17b/0x250 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/list_lru.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n186'>mm/list_lru.c:186</a>
+       __inode_add_lru <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/inode.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n534'>fs/inode.c:534</a> [inline]
+       iput_final <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/inode.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n1923'>fs/inode.c:1923</a> [inline]
+       iput+0x89c/0xa50 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/inode.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n1972'>fs/inode.c:1972</a>
+       __dentry_kill+0x20d/0x630 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/dcache.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n625'>fs/dcache.c:625</a>
+       shrink_kill+0xa9/0x2c0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/dcache.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n1070'>fs/dcache.c:1070</a>
+       shrink_dentry_list+0x2c0/0x5b0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/dcache.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n1097'>fs/dcache.c:1097</a>
+       shrink_dcache_sb+0x25e/0x3e0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/dcache.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n1217'>fs/dcache.c:1217</a>
+       reconfigure_super+0x2c6/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/super.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n1061'>fs/super.c:1061</a>
+       do_remount <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/namespace.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n3100'>fs/namespace.c:3100</a> [inline]
+       path_mount+0xc22/0xfa0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/namespace.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n3879'>fs/namespace.c:3879</a>
+       do_mount <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/namespace.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n3900'>fs/namespace.c:3900</a> [inline]
+       __do_sys_mount <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/namespace.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n4111'>fs/namespace.c:4111</a> [inline]
+       __se_sys_mount+0x2d6/0x3c0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/namespace.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n4088'>fs/namespace.c:4088</a>
+       do_syscall_x64 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/arch/x86/entry/common.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n52'>arch/x86/entry/common.c:52</a> [inline]
+       do_syscall_64+0xf3/0x230 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/arch/x86/entry/common.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n83'>arch/x86/entry/common.c:83</a>
+       entry_SYSCALL_64_after_hwframe+0x77/0x7f
+
+-&gt; #3 (&amp;sb-&gt;s_type-&gt;i_lock_key#23){+.+.}-{3:3}:
+       lock_acquire+0x1ed/0x550 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/locking/lockdep.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n5851'>kernel/locking/lockdep.c:5851</a>
+       __raw_spin_lock <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/include/linux/spinlock_api_smp.h?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n133'>include/linux/spinlock_api_smp.h:133</a> [inline]
+       _raw_spin_lock+0x2e/0x40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/locking/spinlock.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n154'>kernel/locking/spinlock.c:154</a>
+       spin_lock <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/include/linux/spinlock.h?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n351'>include/linux/spinlock.h:351</a> [inline]
+       d_instantiate_new+0x76/0x130 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/dcache.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n1922'>fs/dcache.c:1922</a>
+       ext4_add_nondir+0x21e/0x290 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/ext4/namei.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n2808'>fs/ext4/namei.c:2808</a>
+       ext4_create+0x377/0x550 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/ext4/namei.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n2849'>fs/ext4/namei.c:2849</a>
+       lookup_open <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/namei.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n3649'>fs/namei.c:3649</a> [inline]
+       open_last_lookups <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/namei.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n3748'>fs/namei.c:3748</a> [inline]
+       path_openat+0x192f/0x3580 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/namei.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n3984'>fs/namei.c:3984</a>
+       do_filp_open+0x27f/0x4e0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/namei.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n4014'>fs/namei.c:4014</a>
+       do_sys_openat2+0x13e/0x1d0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/open.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n1427'>fs/open.c:1427</a>
+       do_sys_open <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/open.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n1442'>fs/open.c:1442</a> [inline]
+       __do_sys_openat <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/open.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n1458'>fs/open.c:1458</a> [inline]
+       __se_sys_openat <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/open.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n1453'>fs/open.c:1453</a> [inline]
+       __x64_sys_openat+0x247/0x2a0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/open.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n1453'>fs/open.c:1453</a>
+       do_syscall_x64 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/arch/x86/entry/common.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n52'>arch/x86/entry/common.c:52</a> [inline]
+       do_syscall_64+0xf3/0x230 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/arch/x86/entry/common.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n83'>arch/x86/entry/common.c:83</a>
+       entry_SYSCALL_64_after_hwframe+0x77/0x7f
+
+-&gt; #2 (jbd2_handle){++++}-{0:0}:
+       lock_acquire+0x1ed/0x550 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/locking/lockdep.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n5851'>kernel/locking/lockdep.c:5851</a>
+       start_this_handle+0x1eb4/0x2110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/jbd2/transaction.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n448'>fs/jbd2/transaction.c:448</a>
+       jbd2__journal_start+0x2da/0x5d0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/jbd2/transaction.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n505'>fs/jbd2/transaction.c:505</a>
+       __ext4_journal_start_sb+0x239/0x600 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/ext4/ext4_jbd2.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n112'>fs/ext4/ext4_jbd2.c:112</a>
+       __ext4_journal_start <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/ext4/ext4_jbd2.h?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n326'>fs/ext4/ext4_jbd2.h:326</a> [inline]
+       ext4_dirty_inode+0x92/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/ext4/inode.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n6039'>fs/ext4/inode.c:6039</a>
+       __mark_inode_dirty+0x2ee/0xe90 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/fs-writeback.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n2515'>fs/fs-writeback.c:2515</a>
+       generic_update_time <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/inode.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n2112'>fs/inode.c:2112</a> [inline]
+       inode_update_time <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/inode.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n2125'>fs/inode.c:2125</a> [inline]
+       __file_update_time <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/inode.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n2353'>fs/inode.c:2353</a> [inline]
+       file_update_time+0x3d2/0x450 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/inode.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n2383'>fs/inode.c:2383</a>
+       ext4_page_mkwrite+0x210/0x1100 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/ext4/inode.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n6160'>fs/ext4/inode.c:6160</a>
+       do_page_mkwrite+0x159/0x340 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/memory.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n3244'>mm/memory.c:3244</a>
+       do_shared_fault <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/memory.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n5468'>mm/memory.c:5468</a> [inline]
+       do_fault <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/memory.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n5530'>mm/memory.c:5530</a> [inline]
+       do_pte_missing <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/memory.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n4047'>mm/memory.c:4047</a> [inline]
+       handle_pte_fault <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/memory.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n5889'>mm/memory.c:5889</a> [inline]
+       __handle_mm_fault+0x22dc/0x70f0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/memory.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n6032'>mm/memory.c:6032</a>
+       handle_mm_fault+0x3e2/0x8c0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/memory.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n6201'>mm/memory.c:6201</a>
+       do_user_addr_fault <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/arch/x86/mm/fault.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n1388'>arch/x86/mm/fault.c:1388</a> [inline]
+       handle_page_fault <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/arch/x86/mm/fault.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n1480'>arch/x86/mm/fault.c:1480</a> [inline]
+       exc_page_fault+0x2b9/0x8b0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/arch/x86/mm/fault.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n1538'>arch/x86/mm/fault.c:1538</a>
+       asm_exc_page_fault+0x26/0x30 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/arch/x86/include/asm/idtentry.h?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n623'>arch/x86/include/asm/idtentry.h:623</a>
+
+-&gt; #1 (sb_pagefaults){.+.+}-{0:0}:
+       lock_acquire+0x1ed/0x550 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/locking/lockdep.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n5851'>kernel/locking/lockdep.c:5851</a>
+       percpu_down_read+0x44/0x1b0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/include/linux/percpu-rwsem.h?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n51'>include/linux/percpu-rwsem.h:51</a>
+       __sb_start_write <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/include/linux/fs.h?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n1773'>include/linux/fs.h:1773</a> [inline]
+       sb_start_pagefault <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/include/linux/fs.h?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n1938'>include/linux/fs.h:1938</a> [inline]
+       ext4_page_mkwrite+0x1f9/0x1100 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/ext4/inode.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n6159'>fs/ext4/inode.c:6159</a>
+       do_page_mkwrite+0x159/0x340 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/memory.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n3244'>mm/memory.c:3244</a>
+       do_shared_fault <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/memory.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n5468'>mm/memory.c:5468</a> [inline]
+       do_fault <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/memory.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n5530'>mm/memory.c:5530</a> [inline]
+       do_pte_missing <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/memory.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n4047'>mm/memory.c:4047</a> [inline]
+       handle_pte_fault <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/memory.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n5889'>mm/memory.c:5889</a> [inline]
+       __handle_mm_fault+0x22dc/0x70f0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/memory.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n6032'>mm/memory.c:6032</a>
+       handle_mm_fault+0x3e2/0x8c0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/memory.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n6201'>mm/memory.c:6201</a>
+       do_user_addr_fault <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/arch/x86/mm/fault.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n1337'>arch/x86/mm/fault.c:1337</a> [inline]
+       handle_page_fault <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/arch/x86/mm/fault.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n1480'>arch/x86/mm/fault.c:1480</a> [inline]
+       exc_page_fault+0x459/0x8b0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/arch/x86/mm/fault.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n1538'>arch/x86/mm/fault.c:1538</a>
+       asm_exc_page_fault+0x26/0x30 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/arch/x86/include/asm/idtentry.h?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n623'>arch/x86/include/asm/idtentry.h:623</a>
+
+-&gt; #0 (vm_lock){++++}-{0:0}:
+       check_prev_add <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/locking/lockdep.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n3163'>kernel/locking/lockdep.c:3163</a> [inline]
+       check_prevs_add <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/locking/lockdep.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n3282'>kernel/locking/lockdep.c:3282</a> [inline]
+       validate_chain+0x18ef/0x5920 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/locking/lockdep.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n3906'>kernel/locking/lockdep.c:3906</a>
+       __lock_acquire+0x1397/0x2100 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/locking/lockdep.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n5228'>kernel/locking/lockdep.c:5228</a>
+       lock_acquire+0x1ed/0x550 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/locking/lockdep.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n5851'>kernel/locking/lockdep.c:5851</a>
+       vma_start_read <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/include/linux/mm.h?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n749'>include/linux/mm.h:749</a> [inline]
+       lock_vma_under_rcu+0x35f/0x9a0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/memory.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n6436'>mm/memory.c:6436</a>
+       binder_alloc_free_page+0x150/0xd50 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/drivers/android/binder_alloc.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n1156'>drivers/android/binder_alloc.c:1156</a>
+       __list_lru_walk_one+0x170/0x470 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/list_lru.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n300'>mm/list_lru.c:300</a>
+       list_lru_walk_one <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/list_lru.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n337'>mm/list_lru.c:337</a> [inline]
+       list_lru_walk_node+0xc4/0xa70 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/list_lru.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n357'>mm/list_lru.c:357</a>
+       list_lru_walk <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/include/linux/list_lru.h?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n282'>include/linux/list_lru.h:282</a> [inline]
+       binder_shrink_scan+0x138/0x260 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/drivers/android/binder_alloc.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n1226'>drivers/android/binder_alloc.c:1226</a>
+       do_shrink_slab+0x72d/0x1160 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/shrinker.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n437'>mm/shrinker.c:437</a>
+       shrink_slab+0x1093/0x14d0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/shrinker.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n664'>mm/shrinker.c:664</a>
+       drop_slab_node <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/vmscan.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n421'>mm/vmscan.c:421</a> [inline]
+       drop_slab+0x142/0x280 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/vmscan.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n439'>mm/vmscan.c:439</a>
+       drop_caches_sysctl_handler+0xbc/0x160 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/drop_caches.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n68'>fs/drop_caches.c:68</a>
+       proc_sys_call_handler+0x5ec/0x920 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/proc/proc_sysctl.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n601'>fs/proc/proc_sysctl.c:601</a>
+       do_iter_readv_writev+0x71a/0x9d0
+       vfs_writev+0x38b/0xbc0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/read_write.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n1050'>fs/read_write.c:1050</a>
+       do_writev+0x1b6/0x360 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/read_write.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n1096'>fs/read_write.c:1096</a>
+       do_syscall_x64 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/arch/x86/entry/common.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n52'>arch/x86/entry/common.c:52</a> [inline]
+       do_syscall_64+0xf3/0x230 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/arch/x86/entry/common.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n83'>arch/x86/entry/common.c:83</a>
+       entry_SYSCALL_64_after_hwframe+0x77/0x7f
+
+other info that might help us debug this:
+
+Chain exists of:
+  vm_lock --&gt; &amp;sb-&gt;s_type-&gt;i_lock_key#23 --&gt; &amp;l-&gt;lock
+
+ Possible unsafe locking scenario:
+
+       CPU0                    CPU1
+       ----                    ----
+  lock(&amp;l-&gt;lock);
+                               lock(&amp;sb-&gt;s_type-&gt;i_lock_key#23);
+                               lock(&amp;l-&gt;lock);
+  rlock(vm_lock);
+
+ *** DEADLOCK ***
+
+3 locks held by syz.0.16/6005:
+ #0: ffff888033bec420 (sb_writers#3){.+.+}-{0:0}, at: file_start_write <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/include/linux/fs.h?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n3016'>include/linux/fs.h:3016</a> [inline]
+ #0: ffff888033bec420 (sb_writers#3){.+.+}-{0:0}, at: vfs_writev+0x2d6/0xbc0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/read_write.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n1048'>fs/read_write.c:1048</a>
+ #1: ffff88802eac0830 (&amp;l-&gt;lock){+.+.}-{3:3}, at: spin_lock <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/include/linux/spinlock.h?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n351'>include/linux/spinlock.h:351</a> [inline]
+ #1: ffff88802eac0830 (&amp;l-&gt;lock){+.+.}-{3:3}, at: lock_list_lru_of_memcg+0x24c/0x4d0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/list_lru.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n77'>mm/list_lru.c:77</a>
+ #2: ffffffff8e937ee0 (rcu_read_lock){....}-{1:3}, at: rcu_lock_acquire <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/include/linux/rcupdate.h?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n337'>include/linux/rcupdate.h:337</a> [inline]
+ #2: ffffffff8e937ee0 (rcu_read_lock){....}-{1:3}, at: rcu_read_lock <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/include/linux/rcupdate.h?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n849'>include/linux/rcupdate.h:849</a> [inline]
+ #2: ffffffff8e937ee0 (rcu_read_lock){....}-{1:3}, at: lock_vma_under_rcu+0x1dd/0x9a0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/memory.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n6431'>mm/memory.c:6431</a>
+
+stack backtrace:
+CPU: 0 UID: 0 PID: 6005 Comm: syz.0.16 Not tainted 6.13.0-rc6-next-20250107-syzkaller #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 09/13/2024
+Call Trace:
+ &lt;TASK&gt;
+ __dump_stack <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/lib/dump_stack.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n94'>lib/dump_stack.c:94</a> [inline]
+ dump_stack_lvl+0x241/0x360 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/lib/dump_stack.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n120'>lib/dump_stack.c:120</a>
+ print_circular_bug+0x13a/0x1b0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/locking/lockdep.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n2076'>kernel/locking/lockdep.c:2076</a>
+ check_noncircular+0x36a/0x4a0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/locking/lockdep.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n2208'>kernel/locking/lockdep.c:2208</a>
+ check_prev_add <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/locking/lockdep.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n3163'>kernel/locking/lockdep.c:3163</a> [inline]
+ check_prevs_add <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/locking/lockdep.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n3282'>kernel/locking/lockdep.c:3282</a> [inline]
+ validate_chain+0x18ef/0x5920 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/locking/lockdep.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n3906'>kernel/locking/lockdep.c:3906</a>
+ __lock_acquire+0x1397/0x2100 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/locking/lockdep.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n5228'>kernel/locking/lockdep.c:5228</a>
+ lock_acquire+0x1ed/0x550 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/locking/lockdep.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n5851'>kernel/locking/lockdep.c:5851</a>
+ vma_start_read <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/include/linux/mm.h?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n749'>include/linux/mm.h:749</a> [inline]
+ lock_vma_under_rcu+0x35f/0x9a0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/memory.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n6436'>mm/memory.c:6436</a>
+ binder_alloc_free_page+0x150/0xd50 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/drivers/android/binder_alloc.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n1156'>drivers/android/binder_alloc.c:1156</a>
+ __list_lru_walk_one+0x170/0x470 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/list_lru.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n300'>mm/list_lru.c:300</a>
+ list_lru_walk_one <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/list_lru.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n337'>mm/list_lru.c:337</a> [inline]
+ list_lru_walk_node+0xc4/0xa70 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/list_lru.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n357'>mm/list_lru.c:357</a>
+ list_lru_walk <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/include/linux/list_lru.h?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n282'>include/linux/list_lru.h:282</a> [inline]
+ binder_shrink_scan+0x138/0x260 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/drivers/android/binder_alloc.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n1226'>drivers/android/binder_alloc.c:1226</a>
+ do_shrink_slab+0x72d/0x1160 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/shrinker.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n437'>mm/shrinker.c:437</a>
+ shrink_slab+0x1093/0x14d0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/shrinker.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n664'>mm/shrinker.c:664</a>
+ drop_slab_node <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/vmscan.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n421'>mm/vmscan.c:421</a> [inline]
+ drop_slab+0x142/0x280 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/mm/vmscan.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n439'>mm/vmscan.c:439</a>
+ drop_caches_sysctl_handler+0xbc/0x160 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/drop_caches.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n68'>fs/drop_caches.c:68</a>
+ proc_sys_call_handler+0x5ec/0x920 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/proc/proc_sysctl.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n601'>fs/proc/proc_sysctl.c:601</a>
+ do_iter_readv_writev+0x71a/0x9d0
+ vfs_writev+0x38b/0xbc0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/read_write.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n1050'>fs/read_write.c:1050</a>
+ do_writev+0x1b6/0x360 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/fs/read_write.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n1096'>fs/read_write.c:1096</a>
+ do_syscall_x64 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/arch/x86/entry/common.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n52'>arch/x86/entry/common.c:52</a> [inline]
+ do_syscall_64+0xf3/0x230 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/arch/x86/entry/common.c?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578#n83'>arch/x86/entry/common.c:83</a>
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+RIP: 0033:0x7fc4e3d85d29
+Code: ff ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 40 00 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 &lt;48&gt; 3d 01 f0 ff ff 73 01 c3 48 c7 c1 a8 ff ff ff f7 d8 64 89 01 48
+RSP: 002b:00007fffafb25958 EFLAGS: 00000246 ORIG_RAX: 0000000000000014
+RAX: ffffffffffffffda RBX: 00007fc4e3f75fa0 RCX: 00007fc4e3d85d29
+RDX: 0000000000000001 RSI: 00000000200000c0 RDI: 0000000000000003
+RBP: 00007fc4e3e01b08 R08: 0000000000000000 R09: 0000000000000000
+R10: 0000000000000000 R11: 0000000000000246 R12: 0000000000000000
+R13: 00007fc4e3f75fa0 R14: 00007fc4e3f75fa0 R15: 00000000000019d2
+ &lt;/TASK&gt;
+syz.0.16 (6005): drop_caches: 2
+</pre></div><br>
+	
+
+	
+
+<table class="list_table">
+	<caption>Crashes (31):</caption>
+		<thead>
+		<tr>
+			<th><a onclick="return sortTable(this, 'Time', textSort, true)" href="#">Time</a></th>
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+			<th><a onclick="return sortTable(this, 'Commit', textSort)" href="#">Commit</a></th>
+			<th><a onclick="return sortTable(this, 'Syzkaller', textSort)" href="#">Syzkaller</a></th>
+			<th><a onclick="return sortTable(this, 'Config', textSort)" href="#">Config</a></th>
+			<th><a onclick="return sortTable(this, 'Log', textSort)" href="#">Log</a></th>
+			<th><a onclick="return sortTable(this, 'Report', reproSort)" href="#">Report</a></th>
+			<th><a onclick="return sortTable(this, 'Syz repro', reproSort)" href="#">Syz repro</a></th>
+			<th><a onclick="return sortTable(this, 'C repro', textSort)" href="#">C repro</a></th>
+			<th><a onclick="return sortTable(this, 'VM info', textSort)" href="#">VM info</a></th>
+			<th><a onclick="return sortTable(this, 'Assets', textSort)" href="#">Assets</a> (<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot_assets.md">help?</a>)</th>
+			<th><a onclick="return sortTable(this, 'Manager', textSort)" href="#">Manager</a></th>
+			<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		</tr>
+		</thead>
+		<tbody>
+		
+		<tr>
+			<td class="time">2025/01/13 05:28</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="7b4b9bf203da94fbeac75ed3116c84aa03e74578
+	2025/01/07 05:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578">7b4b9bf203da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6dbc6a9bc76e06852841ed5c5bdbb78409b17f53">6dbc6a9b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=63fa2c9d5e12faef">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1579bef8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17bf8a18580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=1379bef8580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=13b9b1df980000">log</a>
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c179cc0c7a3c/disk-7b4b9bf2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fdea80f2ec16/vmlinux-7b4b9bf2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a277fcaff608/bzImage-7b4b9bf2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">possible deadlock in binder_alloc_free_page</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/13 04:23</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="7b4b9bf203da94fbeac75ed3116c84aa03e74578
+	2025/01/07 05:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578">7b4b9bf203da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6dbc6a9bc76e06852841ed5c5bdbb78409b17f53">6dbc6a9b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=63fa2c9d5e12faef">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1261bef8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10478a18580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=11f21cb0580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=1104ebc4580000">log</a>
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c179cc0c7a3c/disk-7b4b9bf2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fdea80f2ec16/vmlinux-7b4b9bf2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a277fcaff608/bzImage-7b4b9bf2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">possible deadlock in binder_alloc_free_page</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/13 03:21</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="7b4b9bf203da94fbeac75ed3116c84aa03e74578
+	2025/01/07 05:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578">7b4b9bf203da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6dbc6a9bc76e06852841ed5c5bdbb78409b17f53">6dbc6a9b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=63fa2c9d5e12faef">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1560ebc4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12e38a18580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=1356bef8580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=104eb1df980000">log</a>
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c179cc0c7a3c/disk-7b4b9bf2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fdea80f2ec16/vmlinux-7b4b9bf2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a277fcaff608/bzImage-7b4b9bf2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">possible deadlock in binder_alloc_free_page</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/13 02:22</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="7b4b9bf203da94fbeac75ed3116c84aa03e74578
+	2025/01/07 05:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578">7b4b9bf203da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6dbc6a9bc76e06852841ed5c5bdbb78409b17f53">6dbc6a9b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=63fa2c9d5e12faef">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16d76bc4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16581cb0580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=14f58a18580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=124abef8580000">log</a>
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c179cc0c7a3c/disk-7b4b9bf2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fdea80f2ec16/vmlinux-7b4b9bf2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a277fcaff608/bzImage-7b4b9bf2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">possible deadlock in binder_alloc_free_page</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/13 01:12</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="7b4b9bf203da94fbeac75ed3116c84aa03e74578
+	2025/01/07 05:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578">7b4b9bf203da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6dbc6a9bc76e06852841ed5c5bdbb78409b17f53">6dbc6a9b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=63fa2c9d5e12faef">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=117fecb0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14b36bc4580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=17c2b1df980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=101cbef8580000">log</a>
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c179cc0c7a3c/disk-7b4b9bf2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fdea80f2ec16/vmlinux-7b4b9bf2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a277fcaff608/bzImage-7b4b9bf2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">possible deadlock in binder_alloc_free_page</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/12 23:59</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="7b4b9bf203da94fbeac75ed3116c84aa03e74578
+	2025/01/07 05:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578">7b4b9bf203da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6dbc6a9bc76e06852841ed5c5bdbb78409b17f53">6dbc6a9b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=63fa2c9d5e12faef">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15ae8a18580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11bbecb0580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=13ae8a18580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=1194b1df980000">log</a>
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c179cc0c7a3c/disk-7b4b9bf2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fdea80f2ec16/vmlinux-7b4b9bf2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a277fcaff608/bzImage-7b4b9bf2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">possible deadlock in binder_alloc_free_page</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/12 22:47</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="7b4b9bf203da94fbeac75ed3116c84aa03e74578
+	2025/01/07 05:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578">7b4b9bf203da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6dbc6a9bc76e06852841ed5c5bdbb78409b17f53">6dbc6a9b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=63fa2c9d5e12faef">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1570b1df980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12aa8a18580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=1370b1df980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=14316bc4580000">log</a>
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c179cc0c7a3c/disk-7b4b9bf2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fdea80f2ec16/vmlinux-7b4b9bf2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a277fcaff608/bzImage-7b4b9bf2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">possible deadlock in binder_alloc_free_page</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/11 15:35</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="7b4b9bf203da94fbeac75ed3116c84aa03e74578
+	2025/01/07 05:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578">7b4b9bf203da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6dbc6a9bc76e06852841ed5c5bdbb78409b17f53">6dbc6a9b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=63fa2c9d5e12faef">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16b62cb0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=158acbc4580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=11b62cb0580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=10b151df980000">log</a>
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c179cc0c7a3c/disk-7b4b9bf2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fdea80f2ec16/vmlinux-7b4b9bf2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a277fcaff608/bzImage-7b4b9bf2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">possible deadlock in binder_alloc_free_page</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/09 06:18</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="7b4b9bf203da94fbeac75ed3116c84aa03e74578
+	2025/01/07 05:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578">7b4b9bf203da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=63fa2c9d5e12faef">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17d02dc4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12f4d4b0580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=10302dc4580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=16f4d4b0580000">log</a>
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c179cc0c7a3c/disk-7b4b9bf2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fdea80f2ec16/vmlinux-7b4b9bf2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a277fcaff608/bzImage-7b4b9bf2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">possible deadlock in binder_alloc_free_page</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/07 16:50</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="7b4b9bf203da94fbeac75ed3116c84aa03e74578
+	2025/01/07 05:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578">7b4b9bf203da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=63fa2c9d5e12faef">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1393dedf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=144264b0580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=160e9c18580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=1793dedf980000">log</a>
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c179cc0c7a3c/disk-7b4b9bf2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fdea80f2ec16/vmlinux-7b4b9bf2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a277fcaff608/bzImage-7b4b9bf2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">possible deadlock in binder_alloc_free_page</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/13 14:43</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="7b4b9bf203da94fbeac75ed3116c84aa03e74578
+	2025/01/07 05:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578">7b4b9bf203da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6dbc6a9bc76e06852841ed5c5bdbb78409b17f53">6dbc6a9b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=63fa2c9d5e12faef">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14d27ef8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17fc9cb0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=682e3797b8f57749">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c179cc0c7a3c/disk-7b4b9bf2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fdea80f2ec16/vmlinux-7b4b9bf2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a277fcaff608/bzImage-7b4b9bf2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">possible deadlock in binder_alloc_free_page</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/13 09:58</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="7b4b9bf203da94fbeac75ed3116c84aa03e74578
+	2025/01/07 05:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578">7b4b9bf203da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6dbc6a9bc76e06852841ed5c5bdbb78409b17f53">6dbc6a9b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=63fa2c9d5e12faef">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11ca4a18580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15bedbc4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=9cf0ab97572bf6d5">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c179cc0c7a3c/disk-7b4b9bf2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fdea80f2ec16/vmlinux-7b4b9bf2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a277fcaff608/bzImage-7b4b9bf2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">possible deadlock in binder_alloc_free_page</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/13 09:37</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="7b4b9bf203da94fbeac75ed3116c84aa03e74578
+	2025/01/07 05:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578">7b4b9bf203da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6dbc6a9bc76e06852841ed5c5bdbb78409b17f53">6dbc6a9b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=63fa2c9d5e12faef">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1157b1df980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=120fbef8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=a6a2f454d00c7e16">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c179cc0c7a3c/disk-7b4b9bf2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fdea80f2ec16/vmlinux-7b4b9bf2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a277fcaff608/bzImage-7b4b9bf2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">possible deadlock in binder_alloc_free_page</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/13 01:08</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="7b4b9bf203da94fbeac75ed3116c84aa03e74578
+	2025/01/07 05:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578">7b4b9bf203da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6dbc6a9bc76e06852841ed5c5bdbb78409b17f53">6dbc6a9b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=63fa2c9d5e12faef">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1242b1df980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=106cbef8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=a2498aa9d960ea2a">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c179cc0c7a3c/disk-7b4b9bf2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fdea80f2ec16/vmlinux-7b4b9bf2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a277fcaff608/bzImage-7b4b9bf2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">possible deadlock in binder_alloc_free_page</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/13 01:08</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="7b4b9bf203da94fbeac75ed3116c84aa03e74578
+	2025/01/07 05:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578">7b4b9bf203da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6dbc6a9bc76e06852841ed5c5bdbb78409b17f53">6dbc6a9b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=63fa2c9d5e12faef">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=113fecb0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11d36bc4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=d10c728c51bb5c11">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c179cc0c7a3c/disk-7b4b9bf2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fdea80f2ec16/vmlinux-7b4b9bf2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a277fcaff608/bzImage-7b4b9bf2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">possible deadlock in binder_alloc_free_page</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/12 21:53</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="7b4b9bf203da94fbeac75ed3116c84aa03e74578
+	2025/01/07 05:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578">7b4b9bf203da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6dbc6a9bc76e06852841ed5c5bdbb78409b17f53">6dbc6a9b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=63fa2c9d5e12faef">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14673ef8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=127c8a18580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7bfb7823afa0c886">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c179cc0c7a3c/disk-7b4b9bf2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fdea80f2ec16/vmlinux-7b4b9bf2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a277fcaff608/bzImage-7b4b9bf2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">possible deadlock in binder_alloc_free_page</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/12 21:45</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="7b4b9bf203da94fbeac75ed3116c84aa03e74578
+	2025/01/07 05:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578">7b4b9bf203da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6dbc6a9bc76e06852841ed5c5bdbb78409b17f53">6dbc6a9b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=63fa2c9d5e12faef">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15ce6bc4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11473ef8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=3bab3a63ca8d7aba">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c179cc0c7a3c/disk-7b4b9bf2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fdea80f2ec16/vmlinux-7b4b9bf2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a277fcaff608/bzImage-7b4b9bf2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">possible deadlock in binder_alloc_free_page</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/12 21:42</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="7b4b9bf203da94fbeac75ed3116c84aa03e74578
+	2025/01/07 05:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578">7b4b9bf203da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6dbc6a9bc76e06852841ed5c5bdbb78409b17f53">6dbc6a9b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=63fa2c9d5e12faef">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=124e6bc4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=125c8a18580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=cbcc4c09d3bb0e96">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c179cc0c7a3c/disk-7b4b9bf2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fdea80f2ec16/vmlinux-7b4b9bf2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a277fcaff608/bzImage-7b4b9bf2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">possible deadlock in binder_alloc_free_page</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/12 21:39</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="7b4b9bf203da94fbeac75ed3116c84aa03e74578
+	2025/01/07 05:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578">7b4b9bf203da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6dbc6a9bc76e06852841ed5c5bdbb78409b17f53">6dbc6a9b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=63fa2c9d5e12faef">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13073ef8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=129c8a18580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=dce8524691b05a41">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c179cc0c7a3c/disk-7b4b9bf2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fdea80f2ec16/vmlinux-7b4b9bf2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a277fcaff608/bzImage-7b4b9bf2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">possible deadlock in binder_alloc_free_page</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/12 21:39</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="7b4b9bf203da94fbeac75ed3116c84aa03e74578
+	2025/01/07 05:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578">7b4b9bf203da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6dbc6a9bc76e06852841ed5c5bdbb78409b17f53">6dbc6a9b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=63fa2c9d5e12faef">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=130e6bc4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=149c8a18580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=6a327b8364c8f427">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c179cc0c7a3c/disk-7b4b9bf2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fdea80f2ec16/vmlinux-7b4b9bf2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a277fcaff608/bzImage-7b4b9bf2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">possible deadlock in binder_alloc_free_page</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/11 08:25</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="7b4b9bf203da94fbeac75ed3116c84aa03e74578
+	2025/01/07 05:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578">7b4b9bf203da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6dbc6a9bc76e06852841ed5c5bdbb78409b17f53">6dbc6a9b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=63fa2c9d5e12faef">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13354bc4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11feb218580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=8f2a436b6a9750b2">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c179cc0c7a3c/disk-7b4b9bf2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fdea80f2ec16/vmlinux-7b4b9bf2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a277fcaff608/bzImage-7b4b9bf2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">possible deadlock in binder_alloc_free_page</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/09 15:06</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="7b4b9bf203da94fbeac75ed3116c84aa03e74578
+	2025/01/07 05:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578">7b4b9bf203da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=63fa2c9d5e12faef">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14f981df980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=114d2ef8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=51a7295d89ca297c">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c179cc0c7a3c/disk-7b4b9bf2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fdea80f2ec16/vmlinux-7b4b9bf2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a277fcaff608/bzImage-7b4b9bf2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">possible deadlock in binder_alloc_free_page</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/09 15:06</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="7b4b9bf203da94fbeac75ed3116c84aa03e74578
+	2025/01/07 05:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578">7b4b9bf203da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=63fa2c9d5e12faef">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=158613c4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=144d2ef8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=e72ebc958afb2800">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c179cc0c7a3c/disk-7b4b9bf2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fdea80f2ec16/vmlinux-7b4b9bf2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a277fcaff608/bzImage-7b4b9bf2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">possible deadlock in binder_alloc_free_page</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/09 09:46</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="7b4b9bf203da94fbeac75ed3116c84aa03e74578
+	2025/01/07 05:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578">7b4b9bf203da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=63fa2c9d5e12faef">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10b9270f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14e7e3c4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=2131979d612a4295">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c179cc0c7a3c/disk-7b4b9bf2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fdea80f2ec16/vmlinux-7b4b9bf2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a277fcaff608/bzImage-7b4b9bf2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">possible deadlock in binder_alloc_free_page</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/09 09:44</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="7b4b9bf203da94fbeac75ed3116c84aa03e74578
+	2025/01/07 05:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578">7b4b9bf203da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=63fa2c9d5e12faef">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11f881df980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1267e3c4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=2171ee26dc714c11">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c179cc0c7a3c/disk-7b4b9bf2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fdea80f2ec16/vmlinux-7b4b9bf2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a277fcaff608/bzImage-7b4b9bf2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">possible deadlock in binder_alloc_free_page</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/09 09:42</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="7b4b9bf203da94fbeac75ed3116c84aa03e74578
+	2025/01/07 05:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578">7b4b9bf203da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=63fa2c9d5e12faef">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14b4c218580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10222ef8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=58af333918a38c86">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c179cc0c7a3c/disk-7b4b9bf2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fdea80f2ec16/vmlinux-7b4b9bf2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a277fcaff608/bzImage-7b4b9bf2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">possible deadlock in binder_alloc_free_page</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/09 03:37</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="7b4b9bf203da94fbeac75ed3116c84aa03e74578
+	2025/01/07 05:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578">7b4b9bf203da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=63fa2c9d5e12faef">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1303cdc4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1703cdc4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=a0d7547b11da5dc2">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c179cc0c7a3c/disk-7b4b9bf2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fdea80f2ec16/vmlinux-7b4b9bf2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a277fcaff608/bzImage-7b4b9bf2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">possible deadlock in binder_alloc_free_page</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/07 13:00</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="7b4b9bf203da94fbeac75ed3116c84aa03e74578
+	2025/01/07 05:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578">7b4b9bf203da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=63fa2c9d5e12faef">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1334f6f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13dadedf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=fea6f80dd44b969e">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c179cc0c7a3c/disk-7b4b9bf2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fdea80f2ec16/vmlinux-7b4b9bf2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a277fcaff608/bzImage-7b4b9bf2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">possible deadlock in binder_alloc_free_page</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/07 12:25</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="7b4b9bf203da94fbeac75ed3116c84aa03e74578
+	2025/01/07 05:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578">7b4b9bf203da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=63fa2c9d5e12faef">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14ab55c4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=159fffd8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=f2f003b0e9a6f15b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c179cc0c7a3c/disk-7b4b9bf2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fdea80f2ec16/vmlinux-7b4b9bf2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a277fcaff608/bzImage-7b4b9bf2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">possible deadlock in binder_alloc_free_page</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/07 10:32</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="7b4b9bf203da94fbeac75ed3116c84aa03e74578
+	2025/01/07 05:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578">7b4b9bf203da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=63fa2c9d5e12faef">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=123555c4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10f805c4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7287925f6066ead9">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c179cc0c7a3c/disk-7b4b9bf2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fdea80f2ec16/vmlinux-7b4b9bf2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a277fcaff608/bzImage-7b4b9bf2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">possible deadlock in binder_alloc_free_page</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/07 10:24</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="7b4b9bf203da94fbeac75ed3116c84aa03e74578
+	2025/01/07 05:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578">7b4b9bf203da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=63fa2c9d5e12faef">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=143805c4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=105555c4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=9fadad5b5bb183c3">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c179cc0c7a3c/disk-7b4b9bf2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fdea80f2ec16/vmlinux-7b4b9bf2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a277fcaff608/bzImage-7b4b9bf2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">possible deadlock in binder_alloc_free_page</td>
+		</tr>
+		
+		</tbody>
+</table>
+<i>* <s>Struck through</s> repros no longer work on HEAD.</i>
+
+
+</body>
+</html>

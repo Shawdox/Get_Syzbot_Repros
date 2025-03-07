@@ -1,0 +1,1467 @@
+
+
+<!doctype html>
+<html>
+<head>
+	
+	<link rel="stylesheet" href="/static/style.css"/>
+	<script src="/static/common.js"></script>
+	
+		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-116117799-1"></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag() { dataLayer.push(arguments); }
+			gtag('js', new Date());
+			gtag('config', 'UA-116117799-1');
+		</script>
+	
+
+	<title>KASAN: use-after-free Read in bch2_btree_node_read_done</title>
+</head>
+<body>
+	
+	<header id="topbar">
+		<table class="position_table">
+			<tr>
+				<td>
+					<h1><a href="/upstream">syzbot</a></h1>
+				</td>
+				<td class="namespace_td">
+					<select class="namespace" onchange="window.location.href = '/' + this.value + '';">
+						
+							<option value="android-5-10" >Android 5.10</option>
+							<option value="android-5-15" >Android 5.15</option>
+							<option value="android-54" >Android 5.4</option>
+							<option value="android-6-1" >Android 6.1</option>
+							<option value="freebsd" >FreeBSD</option>
+							<option value="upstream" selected="1">Linux</option>
+							<option value="linux-5.15" >Linux 5.15</option>
+							<option value="linux-6.1" >Linux 6.1</option>
+							<option value="netbsd" >NetBSD</option>
+							<option value="openbsd" >OpenBSD</option>
+							<option value="gvisor" >gVisor</option></select>
+				</td>
+				<td class="search">
+					
+					
+						<a href="https://syzkaller.appspot.com/_ah/conflogin?continue=https://syzkaller.appspot.com/bug%3Fextid%3D92e65e9b7a42d379f92e">sign-in</a> |
+					
+					<a href="https://groups.google.com/forum/#!forum/syzkaller" target="_blank">mailing list</a> |
+					<a href="https://github.com/google/syzkaller" target="_blank">source</a> |
+					<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md" target="_blank">docs</a>
+				</td>
+			</tr>
+		</table>
+		
+		<div class="navigation">
+			<div class="navigation_tab">
+				<a href='/upstream'><span style="color:DeepPink;">🐞</span> Open [1659]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/subsystems'><span style="color:DeepPink;">≡</span> Subsystems</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/fixed'><span style="color:ForestGreen;">🐞</span> Fixed [6081]</a>
+			</div>
+
+			<div class="navigation_tab" href='/upstream/invalid'>
+				<a href='/upstream/invalid'><span style="color:RoyalBlue;">🐞</span> Invalid [15101]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/backports'><span style="color:ForestGreen;">⬇</span> Missing Backports [157]</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/graph/crashes'><span style="color:ForestGreen;">≡</span> Crashes</a>
+			</div>
+
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Graphs</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href='/upstream/graph/bugs'>Kernel&nbsp;Health</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/found-bugs'>Bugs/Month</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/lifetimes'>Bug&nbsp;Lifetimes</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/fuzzing'>Fuzzing</a>
+				</div>
+			</div>
+
+			
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Coverage</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href="/upstream/graph/coverage?period=quarter">Total</a>
+					<a class="navigation_tab"
+						href="/upstream/coverage?period=month">Repo&nbsp;Heatmap</a>
+					
+						<a class="navigation_tab"
+							href="/upstream/coverage/subsystems?period=month">Subsystems&nbsp;Heatmap</a>
+					
+				</div>
+			</div>
+			
+			
+			<div class="navigation_tab navigation_right">
+				<a href='mailto:syzkaller@googlegroups.com'><span style="color:ForestGreen;">💬</span> Send us feedback</a>
+			</div>
+			
+		</div>
+		
+	</header>
+	<br>
+
+
+	<b>KASAN: use-after-free Read in bch2_btree_node_read_done</b><br><br>
+	Status: <a href="https://groups.google.com/d/msgid/syzkaller-bugs/67447b3c.050a0220.1cc393.0084.GAE@google.com">upstream: reported C repro on 2024/11/25 13:27</a><br>
+	
+		
+			Subsystems: 
+				<span class="bug-label"><a href="/upstream/s/bcachefs">bcachefs</a></span>
+		<br>
+		
+	<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md#labels">[Documentation on labels]</a><br>
+	
+	
+	Reported-by: syzbot&#43;92e65e9b7a42d379f92e@syzkaller.appspotmail.com<br>
+	
+	First crash: 103d, last: 3h21m<br>
+	
+	<div>
+		<div class="bug-bisection-info">
+
+	
+	
+	
+		
+			<b>Cause bisection: introduced by</b>
+		
+		<b>(<a href="https://syzkaller.appspot.com/x/bisect.txt?x=11388778580000">bisect log</a>)</b> <span class="bad"></span>:<br>
+		<span class="mono">
+		
+		commit 03ef80b469d5d83530ce1ce15be78a40e5300f9b<br>
+		Author: Kent Overstreet &lt;kent.overstreet@linux.dev&gt;<br>
+		Date:   Sat Sep 23 22:41:51 2023 &#43;0000<br>
+		<br>
+		&nbsp;&nbsp;<a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=03ef80b469d5d83530ce1ce15be78a40e5300f9b">bcachefs: Ignore unknown mount options</a><br>
+		</span><br>
+	
+	
+		Crash: <a href="https://syzkaller.appspot.com/x/report.txt?x=13388778580000">invalid opcode in bch2_dump_bset</a> (<a href="https://syzkaller.appspot.com/x/log.txt?x=15388778580000">log</a>)<br>
+		Repro: <a href="/text?tag=ReproC&x=170169c0580000">C</a>
+		<a href="/text?tag=ReproSyz&x=159bfb78580000">syz</a>
+		<a href="/text?tag=KernelConfig&x=402159daa216c89d">.config</a><br>
+	
+
+	
+	&nbsp;&nbsp;
+	
+
+</div>
+		
+		<div class="bug-bisection-stop"></div>
+	</div>
+
+	
+	<div class="collapsible collapsible-show">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Discussions (1)</span>
+		</div>
+		<div class="content">
+			
+			
+			
+
+<table class="list_table">
+	<thead>
+	<tr>
+		<th>Title</th>
+		<th>Replies (including bot)</th>
+		<th>Last reply</th>
+	</tr>
+	</thead>
+	<tbody>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/67447b3c.050a0220.1cc393.0084.GAE@google.com/T/">[syzbot] [bcachefs?] KASAN: use-after-free Read in bch2_btree_node_read_done</a></td>
+			<td class="stat">0 (1)</td>
+			<td class="stat">2024/11/25 13:27</td>
+		</tr>
+	
+	</tbody>
+</table>
+
+
+			
+			
+		</div>
+	</div>
+	
+	<div class="collapsible collapsible-hide">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Last patch testing requests (1)</span>
+		</div>
+		<div class="content">
+			
+			
+
+	<table class="list_table">
+		<caption id="jobs"><a class="plain" href="#jobs"></a></caption>
+		<thead>
+		<tr>
+			
+			<th>Created</th>
+			<th>Duration</th>
+			<th>User</th>
+			<th>Patch</th>
+			<th>Repo</th>
+			
+			<th>Result</th>
+		</tr>
+		</thead>
+		<tbody>
+		
+			<tr>
+				
+				<td class="time">2025/01/15 18:48</td>
+				<td class="time" title="started: 2025/01/15 18:48&#013;finished: 2025/01/15 19:02">
+					13m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=619f0b6fad524f08d493a98d55bac9ab8895e3a6">upstream</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=130047c4580000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=150047c4580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+		</tbody>
+	</table>
+
+
+			
+			
+			
+		</div>
+	</div>
+	
+
+	
+	<br><b>Sample crash report:</b><br>
+	<div id="crash_div"><pre>  node offset 8/24 bset u64s 375 bset byte offset 184: keys out of order: u64s 11 type alloc_v4 0:32:0 len 0 ver 0 &gt; u64s 11 type alloc_v4 0:2:0 len 0 ver 0, fixing
+bcachefs (loop0): btree_node_read_work: rewriting btree node at btree=alloc level=0 SPOS_MAX due to error
+==================================================================
+BUG: KASAN: use-after-free in bch2_btree_node_read_done+0xfbe/0x5e90 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/bcachefs/btree_io.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n1087'>fs/bcachefs/btree_io.c:1087</a>
+Read of size 8 at addr ffff888076abc010 by task syz-executor345/5842
+
+CPU: 1 UID: 0 PID: 5842 Comm: syz-executor345 Not tainted 6.12.0-syzkaller-08446-g228a1157fb9f #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 09/13/2024
+Call Trace:
+ &lt;TASK&gt;
+ __dump_stack <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/lib/dump_stack.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n94'>lib/dump_stack.c:94</a> [inline]
+ dump_stack_lvl+0x241/0x360 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/lib/dump_stack.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n120'>lib/dump_stack.c:120</a>
+ print_address_description <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/kasan/report.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n377'>mm/kasan/report.c:377</a> [inline]
+ print_report+0x169/0x550 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/kasan/report.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n488'>mm/kasan/report.c:488</a>
+ kasan_report+0x143/0x180 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/kasan/report.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n601'>mm/kasan/report.c:601</a>
+ bch2_btree_node_read_done+0xfbe/0x5e90 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/bcachefs/btree_io.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n1087'>fs/bcachefs/btree_io.c:1087</a>
+ btree_node_read_work+0x68b/0x1260 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/bcachefs/btree_io.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n1323'>fs/bcachefs/btree_io.c:1323</a>
+ bch2_btree_node_read+0x2433/0x2a10
+ __bch2_btree_root_read <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/bcachefs/btree_io.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n1749'>fs/bcachefs/btree_io.c:1749</a> [inline]
+ bch2_btree_root_read+0x617/0x7a0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/bcachefs/btree_io.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n1771'>fs/bcachefs/btree_io.c:1771</a>
+ read_btree_roots+0x296/0x840 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/bcachefs/recovery.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n523'>fs/bcachefs/recovery.c:523</a>
+ bch2_fs_recovery+0x2585/0x39d0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/bcachefs/recovery.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n853'>fs/bcachefs/recovery.c:853</a>
+ bch2_fs_start+0x356/0x5b0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/bcachefs/super.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n1037'>fs/bcachefs/super.c:1037</a>
+ bch2_fs_get_tree+0xd68/0x1710 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/bcachefs/fs.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n2170'>fs/bcachefs/fs.c:2170</a>
+ vfs_get_tree+0x90/0x2b0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/super.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n1814'>fs/super.c:1814</a>
+ do_new_mount+0x2be/0xb40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namespace.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n3507'>fs/namespace.c:3507</a>
+ do_mount <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namespace.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n3847'>fs/namespace.c:3847</a> [inline]
+ __do_sys_mount <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namespace.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n4057'>fs/namespace.c:4057</a> [inline]
+ __se_sys_mount+0x2d6/0x3c0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namespace.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n4034'>fs/namespace.c:4034</a>
+ do_syscall_x64 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n52'>arch/x86/entry/common.c:52</a> [inline]
+ do_syscall_64+0xf3/0x230 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n83'>arch/x86/entry/common.c:83</a>
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+RIP: 0033:0x7fc4572667ea
+Code: d8 64 89 02 48 c7 c0 ff ff ff ff eb a6 e8 3e 06 00 00 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 40 00 49 89 ca b8 a5 00 00 00 0f 05 &lt;48&gt; 3d 01 f0 ff ff 73 01 c3 48 c7 c1 b8 ff ff ff f7 d8 64 89 01 48
+RSP: 002b:00007ffd22484098 EFLAGS: 00000282 ORIG_RAX: 00000000000000a5
+RAX: ffffffffffffffda RBX: 0000000000000000 RCX: 00007fc4572667ea
+RDX: 00000000200000c0 RSI: 0000000020000180 RDI: 00007ffd224840f0
+RBP: 0000000000000004 R08: 00007ffd22484130 R09: 000000000000593e
+R10: 0000000000000010 R11: 0000000000000282 R12: 00007ffd22484130
+R13: 0000000001000000 R14: 0000000000000003 R15: 0000000000000010
+ &lt;/TASK&gt;
+
+The buggy address belongs to the physical page:
+page: refcount:0 mapcount:0 mapping:0000000000000000 index:0x0 pfn:0x76abc
+flags: 0xfff00000000000(node=0|zone=1|lastcpupid=0x7ff)
+raw: 00fff00000000000 ffffea0001ca0108 ffff8880b87447e0 0000000000000000
+raw: 0000000000000000 0000000000000000 00000000ffffffff 0000000000000000
+page dumped because: kasan: bad access detected
+page_owner tracks the page as freed
+page last allocated via order 2, migratetype Reclaimable, gfp_mask 0x452cd0(GFP_KERNEL_ACCOUNT|__GFP_NOWARN|__GFP_NORETRY|__GFP_COMP|__GFP_RECLAIMABLE), pid 5842, tgid 5842 (syz-executor345), ts 64163821991, free_ts 64389007908
+ set_page_owner <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/page_owner.h?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n32'>include/linux/page_owner.h:32</a> [inline]
+ post_alloc_hook+0x1f3/0x230 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/page_alloc.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n1556'>mm/page_alloc.c:1556</a>
+ prep_new_page <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/page_alloc.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n1564'>mm/page_alloc.c:1564</a> [inline]
+ get_page_from_freelist+0x363e/0x3790 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/page_alloc.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n3474'>mm/page_alloc.c:3474</a>
+ __alloc_pages_noprof+0x292/0x710 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/page_alloc.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n4751'>mm/page_alloc.c:4751</a>
+ __alloc_pages_node_noprof <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/gfp.h?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n269'>include/linux/gfp.h:269</a> [inline]
+ alloc_pages_node_noprof <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/gfp.h?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n296'>include/linux/gfp.h:296</a> [inline]
+ ___kmalloc_large_node+0x8b/0x1d0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n4209'>mm/slub.c:4209</a>
+ __kmalloc_large_node_noprof+0x1a/0x80 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n4236'>mm/slub.c:4236</a>
+ __do_kmalloc_node <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n4252'>mm/slub.c:4252</a> [inline]
+ __kmalloc_node_noprof+0x2d2/0x440 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n4270'>mm/slub.c:4270</a>
+ __kvmalloc_node_noprof+0x72/0x190 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/util.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n658'>mm/util.c:658</a>
+ btree_node_data_alloc+0xdb/0x260 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/bcachefs/btree_cache.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n153'>fs/bcachefs/btree_cache.c:153</a>
+ __bch2_btree_node_mem_alloc+0x1d8/0x3e0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/bcachefs/btree_cache.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n198'>fs/bcachefs/btree_cache.c:198</a>
+ bch2_fs_btree_cache_init+0x26f/0x630 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/bcachefs/btree_cache.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n653'>fs/bcachefs/btree_cache.c:653</a>
+ bch2_fs_alloc <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/bcachefs/super.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n917'>fs/bcachefs/super.c:917</a> [inline]
+ bch2_fs_open+0x2aa4/0x2f80 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/bcachefs/super.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n2065'>fs/bcachefs/super.c:2065</a>
+ bch2_fs_get_tree+0x738/0x1710 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/bcachefs/fs.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n2157'>fs/bcachefs/fs.c:2157</a>
+ vfs_get_tree+0x90/0x2b0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/super.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n1814'>fs/super.c:1814</a>
+ do_new_mount+0x2be/0xb40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namespace.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n3507'>fs/namespace.c:3507</a>
+ do_mount <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namespace.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n3847'>fs/namespace.c:3847</a> [inline]
+ __do_sys_mount <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namespace.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n4057'>fs/namespace.c:4057</a> [inline]
+ __se_sys_mount+0x2d6/0x3c0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namespace.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n4034'>fs/namespace.c:4034</a>
+ do_syscall_x64 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n52'>arch/x86/entry/common.c:52</a> [inline]
+ do_syscall_64+0xf3/0x230 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n83'>arch/x86/entry/common.c:83</a>
+page last free pid 5842 tgid 5842 stack trace:
+ reset_page_owner <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/page_owner.h?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n25'>include/linux/page_owner.h:25</a> [inline]
+ free_pages_prepare <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/page_alloc.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n1127'>mm/page_alloc.c:1127</a> [inline]
+ free_unref_page+0xded/0x1130 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/page_alloc.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n2657'>mm/page_alloc.c:2657</a>
+ __folio_put+0x2c7/0x440 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/swap.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n112'>mm/swap.c:112</a>
+ folio_put <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/mm.h?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n1490'>include/linux/mm.h:1490</a> [inline]
+ free_large_kmalloc+0x105/0x1c0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n4698'>mm/slub.c:4698</a>
+ kfree+0x21c/0x440 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n4721'>mm/slub.c:4721</a>
+ btree_bounce_free <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/bcachefs/btree_io.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n112'>fs/bcachefs/btree_io.c:112</a> [inline]
+ bch2_btree_node_read_done+0x3c8a/0x5e90 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/bcachefs/btree_io.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n1209'>fs/bcachefs/btree_io.c:1209</a>
+ btree_node_read_work+0x68b/0x1260 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/bcachefs/btree_io.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n1323'>fs/bcachefs/btree_io.c:1323</a>
+ bch2_btree_node_read+0x2433/0x2a10
+ __bch2_btree_root_read <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/bcachefs/btree_io.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n1749'>fs/bcachefs/btree_io.c:1749</a> [inline]
+ bch2_btree_root_read+0x617/0x7a0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/bcachefs/btree_io.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n1771'>fs/bcachefs/btree_io.c:1771</a>
+ read_btree_roots+0x296/0x840 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/bcachefs/recovery.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n523'>fs/bcachefs/recovery.c:523</a>
+ bch2_fs_recovery+0x2585/0x39d0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/bcachefs/recovery.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n853'>fs/bcachefs/recovery.c:853</a>
+ bch2_fs_start+0x356/0x5b0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/bcachefs/super.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n1037'>fs/bcachefs/super.c:1037</a>
+ bch2_fs_get_tree+0xd68/0x1710 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/bcachefs/fs.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n2170'>fs/bcachefs/fs.c:2170</a>
+ vfs_get_tree+0x90/0x2b0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/super.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n1814'>fs/super.c:1814</a>
+ do_new_mount+0x2be/0xb40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namespace.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n3507'>fs/namespace.c:3507</a>
+ do_mount <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namespace.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n3847'>fs/namespace.c:3847</a> [inline]
+ __do_sys_mount <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namespace.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n4057'>fs/namespace.c:4057</a> [inline]
+ __se_sys_mount+0x2d6/0x3c0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namespace.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n4034'>fs/namespace.c:4034</a>
+ do_syscall_x64 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n52'>arch/x86/entry/common.c:52</a> [inline]
+ do_syscall_64+0xf3/0x230 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=228a1157fb9fec47eb135b51c0202b574e079ebf#n83'>arch/x86/entry/common.c:83</a>
+
+Memory state around the buggy address:
+ ffff888076abbf00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+ ffff888076abbf80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+&gt;ffff888076abc000: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+                         ^
+ ffff888076abc080: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+ ffff888076abc100: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+==================================================================
+</pre></div><br>
+	
+
+	
+
+<table class="list_table">
+	<caption>Crashes (40):</caption>
+		<thead>
+		<tr>
+			<th><a onclick="return sortTable(this, 'Time', textSort, true)" href="#">Time</a></th>
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+			<th><a onclick="return sortTable(this, 'Commit', textSort)" href="#">Commit</a></th>
+			<th><a onclick="return sortTable(this, 'Syzkaller', textSort)" href="#">Syzkaller</a></th>
+			<th><a onclick="return sortTable(this, 'Config', textSort)" href="#">Config</a></th>
+			<th><a onclick="return sortTable(this, 'Log', textSort)" href="#">Log</a></th>
+			<th><a onclick="return sortTable(this, 'Report', reproSort)" href="#">Report</a></th>
+			<th><a onclick="return sortTable(this, 'Syz repro', reproSort)" href="#">Syz repro</a></th>
+			<th><a onclick="return sortTable(this, 'C repro', textSort)" href="#">C repro</a></th>
+			<th><a onclick="return sortTable(this, 'VM info', textSort)" href="#">VM info</a></th>
+			<th><a onclick="return sortTable(this, 'Assets', textSort)" href="#">Assets</a> (<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot_assets.md">help?</a>)</th>
+			<th><a onclick="return sortTable(this, 'Manager', textSort)" href="#">Manager</a></th>
+			<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		</tr>
+		</thead>
+		<tbody>
+		
+		<tr>
+			<td class="time">2024/11/23 23:20</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="228a1157fb9fec47eb135b51c0202b574e079ebf
+	2024/11/23 05:54"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=228a1157fb9fec47eb135b51c0202b574e079ebf">228a1157fb9f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/68da6d951a345757b69b764ceb8dda1e9d65b038">68da6d95</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=402159daa216c89d">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16300530580000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=150fb6e8580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=159bfb78580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=139bfb78580000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=170169c0580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d32a8e8c5aae/disk-228a1157.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/28d5c070092e/vmlinux-228a1157.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/45af4bfd9e8e/bzImage-228a1157.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4b641b27822f/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">KASAN: use-after-free Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/22 22:40</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="28eb75e178d389d325f1666e422bc13bbbb9804c
+	2024/11/21 22:56"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=28eb75e178d389d325f1666e422bc13bbbb9804c">28eb75e178d3</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/68da6d951a345757b69b764ceb8dda1e9d65b038">68da6d95</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=95b76860fd16c857">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16ceb930580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=133c175f980000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=1546fec0580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=14923b78580000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=10923b78580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-28eb75e1.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e998772085ad/vmlinux-28eb75e1.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/499fcd785543/bzImage-28eb75e1.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/85ebf33f482e/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/03/06 00:17</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="bb2281fb05e50108ce95c43ab7e701ee564565c8
+	2025/03/05 05:05"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=bb2281fb05e50108ce95c43ab7e701ee564565c8">bb2281fb05e5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/831e3629115be4f5e68e6e0df3a5b07eed26daa4">831e3629</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=523d3ff8e053340a">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1618c078580000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11830264580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=11bfbda8580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=14c0b7a0580000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=1349b8b7980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7f163a5da7e8/disk-bb2281fb.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6841e1105518/vmlinux-bb2281fb.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3295ae6e86c0/bzImage-bb2281fb.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/577d4677794a/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">KASAN: slab-out-of-bounds Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/03/05 23:16</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="cfced12f5100e50d56bc587299393fd33c1169a9
+	2025/03/05 17:17"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=cfced12f5100e50d56bc587299393fd33c1169a9">cfced12f5100</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/034534df050681c9e95b14ebd841afaa9db31390">034534df</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=2040405600e83619">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15deb8b7980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13c737a0580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=10b90264580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=10e2f5a8580000">log</a>
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-cfced12f.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/deba3bfb6f20/vmlinux-cfced12f.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d1f6e199bab2/bzImage-cfced12f.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/efa456f97f92/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/20 23:56</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="e9a8cac0bf895efe0bc7b11d174e8dae9b195da8
+	2025/02/20 16:59"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=e9a8cac0bf895efe0bc7b11d174e8dae9b195da8">e9a8cac0bf89</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0808a665bc75ab0845906bfeca0d12fb520ae6eb">0808a665</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b7bde34acd8f53b1">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1760bdb8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=145cefdf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-e9a8cac0.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/15308b7ab4e3/vmlinux-e9a8cac0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/993d3e20dece/bzImage-e9a8cac0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/20 12:51</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="87a132e73910e8689902aed7f2fc229d6908383b
+	2025/02/20 02:11"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=87a132e73910e8689902aed7f2fc229d6908383b">87a132e73910</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/506687987fc2f8f40b2918782fc2943285fdc602">50668798</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b7bde34acd8f53b1">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12763ba4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=143d2ba4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-87a132e7.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ad82ed47c765/vmlinux-87a132e7.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4461f54cc0ef/bzImage-87a132e7.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/10 11:17</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a64dcfb451e254085a7daee5fe51bf22959d52d3
+	2025/02/09 20:45"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a64dcfb451e254085a7daee5fe51bf22959d52d3">a64dcfb451e2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ef44b750e8fab8d6d5cb84920680581b13e0d470">ef44b750</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7f246b548ed0635a">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15ccebdf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1461d1b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-a64dcfb4.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6a816640d31b/vmlinux-a64dcfb4.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b5cb42ffa4f6/bzImage-a64dcfb4.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/05 07:42</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="5c8c229261f14159b54b9a32f12e5fa89d88b905
+	2025/02/04 19:01"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=5c8c229261f14159b54b9a32f12e5fa89d88b905">5c8c229261f1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/5896748e7b42c8f1b0cc2ceca4ba3dba2bed2618">5896748e</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1909f2f0d8e641ce">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1326ef64580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17ab13df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-5c8c2292.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fc7bd0937147/vmlinux-5c8c2292.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/55fb37b08731/bzImage-5c8c2292.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/02 21:57</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="69e858e0b8b2ea07759e995aa383e8780d9d140c
+	2025/01/31 02:29"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=69e858e0b8b2ea07759e995aa383e8780d9d140c">69e858e0b8b2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/568559e4e604140cecd9fc4835eaa0298a1cadcc">568559e4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d033b14aeef39158">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=164a83df980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=129735f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-69e858e0.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a53b888c1f3f/vmlinux-69e858e0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6b5e17edafc0/bzImage-69e858e0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/02 07:18</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="69e858e0b8b2ea07759e995aa383e8780d9d140c
+	2025/01/31 02:29"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=69e858e0b8b2ea07759e995aa383e8780d9d140c">69e858e0b8b2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/568559e4e604140cecd9fc4835eaa0298a1cadcc">568559e4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d033b14aeef39158">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=129dd5f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17e98f24580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-69e858e0.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a53b888c1f3f/vmlinux-69e858e0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6b5e17edafc0/bzImage-69e858e0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/31 23:12</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="69e858e0b8b2ea07759e995aa383e8780d9d140c
+	2025/01/31 02:29"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=69e858e0b8b2ea07759e995aa383e8780d9d140c">69e858e0b8b2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/aa47157c8ec3df5a6d16e3866b095c8f91026465">aa47157c</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d033b14aeef39158">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1182c518580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14a095f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-69e858e0.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a53b888c1f3f/vmlinux-69e858e0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6b5e17edafc0/bzImage-69e858e0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/31 22:24</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="69e858e0b8b2ea07759e995aa383e8780d9d140c
+	2025/01/31 02:29"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=69e858e0b8b2ea07759e995aa383e8780d9d140c">69e858e0b8b2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/aa47157c8ec3df5a6d16e3866b095c8f91026465">aa47157c</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d033b14aeef39158">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15cff6b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15cf15f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-69e858e0.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a53b888c1f3f/vmlinux-69e858e0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6b5e17edafc0/bzImage-69e858e0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/28 15:18</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="805ba04cb7ccfc7d72e834ebd796e043142156ba
+	2025/01/27 17:00"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=805ba04cb7ccfc7d72e834ebd796e043142156ba">805ba04cb7cc</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ac37c1f8489ad2f16314d4b79f4cbf41356898f8">ac37c1f8</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7d796da73b2f708c">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13f8d918580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16156e24580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-805ba04c.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/85ee30d862e7/vmlinux-805ba04c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0fcbe505a48e/bzImage-805ba04c.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/28 08:02</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="805ba04cb7ccfc7d72e834ebd796e043142156ba
+	2025/01/27 17:00"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=805ba04cb7ccfc7d72e834ebd796e043142156ba">805ba04cb7cc</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/180708967e9f2cb26bc15973d46e3cd9cf3d2d80">18070896</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7d796da73b2f708c">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13ffae24580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=132ae6b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-805ba04c.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/85ee30d862e7/vmlinux-805ba04c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0fcbe505a48e/bzImage-805ba04c.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/28 03:20</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="805ba04cb7ccfc7d72e834ebd796e043142156ba
+	2025/01/27 17:00"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=805ba04cb7ccfc7d72e834ebd796e043142156ba">805ba04cb7cc</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/180708967e9f2cb26bc15973d46e3cd9cf3d2d80">18070896</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7d796da73b2f708c">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=160eae24580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17e14ddf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-805ba04c.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/85ee30d862e7/vmlinux-805ba04c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0fcbe505a48e/bzImage-805ba04c.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/26 18:12</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="aa22f4da2a46b484a257d167c67a2adc1b7aaf68
+	2025/01/26 00:23"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=aa22f4da2a46b484a257d167c67a2adc1b7aaf68">aa22f4da2a46</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9fbd772e8b64ff0c8c90bdfb86237aefa530a06c">9fbd772e</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ba866aed9d46ef97">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14ff46b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1378e118580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-aa22f4da.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3fb0bac0f12d/vmlinux-aa22f4da.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6cb3badf424f/bzImage-aa22f4da.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/26 04:51</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="405057718a1f9074133979a9f2ff0c9fa4a19948
+	2025/01/25 18:21"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=405057718a1f9074133979a9f2ff0c9fa4a19948">405057718a1f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9fbd772e8b64ff0c8c90bdfb86237aefa530a06c">9fbd772e</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ba866aed9d46ef97">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10cab5df980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1103de18580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-40505771.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ea00d15dd500/vmlinux-40505771.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2078fd5be2a4/bzImage-40505771.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/26 04:09</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="405057718a1f9074133979a9f2ff0c9fa4a19948
+	2025/01/25 18:21"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=405057718a1f9074133979a9f2ff0c9fa4a19948">405057718a1f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9fbd772e8b64ff0c8c90bdfb86237aefa530a06c">9fbd772e</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ba866aed9d46ef97">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=166e86b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=116e86b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-40505771.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ea00d15dd500/vmlinux-40505771.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2078fd5be2a4/bzImage-40505771.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/25 18:03</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="b46c89c08f4146e7987fc355941a93b12e2c03ef
+	2025/01/25 00:12"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=b46c89c08f4146e7987fc355941a93b12e2c03ef">b46c89c08f41</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9fbd772e8b64ff0c8c90bdfb86237aefa530a06c">9fbd772e</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ba866aed9d46ef97">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=166a5e18580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=151035df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-b46c89c0.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/36e45b7469b5/vmlinux-b46c89c0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/30a6cef10ce8/bzImage-b46c89c0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/24 00:59</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="21266b8df5224c4f677acf9f353eecc9094731f0
+	2025/01/23 04:34"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=21266b8df5224c4f677acf9f353eecc9094731f0">21266b8df522</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f6a35ef3a59d5a0ad14de993e51c186016ea91de">f6a35ef3</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=f9e008bfc27b14db">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14fddab0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=170969f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-21266b8d.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/96d2e2351b97/vmlinux-21266b8d.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/df52cb464cba/bzImage-21266b8d.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/23 19:58</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="21266b8df5224c4f677acf9f353eecc9094731f0
+	2025/01/23 04:34"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=21266b8df5224c4f677acf9f353eecc9094731f0">21266b8df522</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f6a35ef3a59d5a0ad14de993e51c186016ea91de">f6a35ef3</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=f9e008bfc27b14db">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=152c0e18580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1514e5df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-21266b8d.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/96d2e2351b97/vmlinux-21266b8d.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/df52cb464cba/bzImage-21266b8d.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/22 08:56</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="c4b9570cfb63501638db720f3bee9f6dfd044b82
+	2025/01/22 04:12"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=c4b9570cfb63501638db720f3bee9f6dfd044b82">c4b9570cfb63</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/da72ac06e38cf1dd2ecbddd5502225ff7589542d">da72ac06</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=5d46425e33fe266e">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=102349f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=106c1824580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-c4b9570c.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/731d6adef14e/vmlinux-c4b9570c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fba145e47ede/bzImage-c4b9570c.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/21 13:56</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="3d3a9c8b89d4f8a3785e06ffd15405c670696f02
+	2025/01/20 22:26"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=3d3a9c8b89d4f8a3785e06ffd15405c670696f02">3d3a9c8b89d4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6e87cfa299c98d36e79e8b8718a4126899a3ba2f">6e87cfa2</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=88da85736adb8c92">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10055618580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16bc45df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-3d3a9c8b.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e3e59d52398c/vmlinux-3d3a9c8b.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2cd5680cc455/bzImage-3d3a9c8b.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/21 13:14</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="3d3a9c8b89d4f8a3785e06ffd15405c670696f02
+	2025/01/20 22:26"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=3d3a9c8b89d4f8a3785e06ffd15405c670696f02">3d3a9c8b89d4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6e87cfa299c98d36e79e8b8718a4126899a3ba2f">6e87cfa2</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=88da85736adb8c92">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=100cd824580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=130c45df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-3d3a9c8b.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e3e59d52398c/vmlinux-3d3a9c8b.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2cd5680cc455/bzImage-3d3a9c8b.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/31 17:22</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ccb98ccef0e543c2bd4ef1a72270461957f3d8d0
+	2024/12/30 19:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0">ccb98ccef0e5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1c541fa8af5c9cc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=131748b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15779818580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-ccb98cce.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/703c842459ce/vmlinux-ccb98cce.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1a8db4bb5dbb/bzImage-ccb98cce.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/25 16:28</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9b2ffa6148b1e4468d08f7e0e7e371c43cac9ffe
+	2024/12/24 17:08"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9b2ffa6148b1e4468d08f7e0e7e371c43cac9ffe">9b2ffa6148b1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/444551c40edde85b5e4900ae27d432bd1da7079c">444551c4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d269ef41b9262400">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1301a2f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=139b0018580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-9b2ffa61.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ddc85002bb5c/vmlinux-9b2ffa61.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dd33dcda671f/bzImage-9b2ffa61.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/21 08:43</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="e9b8ffafd20ad21357a789cc58ffaa162b3ad074
+	2024/12/20 19:09"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=e9b8ffafd20ad21357a789cc58ffaa162b3ad074">e9b8ffafd20a</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d7f584ee3c24504bb07d04526a23b7d8df38b8ed">d7f584ee</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=6a2b862bf4a5409f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17d632df980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1652dcf8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-e9b8ffaf.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ad411c12e636/vmlinux-e9b8ffaf.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/61fac154060e/bzImage-e9b8ffaf.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/19 02:27</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="aef25be35d23ec768eed08bfcf7ca3cf9685bc28
+	2024/12/17 22:07"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=aef25be35d23ec768eed08bfcf7ca3cf9685bc28">aef25be35d23</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/1432fc84530255f6208c5719be796918244fa9d3">1432fc84</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=6a2b862bf4a5409f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=167eb730580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1669b7e8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-aef25be3.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b51d6862d2de/vmlinux-aef25be3.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cdb968bd31a4/bzImage-aef25be3.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/19 02:25</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="aef25be35d23ec768eed08bfcf7ca3cf9685bc28
+	2024/12/17 22:07"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=aef25be35d23ec768eed08bfcf7ca3cf9685bc28">aef25be35d23</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/1432fc84530255f6208c5719be796918244fa9d3">1432fc84</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=6a2b862bf4a5409f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1078ef44580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=147eb730580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-aef25be3.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b51d6862d2de/vmlinux-aef25be3.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cdb968bd31a4/bzImage-aef25be3.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/11 10:04</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="f92f4749861b06fed908d336b4dee1326003291b
+	2024/12/11 02:21"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=f92f4749861b06fed908d336b4dee1326003291b">f92f4749861b</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/cfc402b4e65a6aab3a2555765bda8dc12c99a348">cfc402b4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=fee25f93665c89ac">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1461c20f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14d0b544580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-f92f4749.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/172351ebd33d/vmlinux-f92f4749.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f86b8c9838ea/bzImage-f92f4749.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/27 21:53</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="aaf20f870da056752f6386693cc0d8e25421ef35
+	2024/11/27 02:36"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=aaf20f870da056752f6386693cc0d8e25421ef35">aaf20f870da0</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/5df2386563cbffa1bbbb9d0b8ec1eebb98d051ae">5df23865</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=493f836b3188006b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14f3f778580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14f911e8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-aaf20f87.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/88e73480de10/vmlinux-aaf20f87.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2ce03c25cff1/bzImage-aaf20f87.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/24 13:23</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9f16d5e6f220661f73b36a4be1b21575651d8833
+	2024/11/24 00:00"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9f16d5e6f220661f73b36a4be1b21575651d8833">9f16d5e6f220</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/68da6d951a345757b69b764ceb8dda1e9d65b038">68da6d95</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=5073f0bff19a2470">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=177919c0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=101fd75f980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-9f16d5e6.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0b34c9010f21/vmlinux-9f16d5e6.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fa5635896077/bzImage-9f16d5e6.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/24 09:47</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9f16d5e6f220661f73b36a4be1b21575651d8833
+	2024/11/24 00:00"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9f16d5e6f220661f73b36a4be1b21575651d8833">9f16d5e6f220</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/68da6d951a345757b69b764ceb8dda1e9d65b038">68da6d95</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=5073f0bff19a2470">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=162c8778580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=112c8778580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-9f16d5e6.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0b34c9010f21/vmlinux-9f16d5e6.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fa5635896077/bzImage-9f16d5e6.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/22 22:30</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="28eb75e178d389d325f1666e422bc13bbbb9804c
+	2024/11/21 22:56"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=28eb75e178d389d325f1666e422bc13bbbb9804c">28eb75e178d3</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/68da6d951a345757b69b764ceb8dda1e9d65b038">68da6d95</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=95b76860fd16c857">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13bdd6e8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16c23b78580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-28eb75e1.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e998772085ad/vmlinux-28eb75e1.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/499fcd785543/bzImage-28eb75e1.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/22 22:28</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="28eb75e178d389d325f1666e422bc13bbbb9804c
+	2024/11/21 22:56"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=28eb75e178d389d325f1666e422bc13bbbb9804c">28eb75e178d3</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/68da6d951a345757b69b764ceb8dda1e9d65b038">68da6d95</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=95b76860fd16c857">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14bdd6e8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=165afec0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-28eb75e1.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e998772085ad/vmlinux-28eb75e1.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/499fcd785543/bzImage-28eb75e1.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/03/05 22:56</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="cfced12f5100e50d56bc587299393fd33c1169a9
+	2025/03/05 17:17"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=cfced12f5100e50d56bc587299393fd33c1169a9">cfced12f5100</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/034534df050681c9e95b14ebd841afaa9db31390">034534df</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=2040405600e83619">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13090264580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13bf4078580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-cfced12f.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/deba3bfb6f20/vmlinux-cfced12f.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d1f6e199bab2/bzImage-cfced12f.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: slab-out-of-bounds Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/01 18:45</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ccb98ccef0e543c2bd4ef1a72270461957f3d8d0
+	2024/12/30 19:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0">ccb98ccef0e5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1c541fa8af5c9cc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1081d6df980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=156106c4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-ccb98cce.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/703c842459ce/vmlinux-ccb98cce.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1a8db4bb5dbb/bzImage-ccb98cce.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: slab-out-of-bounds Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/26 00:39</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9b2ffa6148b1e4468d08f7e0e7e371c43cac9ffe
+	2024/12/24 17:08"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9b2ffa6148b1e4468d08f7e0e7e371c43cac9ffe">9b2ffa6148b1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/444551c40edde85b5e4900ae27d432bd1da7079c">444551c4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d269ef41b9262400">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=149d40b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1152fcc4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-9b2ffa61.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ddc85002bb5c/vmlinux-9b2ffa61.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dd33dcda671f/bzImage-9b2ffa61.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: slab-out-of-bounds Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/25 17:43</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9b2ffa6148b1e4468d08f7e0e7e371c43cac9ffe
+	2024/12/24 17:08"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9b2ffa6148b1e4468d08f7e0e7e371c43cac9ffe">9b2ffa6148b1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/444551c40edde85b5e4900ae27d432bd1da7079c">444551c4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d269ef41b9262400">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10df0018580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11b380b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-9b2ffa61.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ddc85002bb5c/vmlinux-9b2ffa61.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dd33dcda671f/bzImage-9b2ffa61.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: slab-out-of-bounds Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/21 11:51</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="573067a5a685c238d90270ffb6efae6b26c72fed
+	2024/12/20 13:37"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=573067a5a685c238d90270ffb6efae6b26c72fed">573067a5a685</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d7f584ee3c24504bb07d04526a23b7d8df38b8ed">d7f584ee</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=cd7202b56d469648">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1332efe8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=108a7e0f980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=401a6c0a31461766">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9d3b5c855aa0/disk-573067a5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0c06fc1ead83/vmlinux-573067a5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3390e59b9e4b/Image-573067a5.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">KASAN: slab-out-of-bounds Read in bch2_btree_node_read_done</td>
+		</tr>
+		
+		</tbody>
+</table>
+<i>* <s>Struck through</s> repros no longer work on HEAD.</i>
+
+
+</body>
+</html>

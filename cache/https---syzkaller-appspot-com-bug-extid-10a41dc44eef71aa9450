@@ -1,0 +1,2158 @@
+
+
+<!doctype html>
+<html>
+<head>
+	
+	<link rel="stylesheet" href="/static/style.css"/>
+	<script src="/static/common.js"></script>
+	
+		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-116117799-1"></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag() { dataLayer.push(arguments); }
+			gtag('js', new Date());
+			gtag('config', 'UA-116117799-1');
+		</script>
+	
+
+	<title>BUG: soft lockup in do_sock_setsockopt</title>
+</head>
+<body>
+	
+	<header id="topbar">
+		<table class="position_table">
+			<tr>
+				<td>
+					<h1><a href="/upstream">syzbot</a></h1>
+				</td>
+				<td class="namespace_td">
+					<select class="namespace" onchange="window.location.href = '/' + this.value + '';">
+						
+							<option value="android-5-10" >Android 5.10</option>
+							<option value="android-5-15" >Android 5.15</option>
+							<option value="android-54" >Android 5.4</option>
+							<option value="android-6-1" >Android 6.1</option>
+							<option value="freebsd" >FreeBSD</option>
+							<option value="upstream" selected="1">Linux</option>
+							<option value="linux-5.15" >Linux 5.15</option>
+							<option value="linux-6.1" >Linux 6.1</option>
+							<option value="netbsd" >NetBSD</option>
+							<option value="openbsd" >OpenBSD</option>
+							<option value="gvisor" >gVisor</option></select>
+				</td>
+				<td class="search">
+					
+					
+						<a href="https://syzkaller.appspot.com/_ah/conflogin?continue=https://syzkaller.appspot.com/bug%3Fextid%3D10a41dc44eef71aa9450">sign-in</a> |
+					
+					<a href="https://groups.google.com/forum/#!forum/syzkaller" target="_blank">mailing list</a> |
+					<a href="https://github.com/google/syzkaller" target="_blank">source</a> |
+					<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md" target="_blank">docs</a>
+				</td>
+			</tr>
+		</table>
+		
+		<div class="navigation">
+			<div class="navigation_tab">
+				<a href='/upstream'><span style="color:DeepPink;">🐞</span> Open [1659]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/subsystems'><span style="color:DeepPink;">≡</span> Subsystems</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/fixed'><span style="color:ForestGreen;">🐞</span> Fixed [6081]</a>
+			</div>
+
+			<div class="navigation_tab" href='/upstream/invalid'>
+				<a href='/upstream/invalid'><span style="color:RoyalBlue;">🐞</span> Invalid [15102]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/backports'><span style="color:ForestGreen;">⬇</span> Missing Backports [157]</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/graph/crashes'><span style="color:ForestGreen;">≡</span> Crashes</a>
+			</div>
+
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Graphs</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href='/upstream/graph/bugs'>Kernel&nbsp;Health</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/found-bugs'>Bugs/Month</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/lifetimes'>Bug&nbsp;Lifetimes</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/fuzzing'>Fuzzing</a>
+				</div>
+			</div>
+
+			
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Coverage</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href="/upstream/graph/coverage?period=quarter">Total</a>
+					<a class="navigation_tab"
+						href="/upstream/coverage?period=month">Repo&nbsp;Heatmap</a>
+					
+						<a class="navigation_tab"
+							href="/upstream/coverage/subsystems?period=month">Subsystems&nbsp;Heatmap</a>
+					
+				</div>
+			</div>
+			
+			
+			<div class="navigation_tab navigation_right">
+				<a href='mailto:syzkaller@googlegroups.com'><span style="color:ForestGreen;">💬</span> Send us feedback</a>
+			</div>
+			
+		</div>
+		
+	</header>
+	<br>
+
+
+	<b>BUG: soft lockup in do_sock_setsockopt</b><br><br>
+	Status: <a href="https://groups.google.com/d/msgid/syzkaller-bugs/000000000000bb900e061440909c%40google.com">upstream: reported C repro on 2024/03/22 14:23</a><br>
+	
+		
+			Subsystems: 
+				<span class="bug-label"><a href="/upstream/s/tipc">tipc</a></span>
+		<br>
+		
+	<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md#labels">[Documentation on labels]</a><br>
+	
+	
+	Reported-by: syzbot&#43;10a41dc44eef71aa9450@syzkaller.appspotmail.com<br>
+	
+	First crash: 348d, last: 24d<br>
+	
+	<div>
+		<div class="bug-bisection-info">
+
+	
+	
+	
+		
+			<b>Cause bisection: introduced by</b>
+		
+		<b>(<a href="https://syzkaller.appspot.com/x/bisect.txt?x=104b93d0580000">bisect log</a>)</b> <span class="bad"></span>:<br>
+		<span class="mono">
+		
+		commit 5f6bd380c7bdbe10f7b4e8ddcceed60ce0714c6d<br>
+		Author: Peter Zijlstra &lt;peterz@infradead.org&gt;<br>
+		Date:   Mon May 27 12:06:55 2024 &#43;0000<br>
+		<br>
+		&nbsp;&nbsp;<a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=5f6bd380c7bdbe10f7b4e8ddcceed60ce0714c6d">sched/rt: Remove default bandwidth control</a><br>
+		</span><br>
+	
+	
+		Crash: <a href="https://syzkaller.appspot.com/x/report.txt?x=124b93d0580000">INFO: task hung in corrupted</a> (<a href="https://syzkaller.appspot.com/x/log.txt?x=144b93d0580000">log</a>)<br>
+		Repro: <a href="/text?tag=ReproC&x=136b5e80580000">C</a>
+		<a href="/text?tag=ReproSyz&x=1636fe27980000">syz</a>
+		<a href="/text?tag=KernelConfig&x=a4fcb065287cdb84">.config</a><br>
+	
+
+	
+	&nbsp;&nbsp;
+	
+
+</div>
+		
+		<div class="bug-bisection-stop"></div>
+	</div>
+
+	
+	<div class="collapsible collapsible-show">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Discussions (1)</span>
+		</div>
+		<div class="content">
+			
+			
+			
+
+<table class="list_table">
+	<thead>
+	<tr>
+		<th>Title</th>
+		<th>Replies (including bot)</th>
+		<th>Last reply</th>
+	</tr>
+	</thead>
+	<tbody>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/000000000000bb900e061440909c@google.com/T/">[syzbot] [tipc?] BUG: soft lockup in do_sock_setsockopt</a></td>
+			<td class="stat">1 (4)</td>
+			<td class="stat">2024/10/03 09:25</td>
+		</tr>
+	
+	</tbody>
+</table>
+
+
+			
+			
+		</div>
+	</div>
+	
+	<div class="collapsible collapsible-hide">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Last patch testing requests (11)</span>
+		</div>
+		<div class="content">
+			
+			
+
+	<table class="list_table">
+		<caption id="jobs"><a class="plain" href="#jobs"></a></caption>
+		<thead>
+		<tr>
+			
+			<th>Created</th>
+			<th>Duration</th>
+			<th>User</th>
+			<th>Patch</th>
+			<th>Repo</th>
+			
+			<th>Result</th>
+		</tr>
+		</thead>
+		<tbody>
+		
+			<tr>
+				
+				<td class="time">2025/02/24 03:54</td>
+				<td class="time" title="started: 2025/02/24 03:54&#013;finished: 2025/02/24 04:28">
+					33m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=d082ecbc71e9e0bf49883ee4afd435a77a5101b6">upstream</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=136fd7f8580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/02/24 00:26</td>
+				<td class="time" title="started: 2025/02/24 02:24&#013;finished: 2025/02/24 02:53">
+					29m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/commit/?id=a1c24ab822793eb513351686f631bd18952b7870">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=17cbd7f8580000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=13cbd7f8580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/02/24 00:26</td>
+				<td class="time" title="started: 2025/02/24 02:00&#013;finished: 2025/02/24 02:24">
+					24m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/commit/?id=a1c24ab822793eb513351686f631bd18952b7870">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=12f42db0580000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=14f42db0580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/02/24 00:26</td>
+				<td class="time" title="started: 2025/02/24 00:26&#013;finished: 2025/02/24 02:00">
+					1h34m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/commit/?id=a1c24ab822793eb513351686f631bd18952b7870">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=12fdd7f8580000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=14fdd7f8580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/12/15 21:55</td>
+				<td class="time" title="started: 2024/12/15 23:11&#013;finished: 2024/12/15 23:31">
+					19m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/commit/?id=2e7aff49b5dadb8c72ed9eece88994e3a7618a2f">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=176f54f8580000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=136f54f8580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/12/15 21:55</td>
+				<td class="time" title="started: 2024/12/15 22:42&#013;finished: 2024/12/15 23:11">
+					28m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/commit/?id=2e7aff49b5dadb8c72ed9eece88994e3a7618a2f">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=13d81730580000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=15d81730580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/12/15 21:55</td>
+				<td class="time" title="started: 2024/12/15 22:22&#013;finished: 2024/12/15 22:42">
+					20m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/commit/?id=2e7aff49b5dadb8c72ed9eece88994e3a7618a2f">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=12a17cdf980000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=14a17cdf980000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/12/15 21:55</td>
+				<td class="time" title="started: 2024/12/15 21:55&#013;finished: 2024/12/15 22:22">
+					26m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=dccbe2047a5b0859de24bf463dae9eeea8e01c1e">upstream</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=172b54f8580000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=132b54f8580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/07/20 06:59</td>
+				<td class="time" title="started: 2024/07/20 07:38&#013;finished: 2024/07/20 08:05">
+					27m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/commit/?id=c912bf709078c927aa7592c696c10cc46fa38508">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=10044be9980000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=17f84be9980000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/07/20 06:59</td>
+				<td class="time" title="started: 2024/07/20 07:18&#013;finished: 2024/07/20 07:38">
+					20m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/commit/?id=c912bf709078c927aa7592c696c10cc46fa38508">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=1116fe79980000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=1616fe79980000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/03/23 00:02</td>
+				<td class="time" title="started: 2024/03/23 02:34&#013;finished: 2024/03/23 08:43">
+					6h08m
+				</td>
+				<td>
+					
+						hdanton@sina.com
+					
+				</td>
+				<td><a href="/text?tag=Patch&x=1222a94e180000">patch</a></td>
+				<td class="kernel" title="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/commit/?id=707081b61156a186b32dc5346cdcf91b08ae73a9">https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=17e6b481180000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+		</tbody>
+	</table>
+
+
+			
+			
+			
+		</div>
+	</div>
+	
+
+	
+	<br><b>Sample crash report:</b><br>
+	<div id="crash_div"><pre>watchdog: BUG: soft lockup - CPU#0 stuck for 22s! [syz-executor984:17409]
+Modules linked in:
+irq event stamp: 31936393
+hardirqs last  enabled at (31936392): [&lt;ffff8000801e6138&gt;] __local_bh_enable_ip+0x224/0x44c <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/kernel/softirq.c?id=fda5695d692cf6a82fceb174583923fda049799f#n387'>kernel/softirq.c:387</a>
+hardirqs last disabled at (31936393): [&lt;ffff80008ae85378&gt;] __el1_irq <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/arch/arm64/kernel/entry-common.c?id=fda5695d692cf6a82fceb174583923fda049799f#n533'>arch/arm64/kernel/entry-common.c:533</a> [inline]
+hardirqs last disabled at (31936393): [&lt;ffff80008ae85378&gt;] el1_interrupt+0x24/0x68 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/arch/arm64/kernel/entry-common.c?id=fda5695d692cf6a82fceb174583923fda049799f#n551'>arch/arm64/kernel/entry-common.c:551</a>
+softirqs last  enabled at (732): [&lt;ffff80008a918688&gt;] spin_unlock_bh <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/include/linux/spinlock.h?id=fda5695d692cf6a82fceb174583923fda049799f#n396'>include/linux/spinlock.h:396</a> [inline]
+softirqs last  enabled at (732): [&lt;ffff80008a918688&gt;] tipc_skb_peek_port <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/net/tipc/msg.h?id=fda5695d692cf6a82fceb174583923fda049799f#n1235'>net/tipc/msg.h:1235</a> [inline]
+softirqs last  enabled at (732): [&lt;ffff80008a918688&gt;] tipc_sk_rcv+0x34c/0x18b8 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/net/tipc/socket.c?id=fda5695d692cf6a82fceb174583923fda049799f#n2493'>net/tipc/socket.c:2493</a>
+softirqs last disabled at (734): [&lt;ffff80008a9186a8&gt;] spin_trylock_bh <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/include/linux/spinlock.h?id=fda5695d692cf6a82fceb174583923fda049799f#n411'>include/linux/spinlock.h:411</a> [inline]
+softirqs last disabled at (734): [&lt;ffff80008a9186a8&gt;] tipc_sk_rcv+0x36c/0x18b8 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/net/tipc/socket.c?id=fda5695d692cf6a82fceb174583923fda049799f#n2498'>net/tipc/socket.c:2498</a>
+CPU: 0 PID: 17409 Comm: syz-executor984 Not tainted 6.9.0-rc7-syzkaller-gfda5695d692c #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 03/27/2024
+pstate: 60400005 (nZCv daif +PAN -UAO -TCO -DIT -SSBS BTYPE=--)
+pc : lock_acquire+0x284/0x73c
+lr : lockdep_recursion_finish <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/kernel/locking/lockdep.c?id=fda5695d692cf6a82fceb174583923fda049799f#n467'>kernel/locking/lockdep.c:467</a> [inline]
+lr : lock_acquire+0x254/0x73c <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/kernel/locking/lockdep.c?id=fda5695d692cf6a82fceb174583923fda049799f#n5756'>kernel/locking/lockdep.c:5756</a>
+sp : ffff80009a276180
+x29: ffff80009a276280 x28: dfff800000000000 x27: ffff70001344ec3c
+x26: ffff0001b3dc4dc0 x25: ffff80009a276830 x24: 0000000000000000
+x23: 0000000000000000 x22: 0000000000000000 x21: 0000000000000000
+x20: ffff80008ee01dc0 x19: ffff0001b3dc4dc0 x18: ffff80009a2762e0
+x17: 000000000000cd4d x16: ffff80008ae89f60 x15: 0000000000000001
+x14: ffff80008eeb0668 x13: dfff800000000000 x12: 000000000f4afb16
+x11: 00000000f45ae600 x10: 0000000000000003 x9 : 0000000000000000
+x8 : 00000000000000c0 x7 : ffff80008a918520 x6 : 0000000000000000
+x5 : 0000000000000000 x4 : 0000000000000001 x3 : 0000000000000000
+x2 : 0000000000000008 x1 : ffff80008b000c80 x0 : 0000000000000000
+Call trace:
+ __daif_local_irq_restore <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/arch/arm64/include/asm/irqflags.h?id=fda5695d692cf6a82fceb174583923fda049799f#n175'>arch/arm64/include/asm/irqflags.h:175</a> [inline]
+ arch_local_irq_restore <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/arch/arm64/include/asm/irqflags.h?id=fda5695d692cf6a82fceb174583923fda049799f#n195'>arch/arm64/include/asm/irqflags.h:195</a> [inline]
+ lock_acquire+0x284/0x73c <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/kernel/locking/lockdep.c?id=fda5695d692cf6a82fceb174583923fda049799f#n5757'>kernel/locking/lockdep.c:5757</a>
+ __raw_spin_lock_bh <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/include/linux/spinlock_api_smp.h?id=fda5695d692cf6a82fceb174583923fda049799f#n126'>include/linux/spinlock_api_smp.h:126</a> [inline]
+ _raw_spin_lock_bh+0x48/0x60 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/kernel/locking/spinlock.c?id=fda5695d692cf6a82fceb174583923fda049799f#n178'>kernel/locking/spinlock.c:178</a>
+ spin_lock_bh <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/include/linux/spinlock.h?id=fda5695d692cf6a82fceb174583923fda049799f#n356'>include/linux/spinlock.h:356</a> [inline]
+ tipc_skb_peek_port <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/net/tipc/msg.h?id=fda5695d692cf6a82fceb174583923fda049799f#n1225'>net/tipc/msg.h:1225</a> [inline]
+ tipc_sk_rcv+0x1e4/0x18b8 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/net/tipc/socket.c?id=fda5695d692cf6a82fceb174583923fda049799f#n2493'>net/tipc/socket.c:2493</a>
+ tipc_node_xmit+0x1b0/0xdb0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/net/tipc/node.c?id=fda5695d692cf6a82fceb174583923fda049799f#n1701'>net/tipc/node.c:1701</a>
+ tipc_node_xmit_skb <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/net/tipc/node.c?id=fda5695d692cf6a82fceb174583923fda049799f#n1766'>net/tipc/node.c:1766</a> [inline]
+ tipc_node_distr_xmit+0x28c/0x3a4 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/net/tipc/node.c?id=fda5695d692cf6a82fceb174583923fda049799f#n1781'>net/tipc/node.c:1781</a>
+ tipc_sk_rcv+0x12b0/0x18b8 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/net/tipc/socket.c?id=fda5695d692cf6a82fceb174583923fda049799f#n2503'>net/tipc/socket.c:2503</a>
+ tipc_node_xmit+0x1b0/0xdb0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/net/tipc/node.c?id=fda5695d692cf6a82fceb174583923fda049799f#n1701'>net/tipc/node.c:1701</a>
+ tipc_sk_push_backlog <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/net/tipc/socket.c?id=fda5695d692cf6a82fceb174583923fda049799f#n1316'>net/tipc/socket.c:1316</a> [inline]
+ tipc_sk_filter_connect <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/net/tipc/socket.c?id=fda5695d692cf6a82fceb174583923fda049799f#n2257'>net/tipc/socket.c:2257</a> [inline]
+ tipc_sk_filter_rcv+0x1718/0x2ca0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/net/tipc/socket.c?id=fda5695d692cf6a82fceb174583923fda049799f#n2366'>net/tipc/socket.c:2366</a>
+ tipc_sk_enqueue <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/net/tipc/socket.c?id=fda5695d692cf6a82fceb174583923fda049799f#n2447'>net/tipc/socket.c:2447</a> [inline]
+ tipc_sk_rcv+0x6d0/0x18b8 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/net/tipc/socket.c?id=fda5695d692cf6a82fceb174583923fda049799f#n2499'>net/tipc/socket.c:2499</a>
+ tipc_node_xmit+0x1b0/0xdb0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/net/tipc/node.c?id=fda5695d692cf6a82fceb174583923fda049799f#n1701'>net/tipc/node.c:1701</a>
+ tipc_node_xmit_skb <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/net/tipc/node.c?id=fda5695d692cf6a82fceb174583923fda049799f#n1766'>net/tipc/node.c:1766</a> [inline]
+ tipc_node_distr_xmit+0x28c/0x3a4 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/net/tipc/node.c?id=fda5695d692cf6a82fceb174583923fda049799f#n1781'>net/tipc/node.c:1781</a>
+ tipc_sk_backlog_rcv+0x164/0x214 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/net/tipc/socket.c?id=fda5695d692cf6a82fceb174583923fda049799f#n2414'>net/tipc/socket.c:2414</a>
+ sk_backlog_rcv <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/include/net/sock.h?id=fda5695d692cf6a82fceb174583923fda049799f#n1106'>include/net/sock.h:1106</a> [inline]
+ __release_sock+0x1a8/0x3d8 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/net/core/sock.c?id=fda5695d692cf6a82fceb174583923fda049799f#n2984'>net/core/sock.c:2984</a>
+ release_sock+0x68/0x1b8 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/net/core/sock.c?id=fda5695d692cf6a82fceb174583923fda049799f#n3550'>net/core/sock.c:3550</a>
+ sk_setsockopt+0xbdc/0x306c
+ sock_setsockopt+0x68/0x80 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/net/core/sock.c?id=fda5695d692cf6a82fceb174583923fda049799f#n1549'>net/core/sock.c:1549</a>
+ do_sock_setsockopt+0x238/0x4e0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/net/socket.c?id=fda5695d692cf6a82fceb174583923fda049799f#n2307'>net/socket.c:2307</a>
+ __sys_setsockopt+0x128/0x1a8 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/net/socket.c?id=fda5695d692cf6a82fceb174583923fda049799f#n2334'>net/socket.c:2334</a>
+ __do_sys_setsockopt <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/net/socket.c?id=fda5695d692cf6a82fceb174583923fda049799f#n2343'>net/socket.c:2343</a> [inline]
+ __se_sys_setsockopt <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/net/socket.c?id=fda5695d692cf6a82fceb174583923fda049799f#n2340'>net/socket.c:2340</a> [inline]
+ __arm64_sys_setsockopt+0xb8/0xd4 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/net/socket.c?id=fda5695d692cf6a82fceb174583923fda049799f#n2340'>net/socket.c:2340</a>
+ __invoke_syscall <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/arch/arm64/kernel/syscall.c?id=fda5695d692cf6a82fceb174583923fda049799f#n34'>arch/arm64/kernel/syscall.c:34</a> [inline]
+ invoke_syscall+0x98/0x2b8 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/arch/arm64/kernel/syscall.c?id=fda5695d692cf6a82fceb174583923fda049799f#n48'>arch/arm64/kernel/syscall.c:48</a>
+ el0_svc_common+0x130/0x23c <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/arch/arm64/kernel/syscall.c?id=fda5695d692cf6a82fceb174583923fda049799f#n133'>arch/arm64/kernel/syscall.c:133</a>
+ do_el0_svc+0x48/0x58 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/arch/arm64/kernel/syscall.c?id=fda5695d692cf6a82fceb174583923fda049799f#n152'>arch/arm64/kernel/syscall.c:152</a>
+ el0_svc+0x54/0x168 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/arch/arm64/kernel/entry-common.c?id=fda5695d692cf6a82fceb174583923fda049799f#n712'>arch/arm64/kernel/entry-common.c:712</a>
+ el0t_64_sync_handler+0x84/0xfc <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/arch/arm64/kernel/entry-common.c?id=fda5695d692cf6a82fceb174583923fda049799f#n730'>arch/arm64/kernel/entry-common.c:730</a>
+ el0t_64_sync+0x190/0x194 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/tree/arch/arm64/kernel/entry.S?id=fda5695d692cf6a82fceb174583923fda049799f#n598'>arch/arm64/kernel/entry.S:598</a>
+</pre></div><br>
+	
+
+	
+
+<table class="list_table">
+	<caption>Crashes (92):</caption>
+		<thead>
+		<tr>
+			<th><a onclick="return sortTable(this, 'Time', textSort, true)" href="#">Time</a></th>
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+			<th><a onclick="return sortTable(this, 'Commit', textSort)" href="#">Commit</a></th>
+			<th><a onclick="return sortTable(this, 'Syzkaller', textSort)" href="#">Syzkaller</a></th>
+			<th><a onclick="return sortTable(this, 'Config', textSort)" href="#">Config</a></th>
+			<th><a onclick="return sortTable(this, 'Log', textSort)" href="#">Log</a></th>
+			<th><a onclick="return sortTable(this, 'Report', reproSort)" href="#">Report</a></th>
+			<th><a onclick="return sortTable(this, 'Syz repro', reproSort)" href="#">Syz repro</a></th>
+			<th><a onclick="return sortTable(this, 'C repro', textSort)" href="#">C repro</a></th>
+			<th><a onclick="return sortTable(this, 'VM info', textSort)" href="#">VM info</a></th>
+			<th><a onclick="return sortTable(this, 'Assets', textSort)" href="#">Assets</a> (<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot_assets.md">help?</a>)</th>
+			<th><a onclick="return sortTable(this, 'Manager', textSort)" href="#">Manager</a></th>
+			<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		</tr>
+		</thead>
+		<tbody>
+		
+		<tr>
+			<td class="time">2024/05/15 06:42</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="fda5695d692cf6a82fceb174583923fda049799f
+	2024/05/10 13:35"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=fda5695d692cf6a82fceb174583923fda049799f">fda5695d692c</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/fdb4c10ce6d49163d1f57463d7ca0ae22b71e765">fdb4c10c</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=95dc1de8407c7270">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=140437b8980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=120b78f0980000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=150b0798980000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=13c08cd0980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/07f3214ff0d9/disk-fda5695d.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/70e2e2c864e8/vmlinux-fda5695d.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b259942a16dc/Image-fda5695d.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: soft lockup in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/03/22 13:20</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="707081b61156a186b32dc5346cdcf91b08ae73a9
+	2024/03/07 19:05"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=707081b61156a186b32dc5346cdcf91b08ae73a9">707081b61156</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/7a239ce75709b01083336e0f2f44aa8a01734543">7a239ce7</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=caeac3f3565b057a">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16d23231180000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=171232c9180000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=126fea6e180000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=114e4c81180000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6cad68bf7532/disk-707081b6.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1a27e5400778/vmlinux-707081b6.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/67dfc53755d0/Image-707081b6.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: soft lockup in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/03/22 10:17</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="707081b61156a186b32dc5346cdcf91b08ae73a9
+	2024/03/07 19:05"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=707081b61156a186b32dc5346cdcf91b08ae73a9">707081b61156</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/7a239ce75709b01083336e0f2f44aa8a01734543">7a239ce7</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=caeac3f3565b057a">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=149cec06180000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1349c0e9180000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=11a789be180000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=14475c6e180000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6cad68bf7532/disk-707081b6.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1a27e5400778/vmlinux-707081b6.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/67dfc53755d0/Image-707081b6.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: soft lockup in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/13 10:42</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="3022e9d00ebec31ed435ae0844e3f235dba998a9
+	2024/11/11 22:09"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=3022e9d00ebec31ed435ae0844e3f235dba998a9">3022e9d00ebe</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/62026c85dde44786cae707cb107475e182936149">62026c85</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c3a3896a92fb300b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=165d64c0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1480c1a7980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=48f88e13706635a">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dd57f8009b41/disk-3022e9d0.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0ad5a9ff7263/vmlinux-3022e9d0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f33cfde49a47/bzImage-3022e9d0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-badwrites-root</td>
+			<td class="manager">BUG: soft lockup in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/29 14:11</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="3efc57369a0ce8f76bf0804f7e673982384e4ac9
+	2024/09/28 16:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=3efc57369a0ce8f76bf0804f7e673982384e4ac9">3efc57369a0c</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ba29ff75d05fca62258d71ffc063e70f0d7b8b09">ba29ff75</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c84edfded8d63598">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16237507980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=103c3e80580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=df0d124c17b56f3c">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/384ffdcca292/non_bootable_disk-3efc5736.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/15961ec43064/vmlinux-3efc5736.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b459e678745a/Image-3efc5736.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu2-arm64</td>
+			<td class="manager">BUG: soft lockup in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/18 04:29</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="887407160d72d9f15dbb3da2739d8854230ccff3
+	2024/11/14 12:07"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=887407160d72d9f15dbb3da2739d8854230ccff3">887407160d72</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/cfe3a04a188eb9a2c407783d8d6e6f55a4b30886">cfe3a04a</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a1eb85a42cb8ccec">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10d63378580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1293f2c0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=4a08619fde6e09f7">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1011f7c2c68d/disk-88740716.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9035dac2e5ad/vmlinux-88740716.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/55be49953149/Image-88740716.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: soft lockup in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/18 02:30</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="887407160d72d9f15dbb3da2739d8854230ccff3
+	2024/11/14 12:07"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=887407160d72d9f15dbb3da2739d8854230ccff3">887407160d72</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/cfe3a04a188eb9a2c407783d8d6e6f55a4b30886">cfe3a04a</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a1eb85a42cb8ccec">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15408930580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=116ef2c0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=68a57e68999ca12d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1011f7c2c68d/disk-88740716.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9035dac2e5ad/vmlinux-88740716.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/55be49953149/Image-88740716.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: soft lockup in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/16 23:31</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="887407160d72d9f15dbb3da2739d8854230ccff3
+	2024/11/14 12:07"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=887407160d72d9f15dbb3da2739d8854230ccff3">887407160d72</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/cfe3a04a188eb9a2c407783d8d6e6f55a4b30886">cfe3a04a</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a1eb85a42cb8ccec">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=108452e8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=111b52c0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=9db86e211a0c852d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1011f7c2c68d/disk-88740716.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9035dac2e5ad/vmlinux-88740716.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/55be49953149/Image-88740716.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: soft lockup in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/16 19:56</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="887407160d72d9f15dbb3da2739d8854230ccff3
+	2024/11/14 12:07"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=887407160d72d9f15dbb3da2739d8854230ccff3">887407160d72</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/cfe3a04a188eb9a2c407783d8d6e6f55a4b30886">cfe3a04a</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a1eb85a42cb8ccec">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=152392e8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=150c52c0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=9db86e211a0c852d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1011f7c2c68d/disk-88740716.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9035dac2e5ad/vmlinux-88740716.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/55be49953149/Image-88740716.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: soft lockup in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/16 03:41</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="887407160d72d9f15dbb3da2739d8854230ccff3
+	2024/11/14 12:07"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=887407160d72d9f15dbb3da2739d8854230ccff3">887407160d72</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/cfe3a04a188eb9a2c407783d8d6e6f55a4b30886">cfe3a04a</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a1eb85a42cb8ccec">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1531bcc0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1221d130580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=8c2f7ccbe0205ef3">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1011f7c2c68d/disk-88740716.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9035dac2e5ad/vmlinux-88740716.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/55be49953149/Image-88740716.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: soft lockup in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/15 10:50</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="887407160d72d9f15dbb3da2739d8854230ccff3
+	2024/11/14 12:07"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=887407160d72d9f15dbb3da2739d8854230ccff3">887407160d72</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f6ede3a3f38422f581e15b28c203a682eac5c135">f6ede3a3</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a1eb85a42cb8ccec">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=127331a7980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15186b5f980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=68a57e68999ca12d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1011f7c2c68d/disk-88740716.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9035dac2e5ad/vmlinux-88740716.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/55be49953149/Image-88740716.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: soft lockup in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/15 08:52</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="887407160d72d9f15dbb3da2739d8854230ccff3
+	2024/11/14 12:07"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=887407160d72d9f15dbb3da2739d8854230ccff3">887407160d72</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f6ede3a3f38422f581e15b28c203a682eac5c135">f6ede3a3</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a1eb85a42cb8ccec">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=125a9130580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16ea82e8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=4a08619fde6e09f7">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1011f7c2c68d/disk-88740716.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9035dac2e5ad/vmlinux-88740716.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/55be49953149/Image-88740716.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: soft lockup in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/14 19:55</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="887407160d72d9f15dbb3da2739d8854230ccff3
+	2024/11/14 12:07"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=887407160d72d9f15dbb3da2739d8854230ccff3">887407160d72</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/77f3eeb755d0c3e79023775a7e72e05dded0f8a1">77f3eeb7</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a1eb85a42cb8ccec">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=113bfce8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=153bfce8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=d61533b69dedf917">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1011f7c2c68d/disk-88740716.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9035dac2e5ad/vmlinux-88740716.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/55be49953149/Image-88740716.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: soft lockup in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/13 04:25</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="baa007e8da32060c1ad070c938dd85b0ca2ecd82
+	2024/11/12 19:47"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=baa007e8da32060c1ad070c938dd85b0ca2ecd82">baa007e8da32</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/62026c85dde44786cae707cb107475e182936149">62026c85</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9ce37d357fac206c">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=143fa4c0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=123fa4c0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=68a57e68999ca12d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/091805c67446/disk-baa007e8.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/853803d703a2/vmlinux-baa007e8.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/65373a9a8186/Image-baa007e8.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: soft lockup in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/12 02:48</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="563047e691f2bdabb809481e1c0f26d171632115
+	2024/11/08 21:31"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=563047e691f2bdabb809481e1c0f26d171632115">563047e691f2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/97fe551785f14d411943bf31c363c82a178cb7f0">97fe5517</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1d1ed5ebe7f28fe9">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=164bd35f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17a4fe30580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=68a57e68999ca12d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/09130b543284/disk-563047e6.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/76ce58c74487/vmlinux-563047e6.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e39916627eee/Image-563047e6.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: soft lockup in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/11 07:41</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="563047e691f2bdabb809481e1c0f26d171632115
+	2024/11/08 21:31"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=563047e691f2bdabb809481e1c0f26d171632115">563047e691f2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6b856513c13bbdf86191190923fb64438219ea68">6b856513</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1d1ed5ebe7f28fe9">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10e5be30580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17043ea7980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=d61533b69dedf917">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/09130b543284/disk-563047e6.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/76ce58c74487/vmlinux-563047e6.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e39916627eee/Image-563047e6.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: soft lockup in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/11 02:06</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="563047e691f2bdabb809481e1c0f26d171632115
+	2024/11/08 21:31"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=563047e691f2bdabb809481e1c0f26d171632115">563047e691f2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6b856513c13bbdf86191190923fb64438219ea68">6b856513</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1d1ed5ebe7f28fe9">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=155908c0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11dadea7980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=4a08619fde6e09f7">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/09130b543284/disk-563047e6.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/76ce58c74487/vmlinux-563047e6.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e39916627eee/Image-563047e6.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: soft lockup in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/09 21:53</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="563047e691f2bdabb809481e1c0f26d171632115
+	2024/11/08 21:31"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=563047e691f2bdabb809481e1c0f26d171632115">563047e691f2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6b856513c13bbdf86191190923fb64438219ea68">6b856513</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1d1ed5ebe7f28fe9">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17615e30580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=150730c0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=68a57e68999ca12d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/09130b543284/disk-563047e6.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/76ce58c74487/vmlinux-563047e6.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e39916627eee/Image-563047e6.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: soft lockup in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/07 11:45</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="8936d33c1f697ce59b16896fcb793f23368e456c
+	2024/11/05 13:22"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=8936d33c1f697ce59b16896fcb793f23368e456c">8936d33c1f69</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/df3dc63b8ba0b52ca67025f5b55cd4356b3eda75">df3dc63b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=163d7426d94ed7f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=108dcd87980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14dbc9f7980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=8c2f7ccbe0205ef3">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c58cd818af34/disk-8936d33c.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c0e687204404/vmlinux-8936d33c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/efc94fae8d41/Image-8936d33c.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: soft lockup in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/06 15:47</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="8936d33c1f697ce59b16896fcb793f23368e456c
+	2024/11/05 13:22"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=8936d33c1f697ce59b16896fcb793f23368e456c">8936d33c1f69</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/3a4654820e658eac4775498511ddef4f1019ed67">3a465482</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=163d7426d94ed7f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=156add5f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10188d87980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=4a08619fde6e09f7">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c58cd818af34/disk-8936d33c.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c0e687204404/vmlinux-8936d33c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/efc94fae8d41/Image-8936d33c.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: soft lockup in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/05 13:32</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="46f782153ea2c67ebd059b467cc09cf6161ad90c
+	2024/11/04 17:00"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=46f782153ea2c67ebd059b467cc09cf6161ad90c">46f782153ea2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/509da42949c4013fb236ebf6e25d3562d110198c">509da429</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1c00957dbae95235">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=165ab587980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17f7ed5f980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=d61533b69dedf917">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c456e08030c5/disk-46f78215.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a10afa59009b/vmlinux-46f78215.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/091117a7c9cc/Image-46f78215.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: soft lockup in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/05 07:51</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="46f782153ea2c67ebd059b467cc09cf6161ad90c
+	2024/11/04 17:00"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=46f782153ea2c67ebd059b467cc09cf6161ad90c">46f782153ea2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/509da42949c4013fb236ebf6e25d3562d110198c">509da429</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1c00957dbae95235">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13d4ed5f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10fc96a7980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=68a57e68999ca12d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c456e08030c5/disk-46f78215.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a10afa59009b/vmlinux-46f78215.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/091117a7c9cc/Image-46f78215.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: soft lockup in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/05 04:29</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="46f782153ea2c67ebd059b467cc09cf6161ad90c
+	2024/11/04 17:00"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=46f782153ea2c67ebd059b467cc09cf6161ad90c">46f782153ea2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/509da42949c4013fb236ebf6e25d3562d110198c">509da429</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1c00957dbae95235">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17ed6d5f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10083587980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=68a57e68999ca12d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c456e08030c5/disk-46f78215.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a10afa59009b/vmlinux-46f78215.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/091117a7c9cc/Image-46f78215.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: soft lockup in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/02 09:01</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="5283dc78f4da5400f2ec24794239a785b6d6241c
+	2024/11/01 16:48"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=5283dc78f4da5400f2ec24794239a785b6d6241c">5283dc78f4da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f00eed24f2a1332b07fef1a353a439133978d97b">f00eed24</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=46747686125c7e50">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12f3aaa7980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17434b40580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=8c2f7ccbe0205ef3">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/646a4136941e/disk-5283dc78.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e985dce60177/vmlinux-5283dc78.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8e09efa952c0/Image-5283dc78.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: soft lockup in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/01 22:54</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="1bf329c696cf80000f1098bcdc23534e6fe14fe2
+	2024/10/28 17:23"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=1bf329c696cf80000f1098bcdc23534e6fe14fe2">1bf329c696cf</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f00eed24f2a1332b07fef1a353a439133978d97b">f00eed24</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=46747686125c7e50">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14c2555f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12add340580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=9db86e211a0c852d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d31837bfb598/disk-1bf329c6.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c64d169210de/vmlinux-1bf329c6.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/65fff58eb584/Image-1bf329c6.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: soft lockup in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/01 02:04</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="1bf329c696cf80000f1098bcdc23534e6fe14fe2
+	2024/10/28 17:23"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=1bf329c696cf80000f1098bcdc23534e6fe14fe2">1bf329c696cf</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/96eb609f6eb9558e2fab491a2c63a11bb0556471">96eb609f</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9bfadfb661dcd85e">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=106c9340580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13786e87980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=9db86e211a0c852d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ce371aa5cd38/disk-1bf329c6.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d9b9cedf697e/vmlinux-1bf329c6.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9376f54faf55/Image-1bf329c6.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: soft lockup in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/31 07:18</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="1bf329c696cf80000f1098bcdc23534e6fe14fe2
+	2024/10/28 17:23"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=1bf329c696cf80000f1098bcdc23534e6fe14fe2">1bf329c696cf</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/fb888278a6b21eda7fa63551c83fd17b90305ba1">fb888278</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9bfadfb661dcd85e">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16aac6f7980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11e052a7980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=68a57e68999ca12d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ce371aa5cd38/disk-1bf329c6.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d9b9cedf697e/vmlinux-1bf329c6.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9376f54faf55/Image-1bf329c6.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: soft lockup in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/24 21:21</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="ce8e69898653874df021398ebdab86c81288f216
+	2024/10/23 11:04"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=ce8e69898653874df021398ebdab86c81288f216">ce8e69898653</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9fc8fe026baab9959459256f2d47f4bbf21d405a">9fc8fe02</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=cf20d4aad28662c6">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12b00e40580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=142928a7980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=4a08619fde6e09f7">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c4140162bfaa/disk-ce8e6989.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9cc02a082c01/vmlinux-ce8e6989.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4ca0d2cc7b00/Image-ce8e6989.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: soft lockup in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/20 22:34</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="9ec59cb3edc7dced96c75c5b9b19edd2be1b54ba
+	2024/10/20 10:06"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=9ec59cb3edc7dced96c75c5b9b19edd2be1b54ba">9ec59cb3edc7</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/cd6fc0a3018e5d793bdcca6530622493f5e88307">cd6fc0a3</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c154e2d4db830898">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1281ec87980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16186430580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=8c2f7ccbe0205ef3">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fc9a7d36d46a/disk-9ec59cb3.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/30547ddd681e/vmlinux-9ec59cb3.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5c4e02d0f97a/Image-9ec59cb3.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: soft lockup in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/20 04:54</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="d2b1b3bccef6c800e1f29cfe73874efa0c11ab97
+	2024/10/18 17:58"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=d2b1b3bccef6c800e1f29cfe73874efa0c11ab97">d2b1b3bccef6</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/cd6fc0a3018e5d793bdcca6530622493f5e88307">cd6fc0a3</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c154e2d4db830898">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1034825f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11ffc430580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=8c2f7ccbe0205ef3">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ab5b5f1bb836/disk-d2b1b3bc.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e47b288f7c97/vmlinux-d2b1b3bc.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1e3e5f0bea26/Image-d2b1b3bc.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: soft lockup in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/19 08:34</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="d2b1b3bccef6c800e1f29cfe73874efa0c11ab97
+	2024/10/18 17:58"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=d2b1b3bccef6c800e1f29cfe73874efa0c11ab97">d2b1b3bccef6</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/cd6fc0a3018e5d793bdcca6530622493f5e88307">cd6fc0a3</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c154e2d4db830898">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13d0d240580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11758430580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=9db86e211a0c852d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ab5b5f1bb836/disk-d2b1b3bc.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e47b288f7c97/vmlinux-d2b1b3bc.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1e3e5f0bea26/Image-d2b1b3bc.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: soft lockup in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/11 23:28</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="2d8bce6e34bebbf88f39a20d7177bd0bddf4cda0
+	2024/10/10 17:12"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=2d8bce6e34bebbf88f39a20d7177bd0bddf4cda0">2d8bce6e34be</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/cd942402d6bc82fa3ea87e5c43509e1ec6cfafe2">cd942402</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b9f31443a725c681">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10ea3b27980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1710ef07980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=68a57e68999ca12d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8b2745aa8707/disk-2d8bce6e.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c62ee63d102f/vmlinux-2d8bce6e.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d3b601037e8f/Image-2d8bce6e.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: soft lockup in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/11 18:15</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="2d8bce6e34bebbf88f39a20d7177bd0bddf4cda0
+	2024/10/10 17:12"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=2d8bce6e34bebbf88f39a20d7177bd0bddf4cda0">2d8bce6e34be</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/cd942402d6bc82fa3ea87e5c43509e1ec6cfafe2">cd942402</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b9f31443a725c681">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15da205f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15f66f07980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=68a57e68999ca12d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8b2745aa8707/disk-2d8bce6e.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c62ee63d102f/vmlinux-2d8bce6e.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d3b601037e8f/Image-2d8bce6e.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: soft lockup in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/11 18:15</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="2d8bce6e34bebbf88f39a20d7177bd0bddf4cda0
+	2024/10/10 17:12"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=2d8bce6e34bebbf88f39a20d7177bd0bddf4cda0">2d8bce6e34be</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/cd942402d6bc82fa3ea87e5c43509e1ec6cfafe2">cd942402</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b9f31443a725c681">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11c3db27980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=150d2840580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=9db86e211a0c852d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8b2745aa8707/disk-2d8bce6e.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c62ee63d102f/vmlinux-2d8bce6e.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d3b601037e8f/Image-2d8bce6e.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: soft lockup in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/09 07:48</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9946eaf552b194bb352c2945b54ff98c8193b3f1
+	2025/02/08 22:12"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9946eaf552b194bb352c2945b54ff98c8193b3f1">9946eaf552b1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ef44b750e8fab8d6d5cb84920680581b13e0d470">ef44b750</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a7ddf49cf33ba213">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10142bdf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=108282a4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=c0a2814b5834bcc9">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2b05ac225ca1/disk-9946eaf5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/50411613670f/vmlinux-9946eaf5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/104ffd8fc6a9/bzImage-9946eaf5.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-selinux-root</td>
+			<td class="manager">INFO: rcu detected stall in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/16 18:29</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="619f0b6fad524f08d493a98d55bac9ab8895e3a6
+	2025/01/14 22:10"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=619f0b6fad524f08d493a98d55bac9ab8895e3a6">619f0b6fad52</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/968edaf491504462b98e794257533160d7087792">968edaf4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d1cb4a1f148c0861">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16af9a18580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=169427c4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=690ab8eb15d92409">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a127456cb6e4/disk-619f0b6f.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d571b0066089/vmlinux-619f0b6f.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7871c0902366/bzImage-619f0b6f.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-selinux-root</td>
+			<td class="manager">INFO: rcu detected stall in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/20 03:51</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="8faabc041a001140564f718dabe37753e88b37fa
+	2024/12/19 17:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=8faabc041a001140564f718dabe37753e88b37fa">8faabc041a00</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/1d58202cd938cd702f9fddff39f2be5d9490988c">1d58202c</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4f1586bab1323870">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10e62fe8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1511ff44580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=78b83abf87ca674b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8e292970ae84/disk-8faabc04.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/482ecdd95a7f/vmlinux-8faabc04.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c13e76877b14/bzImage-8faabc04.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-selinux-root</td>
+			<td class="manager">INFO: rcu detected stall in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/01 21:36</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="bcc8eda6d34934d80b96adb8dc4ff5dfc632a53a
+	2024/12/01 02:30"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=bcc8eda6d34934d80b96adb8dc4ff5dfc632a53a">bcc8eda6d349</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/689146651cb695ec7836080377ad32933a0b9bce">68914665</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=3042f011761b016">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12f715e8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=171667c0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=43a3447ee570f280">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d9ddb53503aa/disk-bcc8eda6.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/72cf829f25df/vmlinux-bcc8eda6.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fb7c3cbb1c57/bzImage-bcc8eda6.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-selinux-root</td>
+			<td class="manager">INFO: rcu detected stall in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/28 04:19</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="aaf20f870da056752f6386693cc0d8e25421ef35
+	2024/11/27 02:36"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=aaf20f870da056752f6386693cc0d8e25421ef35">aaf20f870da0</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/5df2386563cbffa1bbbb9d0b8ec1eebb98d051ae">5df23865</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a51a585c6e636e05">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15330f78580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=129d23c0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=4abdc20165a1c05c">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a124d816c6b8/disk-aaf20f87.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/72ab15012016/vmlinux-aaf20f87.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/70a3dde18fe5/bzImage-aaf20f87.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-selinux-root</td>
+			<td class="manager">INFO: rcu detected stall in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/19 00:55</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="adc218676eef25575469234709c2d87185ca223a
+	2024/11/17 22:15"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=adc218676eef25575469234709c2d87185ca223a">adc218676eef</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/571351cb80e526bf973c8f11c46fa7f3bbc2da1e">571351cb</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b3b3b2f3eaae51f9">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11e6c930580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10241ac0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=611215150d2dcf6c">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/24ab646d8da6/disk-adc21867.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/22807fd98623/vmlinux-adc21867.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c39942b56823/bzImage-adc21867.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-smack-root</td>
+			<td class="manager">INFO: rcu detected stall in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/18 11:25</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="adc218676eef25575469234709c2d87185ca223a
+	2024/11/17 22:15"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=adc218676eef25575469234709c2d87185ca223a">adc218676eef</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/cfe3a04a188eb9a2c407783d8d6e6f55a4b30886">cfe3a04a</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b3b3b2f3eaae51f9">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14dabb5f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1687b2e8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=e8708c8c8a368e13">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/24ab646d8da6/disk-adc21867.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/22807fd98623/vmlinux-adc21867.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c39942b56823/bzImage-adc21867.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-smack-root</td>
+			<td class="manager">INFO: rcu detected stall in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/07 01:20</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="7758b206117dab9894f0bcb8333f8e4731c5065a
+	2024/11/06 18:08"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=7758b206117dab9894f0bcb8333f8e4731c5065a">7758b206117d</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/df3dc63b8ba0b52ca67025f5b55cd4356b3eda75">df3dc63b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c0b2fb415081f288">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13ce5f40580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14312e30580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=151cf86af0ae291f">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/85d17d41a04f/disk-7758b206.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4c5dbadde61f/vmlinux-7758b206.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/63b589fd77fc/bzImage-7758b206.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-selinux-root</td>
+			<td class="manager">INFO: rcu detected stall in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/06 06:32</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="2e1b3cc9d7f790145a80cb705b168f05dab65df2
+	2024/11/05 01:23"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=2e1b3cc9d7f790145a80cb705b168f05dab65df2">2e1b3cc9d7f7</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/3a4654820e658eac4775498511ddef4f1019ed67">3a465482</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=921b01cbfd887a9b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=143636a7980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17bf4f40580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=4619065ae9538e3b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/11af92f73086/disk-2e1b3cc9.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/287bcc57639d/vmlinux-2e1b3cc9.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/35d04be122fa/bzImage-2e1b3cc9.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-smack-root</td>
+			<td class="manager">INFO: rcu detected stall in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/21 23:32</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="42f7652d3eb527d03665b09edac47f85fb600924
+	2024/10/20 22:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=42f7652d3eb527d03665b09edac47f85fb600924">42f7652d3eb5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a93682b3599755b030b6c0211c22e56f5e0848f1">a93682b3</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=fc6f8ce8c5369043">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10195c87980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13fb10a7980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=39e76a2d0f90abbf">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ed847da7e5cc/disk-42f7652d.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/66c7a2b66b5b/vmlinux-42f7652d.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9878229c04ae/bzImage-42f7652d.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">INFO: rcu detected stall in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/19 09:40</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="3d5ad2d4eca337e80f38df77de89614aa5aaceb9
+	2024/10/18 23:27"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=3d5ad2d4eca337e80f38df77de89614aa5aaceb9">3d5ad2d4eca3</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/cd6fc0a3018e5d793bdcca6530622493f5e88307">cd6fc0a3</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=cfbd94c114a3d407">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1474d240580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17ba7487980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=d39492f9aa8d0d66">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8c5bd724f633/disk-3d5ad2d4.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/196436615ac2/vmlinux-3d5ad2d4.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/765e7d0e1891/bzImage-3d5ad2d4.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">INFO: rcu detected stall in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/29 03:06</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="3efc57369a0ce8f76bf0804f7e673982384e4ac9
+	2024/09/28 16:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=3efc57369a0ce8f76bf0804f7e673982384e4ac9">3efc57369a0c</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ba29ff75d05fca62258d71ffc063e70f0d7b8b09">ba29ff75</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a4fcb065287cdb84">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12354d9f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1336a6a9980000">report</a></td>
+			<td class="repro stale_repro">
+				<a href="/text?tag=ReproSyz&amp;x=1636fe27980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=1736a6a9980000">log</a>
+			</td>
+			<td class="repro stale_repro"><a href="/text?tag=ReproC&amp;x=136b5e80580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b5a4faec7a99/disk-3efc5736.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/971adf9a5295/vmlinux-3efc5736.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/49516da34e16/bzImage-3efc5736.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">INFO: rcu detected stall in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/08/20 04:20</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="b0da640826ba3b6506b4996a6b23a429235e6923
+	2024/08/19 16:26"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=b0da640826ba3b6506b4996a6b23a429235e6923">b0da640826ba</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9f0ab3fb8930510928e013275e4849b621d82efb">9f0ab3fb</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=df2f0ed7e30a639d">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=102f4605980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15e3f9f5980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=2ddefac88b08c4b7">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6391d2eca959/disk-b0da6408.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cd088eb23b4e/vmlinux-b0da6408.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5938c2cfeb79/bzImage-b0da6408.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">INFO: rcu detected stall in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/06 11:11</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="2e1b3cc9d7f790145a80cb705b168f05dab65df2
+	2024/11/05 01:23"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=2e1b3cc9d7f790145a80cb705b168f05dab65df2">2e1b3cc9d7f7</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/3a4654820e658eac4775498511ddef4f1019ed67">3a465482</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=11254d3590b16717">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=131e0d87980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1170b6a7980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=1dff2124c56f69b4">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/65a68c5606d7/disk-2e1b3cc9.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/924bedacd1d7/vmlinux-2e1b3cc9.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/874b2006a9a1/bzImage-2e1b3cc9.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-386</td>
+			<td class="manager">INFO: rcu detected stall in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/05 16:22</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="2e1b3cc9d7f790145a80cb705b168f05dab65df2
+	2024/11/05 01:23"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=2e1b3cc9d7f790145a80cb705b168f05dab65df2">2e1b3cc9d7f7</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/509da42949c4013fb236ebf6e25d3562d110198c">509da429</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=11254d3590b16717">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11621d5f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15a08f40580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=2c196257440103f2">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/65a68c5606d7/disk-2e1b3cc9.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/924bedacd1d7/vmlinux-2e1b3cc9.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/874b2006a9a1/bzImage-2e1b3cc9.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-386</td>
+			<td class="manager">INFO: rcu detected stall in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/15 15:15</td>
+			<td class="kernel" title="net">net</td>
+			<td class="tag" title="cfaaa7d010d1fc58f9717fcc8591201e741d2d49
+	2024/11/14 18:05"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/log/?id=cfaaa7d010d1fc58f9717fcc8591201e741d2d49">cfaaa7d010d1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f6ede3a3f38422f581e15b28c203a682eac5c135">f6ede3a3</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d2aeec8c0b2e420c">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13f05130580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15b2dcc0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=6284dbd668531cd7">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ca611dbb6f06/disk-cfaaa7d0.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2a239e8f6813/vmlinux-cfaaa7d0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dfdb0d617641/bzImage-cfaaa7d0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-this-kasan-gce</td>
+			<td class="manager">INFO: rcu detected stall in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/13 12:13</td>
+			<td class="kernel" title="net">net</td>
+			<td class="tag" title="2b99b2532593b5a4c7dc6bff2486e98d211a8596
+	2024/11/13 02:23"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/log/?id=2b99b2532593b5a4c7dc6bff2486e98d211a8596">2b99b2532593</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/62026c85dde44786cae707cb107475e182936149">62026c85</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=64aa0d9945bd5c1">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17b20b5f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=167d8130580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=43038a506b16c189">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a8af80e45f8d/disk-2b99b253.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e0eebb613f6a/vmlinux-2b99b253.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eb457c4262a5/bzImage-2b99b253.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-this-kasan-gce</td>
+			<td class="manager">INFO: rcu detected stall in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/07 05:51</td>
+			<td class="kernel" title="net">net</td>
+			<td class="tag" title="1f26339b2ed63d1e8e18a18674fb73a392f3660e
+	2024/11/07 01:56"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/log/?id=1f26339b2ed63d1e8e18a18674fb73a392f3660e">1f26339b2ed6</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/df3dc63b8ba0b52ca67025f5b55cd4356b3eda75">df3dc63b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4ad94ad56b497cfc">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1549f6a7980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1188df40580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=cf8b443695dbada6">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/825a4bd0ae2d/disk-1f26339b.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2d7859a1fc88/vmlinux-1f26339b.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/90d9fd3f3ab8/bzImage-1f26339b.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-this-kasan-gce</td>
+			<td class="manager">INFO: rcu detected stall in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/01 06:28</td>
+			<td class="kernel" title="net">net</td>
+			<td class="tag" title="0144c06c5890d1ad0eea65df074cffaf4eea5a3c
+	2024/11/01 02:18"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/log/?id=0144c06c5890d1ad0eea65df074cffaf4eea5a3c">0144c06c5890</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/96eb609f6eb9558e2fab491a2c63a11bb0556471">96eb609f</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4aec7739e14231a7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10af6630580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12a0b2a7980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=df9d267a2ea6e8fd">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cd371dbf8e5b/disk-0144c06c.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e64d51c3c53d/vmlinux-0144c06c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3fb4f44212db/bzImage-0144c06c.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-this-kasan-gce</td>
+			<td class="manager">INFO: rcu detected stall in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/15 18:48</td>
+			<td class="kernel" title="net">net</td>
+			<td class="tag" title="25c12b459db8365fee84b63f3dd7910f70627f29
+	2024/10/15 00:32"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/log/?id=25c12b459db8365fee84b63f3dd7910f70627f29">25c12b459db8</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/14943bb8b0b96031f1ac7110e2bfa628c0ce9e30">14943bb8</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7cd9e7e4a8a0a15b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1136cc40580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12e45887980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=1784f7faaf8735b9">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2af01ac9645a/disk-25c12b45.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e8b17a2ec627/vmlinux-25c12b45.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/816fb9e84874/bzImage-25c12b45.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-this-kasan-gce</td>
+			<td class="manager">INFO: rcu detected stall in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/18 17:09</td>
+			<td class="kernel" title="net-next">net-next</td>
+			<td class="tag" title="d7ef9eeef0723cc47601923c508ecbebd864f0c0
+	2024/11/18 12:00"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/log/?id=d7ef9eeef0723cc47601923c508ecbebd864f0c0">d7ef9eeef072</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/571351cb80e526bf973c8f11c46fa7f3bbc2da1e">571351cb</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e6d63a300b6a84a4">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17ed6ac0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12ee72e8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ca112aab4d6db84e">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f03ec9e9a3e3/disk-d7ef9eee.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1fddae8cd50b/vmlinux-d7ef9eee.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/32ed050acd2d/bzImage-d7ef9eee.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-kasan-gce</td>
+			<td class="manager">INFO: rcu detected stall in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/04 10:42</td>
+			<td class="kernel" title="net-next">net-next</td>
+			<td class="tag" title="8d1807a95c7dbb9633817fba776fa2f5e7c5146b
+	2024/11/03 23:37"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/log/?id=8d1807a95c7dbb9633817fba776fa2f5e7c5146b">8d1807a95c7d</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f00eed24f2a1332b07fef1a353a439133978d97b">f00eed24</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a9d1c42858837b59">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=107186a7980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15f2c740580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=4f61e6c4f683f49f">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/09c92c612ef2/disk-8d1807a9.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/30b3d89bed65/vmlinux-8d1807a9.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d42bf0018806/bzImage-8d1807a9.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-kasan-gce</td>
+			<td class="manager">INFO: rcu detected stall in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/28 02:25</td>
+			<td class="kernel" title="net-next">net-next</td>
+			<td class="tag" title="6d858708d465669ba7de17e9c5691eb4019166e8
+	2024/10/15 17:55"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/log/?id=6d858708d465669ba7de17e9c5691eb4019166e8">6d858708d465</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/65e8686b0e9e909b6ea5629f95a9b14e81927872">65e8686b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e7f0cac6eaefe81d">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1150aca7980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1776d230580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=725a98cb755f8328">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/88c678a36ec8/disk-6d858708.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b19b4fbbd593/vmlinux-6d858708.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/18fef9c3fe20/bzImage-6d858708.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-kasan-gce</td>
+			<td class="manager">INFO: rcu detected stall in do_sock_setsockopt</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/06/14 13:48</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="a957267fa7e9159d3d2ee1421359ebf228570c68
+	2024/06/11 06:03"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=a957267fa7e9159d3d2ee1421359ebf228570c68">a957267fa7e9</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a9616ff57d4ef2794b54e02c26315c739ca8bc85">a9616ff5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9a880e96898e79f8">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14ce112e980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1709c12e980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ccd189a3f6853c70">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6451759a606b/disk-a957267f.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7f635dbe5b8a/vmlinux-a957267f.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/33eafd1b8aec/bzImage-a957267f.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">INFO: rcu detected stall in do_sock_setsockopt</td>
+		</tr>
+		
+		</tbody>
+</table>
+<i>* <s>Struck through</s> repros no longer work on HEAD.</i>
+
+
+</body>
+</html>

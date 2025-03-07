@@ -1,0 +1,4453 @@
+
+
+<!doctype html>
+<html>
+<head>
+	
+	<link rel="stylesheet" href="/static/style.css"/>
+	<script src="/static/common.js"></script>
+	
+		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-116117799-1"></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag() { dataLayer.push(arguments); }
+			gtag('js', new Date());
+			gtag('config', 'UA-116117799-1');
+		</script>
+	
+
+	<title>KMSAN: kernel-infoleak in copyout (2)</title>
+</head>
+<body>
+	
+	<header id="topbar">
+		<table class="position_table">
+			<tr>
+				<td>
+					<h1><a href="/upstream">syzbot</a></h1>
+				</td>
+				<td class="namespace_td">
+					<select class="namespace" onchange="window.location.href = '/' + this.value + '';">
+						
+							<option value="android-5-10" >Android 5.10</option>
+							<option value="android-5-15" >Android 5.15</option>
+							<option value="android-54" >Android 5.4</option>
+							<option value="android-6-1" >Android 6.1</option>
+							<option value="freebsd" >FreeBSD</option>
+							<option value="upstream" selected="1">Linux</option>
+							<option value="linux-5.15" >Linux 5.15</option>
+							<option value="linux-6.1" >Linux 6.1</option>
+							<option value="netbsd" >NetBSD</option>
+							<option value="openbsd" >OpenBSD</option>
+							<option value="gvisor" >gVisor</option></select>
+				</td>
+				<td class="search">
+					
+					
+						<a href="https://syzkaller.appspot.com/_ah/conflogin?continue=https://syzkaller.appspot.com/bug%3Fextid%3Dfa5414772d5c445dac3c">sign-in</a> |
+					
+					<a href="https://groups.google.com/forum/#!forum/syzkaller" target="_blank">mailing list</a> |
+					<a href="https://github.com/google/syzkaller" target="_blank">source</a> |
+					<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md" target="_blank">docs</a>
+				</td>
+			</tr>
+		</table>
+		
+		<div class="navigation">
+			<div class="navigation_tab">
+				<a href='/upstream'><span style="color:DeepPink;">🐞</span> Open [1655]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/subsystems'><span style="color:DeepPink;">≡</span> Subsystems</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/fixed'><span style="color:ForestGreen;">🐞</span> Fixed [6082]</a>
+			</div>
+
+			<div class="navigation_tab" href='/upstream/invalid'>
+				<a href='/upstream/invalid'><span style="color:RoyalBlue;">🐞</span> Invalid [15106]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/backports'><span style="color:ForestGreen;">⬇</span> Missing Backports [157]</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/graph/crashes'><span style="color:ForestGreen;">≡</span> Crashes</a>
+			</div>
+
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Graphs</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href='/upstream/graph/bugs'>Kernel&nbsp;Health</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/found-bugs'>Bugs/Month</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/lifetimes'>Bug&nbsp;Lifetimes</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/fuzzing'>Fuzzing</a>
+				</div>
+			</div>
+
+			
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Coverage</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href="/upstream/graph/coverage?period=quarter">Total</a>
+					<a class="navigation_tab"
+						href="/upstream/coverage?period=month">Repo&nbsp;Heatmap</a>
+					
+						<a class="navigation_tab"
+							href="/upstream/coverage/subsystems?period=month">Subsystems&nbsp;Heatmap</a>
+					
+				</div>
+			</div>
+			
+			
+			<div class="navigation_tab navigation_right">
+				<a href='mailto:syzkaller@googlegroups.com'><span style="color:ForestGreen;">💬</span> Send us feedback</a>
+			</div>
+			
+		</div>
+		
+	</header>
+	<br>
+
+
+	<b>KMSAN: kernel-infoleak in copyout (2)</b><br><br>
+	Status: <a href="https://groups.google.com/d/msgid/syzkaller-bugs/00000000000038f92e05a1c52f43%40google.com">fixed on 2023/06/08 14:41</a><br>
+	
+		
+			Subsystems: 
+				<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+		<br>
+		
+	<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md#labels">[Documentation on labels]</a><br>
+	
+	
+	Reported-by: syzbot&#43;fa5414772d5c445dac3c@syzkaller.appspotmail.com<br>
+	
+		<b>Fix commit:</b> 
+
+	<span class="mono">
+		
+			8222d5910dae
+		
+		<a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=8222d5910dae08213b6d9d4bc9a7f8502855e624">xfrm: Zero padding when dumping algos and encap</a>
+	</span>
+
+<br>
+		
+	
+	First crash: 2121d, last: 637d<br>
+	
+	<div>
+		
+		
+		<div class="bug-bisection-stop"></div>
+	</div>
+
+	
+	<div class="collapsible collapsible-show">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Discussions (7)</span>
+		</div>
+		<div class="content">
+			
+			
+			
+
+<table class="list_table">
+	<thead>
+	<tr>
+		<th>Title</th>
+		<th>Replies (including bot)</th>
+		<th>Last reply</th>
+	</tr>
+	</thead>
+	<tbody>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/20230322200121.1997157-1-sashal@kernel.org/T/">[PATCH AUTOSEL 5.15 01/16] xfrm: Zero padding when dumping algos and encap</a></td>
+			<td class="stat">16 (16)</td>
+			<td class="stat">2023/03/22 20:01</td>
+		</tr>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/20230322195926.1996699-1-sashal@kernel.org/T/">[PATCH AUTOSEL 6.1 01/34] xfrm: Zero padding when dumping algos and encap</a></td>
+			<td class="stat">34 (34)</td>
+			<td class="stat">2023/03/22 19:59</td>
+		</tr>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/20230322195639.1995821-1-sashal@kernel.org/T/">[PATCH AUTOSEL 6.2 01/45] xfrm: Zero padding when dumping algos and encap</a></td>
+			<td class="stat">45 (45)</td>
+			<td class="stat">2023/03/22 19:56</td>
+		</tr>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/20230315105623.1396491-1-steffen.klassert@secunet.com/T/">[PATCH 0/2] pull request (net): ipsec 2023-03-15</a></td>
+			<td class="stat">4 (4)</td>
+			<td class="stat">2023/03/17 00:30</td>
+		</tr>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/20230204175018.GA7246@ubuntu/T/">[PATCH] af_key: Fix heap information leak</a></td>
+			<td class="stat">11 (11)</td>
+			<td class="stat">2023/02/14 13:06</td>
+		</tr>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/20221104103216.2576427-1-glider@google.com/T/">[PATCH] ipv6: addrlabel: fix infoleak when sending struct ifaddrlblmsg to network</a></td>
+			<td class="stat">4 (8)</td>
+			<td class="stat">2022/11/07 12:30</td>
+		</tr>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/00000000000038f92e05a1c52f43@google.com/T/">KMSAN: kernel-infoleak in copyout (2)</a></td>
+			<td class="stat">0 (1)</td>
+			<td class="stat">2020/03/26 17:19</td>
+		</tr>
+	
+	</tbody>
+</table>
+
+
+			
+			
+		</div>
+	</div>
+	
+	<div class="collapsible collapsible-hide">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Similar bugs (77)</span>
+		</div>
+		<div class="content">
+			
+
+
+<table class="list_table">
+	
+	<thead>
+	<tr>
+		
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+		
+		<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		<th><a onclick="return sortTable(this, 'Repro', reproSort)" href="#">Repro</a></th>
+		<th><a onclick="return sortTable(this, 'Cause bisect', textSort)" href="#">Cause bisect</a></th>
+		<th><a onclick="return sortTable(this, 'Fix bisect', textSort)" href="#">Fix bisect</a></th>
+		<th><a onclick="return sortTable(this, 'Count', numSort)" href="#">Count</a></th>
+		<th><a onclick="return sortTable(this, 'Last', timeSort)" href="#">Last</a></th>
+		<th><a onclick="return sortTable(this, 'Reported', timeSort)" href="#">Reported</a></th>
+		
+		
+		
+			<th><a onclick="return sortTable(this, 'Patched', patchedSort)" href="#">Patched</a></th>
+		
+		
+			<th><a onclick="return sortTable(this, 'Status', textSort)" href="#">Status</a></th>
+		
+		
+	</tr>
+	</thead>
+	<tbody>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=eeef63a8a28d3ceb5c2fecb516e5b9560c9de702">KMSAN: kernel-infoleak in copyout</a>
+					<span class="bug-label"><a href="/upstream/s/fs">fs</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">1860</td>
+			<td class="stat">2122d</td>
+			<td class="stat">
+				
+					2122d
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						closed as invalid on 2019/05/15 17:57
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=9b96a3c00074b0197f3719a4c1ff0bbec8abd95c">KASAN: wild-memory-access Read in copyout</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">726</td>
+			<td class="stat">1402d</td>
+			<td class="stat">
+				
+					1409d
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						auto-closed as invalid on 2021/07/03 03:34
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=a652ddf168ffc4273a60f6321077e72a156966e8">KMSAN: kernel-infoleak in _copy_to_iter (7)</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">138977</td>
+			<td class="stat">741d</td>
+			<td class="stat">
+				
+					1093d
+				
+			</td>
+			
+			
+			
+				<td class="patched" title="sctp: fix kernel-infoleak for SCTP sockets">22/28</td>
+			
+			
+				<td class="status">
+					
+						fixed on 2023/02/24 13:50
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=bd08f0235e40447bf79751068e7a74b71c47e9f3">KMSAN: kernel-infoleak in __skb_datagram_iter</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">68</td>
+			<td class="stat">527d</td>
+			<td class="stat">
+				
+					632d
+				
+			</td>
+			
+			
+			
+				<td class="patched" title="netlink: do not hard code device address lenth in fdb dumps">23/28</td>
+			
+			
+				<td class="status">
+					
+						fixed on 2023/09/28 17:51
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=e476b01dd5a1075a281c26069ebf677b019bf6d8">KMSAN: kernel-infoleak in _copy_to_iter (6)</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">748</td>
+			<td class="stat">1094d</td>
+			<td class="stat">
+				
+					1183d
+				
+			</td>
+			
+			
+			
+				<td class="patched" title="inet_diag: fix kernel-infoleak for UDP sockets">20/28</td>
+			
+			
+				<td class="status">
+					
+						fixed on 2022/03/08 16:11
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=5d85078d73ab8c921c09eee52e6db59421bd4c58">KMSAN: uninit-value in ___bpf_prog_run (3)</a>
+					<span class="bug-label"><a href="/upstream/s/bpf">bpf</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">5</td>
+			<td class="stat">1055d</td>
+			<td class="stat">
+				
+					1057d
+				
+			</td>
+			
+			
+			
+				<td class="patched" title="netlink: reset network and mac headers in netlink_dump()">22/28</td>
+			
+			
+				<td class="status">
+					
+						fixed on 2023/02/24 13:50
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=ae91dcaa831e4f19c0032a4248da8cbe50fa7eee">KMSAN: kernel-infoleak in _copy_to_iter (8)</a>
+					<span class="bug-label"><a href="/upstream/s/mm">mm</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">21180</td>
+			<td class="stat">637d</td>
+			<td class="stat">
+				
+					731d
+				
+			</td>
+			
+			
+			
+				<td class="patched" title="xfrm: Zero padding when dumping algos and encap">22/28</td>
+			
+			
+				<td class="status">
+					
+						fixed on 2023/06/08 14:41
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=d8b02c920ae8f3e0be75">KMSAN: uninit-value in bcmp</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status">error</td>
+			<td class="bisect_status">done</td>
+			<td class="stat ">907</td>
+			<td class="stat">777d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000008f00f7058ad13ec8%40google.com">2098d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" title="fs/ntfs3: Validate attribute name offset">22/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000008f00f7058ad13ec8%40google.com">fixed on 2023/02/24 13:50</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=d210f2552d9f897e70469b9ec55b4c9b85dfe97a">KMSAN: uninit-value in tipc_sk_lookup</a>
+					<span class="bug-label"><a href="/upstream/s/tipc">tipc</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">8</td>
+			<td class="stat">1127d</td>
+			<td class="stat">
+				
+					1181d
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						auto-closed as invalid on 2022/05/03 21:09
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=1cfb4f75ea574fd0c8593a5a2ec7ac4b5fadf695">KMSAN: uninit-value in skb_release_data (3)</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">10</td>
+			<td class="stat">960d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/000000000000faf37f05aede7db6%40google.com">1639d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/000000000000faf37f05aede7db6%40google.com">auto-obsoleted due to no activity on 2022/11/17 07:20</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=2ad30d6cef7180728e401174df99d001bae578fe">KMSAN: uninit-value in hsr_register_frame_in</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">197</td>
+			<td class="stat">593d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000003bb1540581a55575%40google.com">2214d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000003bb1540581a55575%40google.com">auto-obsoleted due to no activity on 2024/02/18 18:09</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=8257f4dcef79de670baf">KMSAN: uninit-value in ipv6_find_tlv</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">271</td>
+			<td class="stat">678d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/00000000000068a9b7059000ba1a%40google.com">2032d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" title="ipv6: Fix an uninit variable access bug in __ip6_make_skb()">22/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/00000000000068a9b7059000ba1a%40google.com">fixed on 2023/06/08 14:41</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=0e6ddb1ef80986bdfe64">KMSAN: uninit-value in bpf_prog_run_generic_xdp</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">1318</td>
+			<td class="stat">14m</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/00000000000067f65105edbd295d%40google.com">839d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/00000000000067f65105edbd295d%40google.com">upstream: reported C repro on 2022/11/18 11:39</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=7e2a48c37faaf4770c50c374edb48823acd38f3d">KMSAN: uninit-value in ax25cmp (2)</a>
+					<span class="bug-label"><a href="/upstream/s/hams">hams</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">51</td>
+			<td class="stat">897d</td>
+			<td class="stat">
+				
+					1158d
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						closed as invalid on 2022/11/18 11:50
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=8ce8988656868012c6232d4734c01956b6432b07">KMSAN: uninit-value in virtqueue_add (3)</a>
+					<span class="bug-label"><a href="/upstream/s/virt">virt</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">13</td>
+			<td class="stat">853d</td>
+			<td class="stat">
+				
+					1146d
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						auto-obsoleted due to no activity on 2023/02/12 03:53
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=d168ec0caca4697e03b1">KMSAN: uninit-value in can_send</a>
+					<span class="bug-label"><a href="/upstream/s/can">can</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">630</td>
+			<td class="stat">836d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/000000000000cf2ce705ec935d80%40google.com">854d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" title="can: j1939: j1939_send_one(): fix missing CAN header initialization">22/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/000000000000cf2ce705ec935d80%40google.com">fixed on 2023/02/24 13:50</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=bf7e6250c7ce248f3ec9">KMSAN: uninit-value in IP6_ECN_decapsulate</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">981</td>
+			<td class="stat">442d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/000000000000336563057653b9aa%40google.com">2358d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" title="hsr: Fix uninit-value access in fill_frame_info()">25/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/000000000000336563057653b9aa%40google.com">fixed on 2023/12/21 03:45</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=d75bec899d05d11007069abb0a3c6c96e78f1351">KMSAN: uninit-value in inet_frag_find (2)</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">2</td>
+			<td class="stat">1150d</td>
+			<td class="stat">
+				
+					1158d
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						auto-closed as invalid on 2022/04/11 17:13
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=0901d0cc75c3d716a3a3">KMSAN: uninit-value in eth_type_trans (2)</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">6718</td>
+			<td class="stat">1d03h</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000009db040059cbd46a4%40google.com">1870d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000009db040059cbd46a4%40google.com">upstream: reported C repro on 2020/01/22 16:47</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=efb14db0805af2a5c597f309cc9076219fd1267d">KMSAN: uninit-value in hsr_fill_frame_info (2)</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">65</td>
+			<td class="stat">593d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/000000000000d7639205eadb267a%40google.com">876d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/000000000000d7639205eadb267a%40google.com">auto-obsoleted due to no activity on 2023/10/30 13:38</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=93ab4a777bafb9d9f960">KMSAN: uninit-value in __ipv6_addr_type</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">3</td>
+			<td class="stat">13d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/67b74f01.050a0220.14d86d.02d8.GAE@google.com">14d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" title="ipvlan: ensure network headers are in skb linear part">21/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/67b74f01.050a0220.14d86d.02d8.GAE@google.com">upstream: reported C repro on 2025/02/20 15:49</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=1c84637b60e31d1303472e4a8175956bbedb7f4a">KMSAN: uninit-value in __xfrm_decode_session (2)</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">6</td>
+			<td class="stat">1867d</td>
+			<td class="stat">
+				
+					1941d
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						auto-closed as invalid on 2020/04/24 09:27
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=2e85e4f6b06cc7ad23dab61c42a632e9741e905c">KASAN: slab-out-of-bounds Read in __xfrm_decode_session (2)</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">7</td>
+			<td class="stat">1187d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/00000000000055d14505bfd44d8a%40google.com">1423d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/00000000000055d14505bfd44d8a%40google.com">auto-closed as invalid on 2022/04/04 17:22</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=606724815ecda3d67e50f04d90f8c33d343badc6">KMSAN: uninit-value in __xfrm_decode_session</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">1</td>
+			<td class="stat">1985d</td>
+			<td class="stat">
+				
+					1985d
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						closed as invalid on 2019/10/08 12:18
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=d054782b2464e3762350440b35e8cb88ae148b06">KMSAN: uninit-value in __xfrm_decode_session (4)</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">8</td>
+			<td class="stat">501d</td>
+			<td class="stat">
+				
+					548d
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						closed as invalid on 2023/12/14 11:46
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=da2b518b755770858a4fe6caf418366fc6bd22b3">KMSAN: uninit-value in __xfrm_decode_session (3)</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">1</td>
+			<td class="stat">1688d</td>
+			<td class="stat">
+				
+					1688d
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						auto-closed as invalid on 2020/10/20 16:12
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>linux-5.15</td>
+			<td class="title">
+				<a href="/bug?id=90dfa946c8bbea309e711c145f0d9c15390c79ff">KASAN: slab-out-of-bounds Read in __xfrm_decode_session</a>
+					<span class="bug-label"><a href="/linux-5.15?label=origin%3Aupstream">origin:upstream</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status">error</td>
+			<td class="stat ">7</td>
+			<td class="stat">483d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/00000000000081e37505faf9c6c4%40google.com">670d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/3</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/00000000000081e37505faf9c6c4%40google.com">auto-obsoleted due to no activity on 2024/02/16 23:16</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>linux-6.1</td>
+			<td class="title">
+				<a href="/bug?extid=8d0bf962e4fedb1613b1">KASAN: slab-out-of-bounds Read in __xfrm_decode_session</a>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">1</td>
+			<td class="stat">70d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/676d21ee.050a0220.2f3838.045e.GAE@google.com">70d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/3</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/676d21ee.050a0220.2f3838.045e.GAE@google.com">upstream: reported on 2024/12/26 09:29</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>linux-6.1</td>
+			<td class="title">
+				<a href="/bug?id=fcfcdeb1e0ca4ee45e14dd21a6de17da17537bea">KASAN: use-after-free Read in __xfrm_decode_session</a>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">4</td>
+			<td class="stat">529d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/0000000000003aefe205fbb8b070%40google.com">661d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/3</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/0000000000003aefe205fbb8b070%40google.com">auto-obsoleted due to no activity on 2024/01/01 21:03</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=1157f1b5ae3cf62f60d725868ae9fc53e9050aa0">KMSAN: uninit-value in ip_route_output_key_hash_rcu (4)</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">2</td>
+			<td class="stat">1494d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000000db99b05b8ce3fb7%40google.com">1512d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000000db99b05b8ce3fb7%40google.com">auto-closed as invalid on 2021/06/01 04:17</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=27abf0595019515c3f17f1f9a26e5a68344a6eeb">KMSAN: uninit-value in ip_route_output_key_hash_rcu (2)</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">1</td>
+			<td class="stat">2486d</td>
+			<td class="stat">
+				
+					2485d
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						closed as invalid on 2018/06/27 15:18
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=3f11694d2a6f35533ce7ea5cf8493ed8e92a79d8">KMSAN: uninit-value in ip_route_output_key_hash_rcu (5)</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">1</td>
+			<td class="stat">1192d</td>
+			<td class="stat">
+				
+					1192d
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						auto-closed as invalid on 2022/02/28 08:56
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=70d6d9cc44d5c004a18484bac2e3c54402f254c4">general protection fault in ip_route_output_key_hash_rcu (3)</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">4</td>
+			<td class="stat">8d13h</td>
+			<td class="stat">
+				
+					34d
+				
+			</td>
+			
+			
+			
+				<td class="patched" title="ipvlan: ensure network headers are in skb linear part">21/28</td>
+			
+			
+				<td class="status">
+					
+						internal: reported on 2025/01/31 12:44
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=bdf73a7358a75d73a4ad247bd8c7451b3f611233">KMSAN: uninit-value in ip_route_output_key_hash_rcu (3)</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">2</td>
+			<td class="stat">1811d</td>
+			<td class="stat">
+				
+					1836d
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						auto-closed as invalid on 2020/06/19 03:56
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=e2f9922e2c785ed68ddd41d09e0adbd130f870cf">KMSAN: uninit-value in ip_route_output_key_hash_rcu</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">179</td>
+			<td class="stat">2494d</td>
+			<td class="stat">
+				
+					2525d
+				
+			</td>
+			
+			
+			
+				<td class="patched" title="ipv4: fix uninit-value in ip_route_output_key_hash_rcu()">5/28</td>
+			
+			
+				<td class="status">
+					
+						fixed on 2018/05/08 18:30
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=42684ade82db995fb0a8550824ba6d6ccf63b300">general protection fault in ip_route_output_key_hash_rcu (2)</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">2</td>
+			<td class="stat">279d</td>
+			<td class="stat">
+				
+					289d
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						closed as invalid on 2024/07/26 12:16
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=7f4d0ea3df4d4fa9a65f">KMSAN: uninit-value in validate_xmit_skb</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">21</td>
+			<td class="stat">402d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000005abd7b060eb160cd%40google.com">419d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" title="net: add more sanity check in virtio_net_hdr_to_skb()">25/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000005abd7b060eb160cd%40google.com">fixed on 2024/01/30 15:47</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=6e121acaff965b6d49b0b8de508bdb4a3f05043e">KMSAN: uninit-value in validate_xmit_skb (3)</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">9</td>
+			<td class="stat">286d</td>
+			<td class="stat">
+				
+					286d
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						closed as invalid on 2024/06/03 17:57
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=9772c8453fadcd420a2959d08c7d75ac7a87569c">KMSAN: uninit-value in validate_xmit_skb (2)</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">15</td>
+			<td class="stat">392d</td>
+			<td class="stat">
+				
+					400d
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						auto-obsoleted due to no activity on 2024/04/10 02:16
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=7ebc2e088af5e4c0c9fa">KMSAN: uninit-value in geneve_xmit</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">163</td>
+			<td class="stat">1635d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000005fecaf05ab015b7a%40google.com">1688d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" title="geneve: fix an uninitialized value in geneve_changelink()">15/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000005fecaf05ab015b7a%40google.com">fixed on 2020/09/16 22:51</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=9ee20ec1de7b3168db09">KMSAN: uninit-value in geneve_xmit (3)</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">14</td>
+			<td class="stat">329d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/000000000000d19c3a06152f9ee4%40google.com">337d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" title="geneve: fix header validation in geneve[6]_xmit_skb">25/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/000000000000d19c3a06152f9ee4%40google.com">fixed on 2024/05/23 00:06</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=ebf763e427156c437f34f9a2f0cf4b22ab01f100">KMSAN: uninit-value in geneve_xmit (2)</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">12</td>
+			<td class="stat">350d</td>
+			<td class="stat">
+				
+					427d
+				
+			</td>
+			
+			
+			
+				<td class="patched" title="net: ip_tunnel: prevent perpetual headroom growth">25/28</td>
+			
+			
+				<td class="status">
+					
+						fixed on 2024/03/26 00:54
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=9e2fbc1cc41de01798cd70bdf61af07486561fa7">KASAN: slab-out-of-bounds Read in geneve_xmit</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">1</td>
+			<td class="stat">1215d</td>
+			<td class="stat">
+				
+					1215d
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						auto-closed as invalid on 2022/02/05 16:18
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>linux-4.19</td>
+			<td class="title">
+				<a href="/bug?id=a6a070e84e9a81cc362448559fe1d22ea847d9aa">KASAN: use-after-free Read in geneve_xmit</a>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">1</td>
+			<td class="stat">899d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/000000000000a6b12205e8fb7a33%40google.com">899d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/1</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/000000000000a6b12205e8fb7a33%40google.com">auto-obsoleted due to no activity on 2023/01/16 22:54</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>linux-5.15</td>
+			<td class="title">
+				<a href="/bug?id=dca8dc7541f2f4f7f91cce9ea38af05145665dee">KASAN: slab-out-of-bounds Read in geneve_xmit</a>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">3</td>
+			<td class="stat">119d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/6722e5ea.050a0220.35b515.0101.GAE@google.com">126d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/3</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/6722e5ea.050a0220.35b515.0101.GAE@google.com">auto-obsoleted due to no activity on 2025/02/15 13:17</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=a81f2759d022496b40ab">KMSAN: uninit-value in hsr_get_node (3)</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">26</td>
+			<td class="stat">23h01m</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000004a86bf0616571fc7%40google.com">322d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000004a86bf0616571fc7%40google.com">upstream: reported C repro on 2024/04/18 04:08</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=67d82ccb9f493168fbc1111b02b0279aceb5fd4b">KMSAN: uninit-value in hsr_get_node</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">304</td>
+			<td class="stat">1427d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/000000000000d9f93a05ac87ba78%40google.com">1669d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/000000000000d9f93a05ac87ba78%40google.com">auto-closed as invalid on 2021/07/08 06:23</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=2ef3a8ce8e91b5a50098">KMSAN: uninit-value in hsr_get_node (2)</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">49</td>
+			<td class="stat">331d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000001663ea060ee476ea%40google.com">417d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" title="hsr: Fix uninit-value access in hsr_get_node()">25/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000001663ea060ee476ea%40google.com">fixed on 2024/04/10 03:59</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=48be0c7d808d342eadac3b515f2353c4e7bae26c">KMSAN: uninit-value in netif_skb_features (2)</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">9</td>
+			<td class="stat">444d</td>
+			<td class="stat">
+				
+					533d
+				
+			</td>
+			
+			
+			
+				<td class="patched" title="net: add more sanity check in virtio_net_hdr_to_skb()">25/28</td>
+			
+			
+				<td class="status">
+					
+						fixed on 2024/01/30 15:47
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=0bbe42c764feafa82c5a">KMSAN: uninit-value in netif_skb_features</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">119</td>
+			<td class="stat">2494d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/089e082d0cb81b67d10569a2283f%40google.com">2520d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" title="vlan: Fix reading memory beyond skb-&gt;tail in skb_vlan_tagged_multi">5/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/089e082d0cb81b67d10569a2283f%40google.com">fixed on 2018/05/08 18:30</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=d0abc20c97da0949af2a">Internal error in fib6_node_lookup_1</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">2</td>
+			<td class="stat">506d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-upstream-moderation/000000000000ea0ca90607ce5b81%40google.com">507d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-upstream-moderation/000000000000ea0ca90607ce5b81%40google.com">auto-obsoleted due to no activity on 2024/01/14 23:35</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=34ad5fab48f7bf510349">KMSAN: kernel-infoleak in __skb_datagram_iter (2)</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">126</td>
+			<td class="stat">346d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000002cf4690610660f71%40google.com">398d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" title="netlink: Fix kernel-infoleak-after-free in __skb_datagram_iter">25/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000002cf4690610660f71%40google.com">fixed on 2024/03/25 23:45</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=0c85cae3350b7d486aee">KMSAN: kernel-infoleak in __skb_datagram_iter (4)</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">266</td>
+			<td class="stat">2h29m</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/00000000000035941f061932a077%40google.com">286d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/00000000000035941f061932a077%40google.com">upstream: reported C repro on 2024/05/24 12:51</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=522c8b5b01fd97925adfa45154a5f56ab4fd6218">KMSAN: kernel-infoleak in __skb_datagram_iter (3)</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">25</td>
+			<td class="stat">290d</td>
+			<td class="stat">
+				
+					344d
+				
+			</td>
+			
+			
+			
+				<td class="patched" title="net/sched: act_skbmod: prevent kernel-infoleak">25/28</td>
+			
+			
+				<td class="status">
+					
+						fixed on 2024/05/23 00:06
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>android-5-15</td>
+			<td class="title">
+				<a href="/bug?id=07cf7ebf4b452f4969c1e1b3511620aefc4e2f9a">KASAN: use-after-free Read in __skb_datagram_iter</a>
+					<span class="bug-label"><a href="/android-5-15?label=origin%3Aupstream">origin:upstream</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status">done</td>
+			<td class="stat ">1</td>
+			<td class="stat">448d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-android-bugs/000000000000242d49060ee947dc%40google.com">479d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/2</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-android-bugs/000000000000242d49060ee947dc%40google.com">auto-obsoleted due to no activity on 2024/03/22 20:57</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=8eafc39ac4106b959679eabe66cd4736d7785d5b">KASAN: use-after-free Read in __skb_datagram_iter</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">431</td>
+			<td class="stat">1402d</td>
+			<td class="stat">
+				
+					1409d
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						auto-closed as invalid on 2021/07/03 04:24
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=0427c601119b04d96edf3169848b94a118c6cffc">KMSAN: uninit-value in qdisc_run</a>
+					<span class="bug-label"><a href="/upstream/s/kernel">kernel</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">2</td>
+			<td class="stat">848d</td>
+			<td class="stat">
+				
+					785d
+				
+			</td>
+			
+			
+			
+				<td class="patched" title="net/sched: sch_taprio: fix possible use-after-free">22/28</td>
+			
+			
+				<td class="status">
+					
+						fixed on 2023/06/08 14:41
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=fbf18eb0b1041f636995f313f715a36efaf764d7">KASAN: slab-out-of-bounds Read in __xfrm_decode_session</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">20</td>
+			<td class="stat">1639d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000004a5415059877e248%40google.com">1924d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000004a5415059877e248%40google.com">auto-closed as invalid on 2021/01/07 14:52</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>android-5-15</td>
+			<td class="title">
+				<a href="/bug?extid=3512b5042ccf76dc6152">KASAN: use-after-free Read in process_one_work</a>
+					<span class="bug-label"><a href="/android-5-15?label=missing-backport">missing-backport</a></span>
+					<span class="bug-label"><a href="/android-5-15?label=origin%3Adownstream">origin:downstream</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status">unreliable</td>
+			<td class="bisect_status"></td>
+			<td class="stat ">576</td>
+			<td class="stat">2h45m</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-android-bugs/0000000000009d4cce05ec5081a9%40google.com">857d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/2</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-android-bugs/0000000000009d4cce05ec5081a9%40google.com">upstream: reported C repro on 2022/10/31 08:36</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>android-5-10</td>
+			<td class="title">
+				<a href="/bug?extid=badfd07a93cffefd7317">BUG: corrupted list in process_one_work</a>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status">error</td>
+			<td class="bisect_status">done</td>
+			<td class="stat ">31</td>
+			<td class="stat">37d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-android-bugs/0000000000003a1b3105dc469dde%40google.com">1061d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" title="percpu_ref_init(): clean -&gt;percpu_count_ref on failure">2/2</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-android-bugs/0000000000003a1b3105dc469dde%40google.com">upstream: reported C repro on 2022/04/10 06:05</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=abece3b33eb72781f5f0">KASAN: global-out-of-bounds Read in process_one_work</a>
+					<span class="bug-label"><a href="/upstream/s/kernel">kernel</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">1</td>
+			<td class="stat">294d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-upstream-moderation/000000000000a77cde0618d84ba7%40google.com">290d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-upstream-moderation/000000000000a77cde0618d84ba7%40google.com">auto-obsoleted due to no activity on 2024/08/14 00:54</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=4e778016c07f85e92e94">general protection fault in process_one_work (2)</a>
+					<span class="bug-label"><a href="/upstream/s/kernel">kernel</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">1</td>
+			<td class="stat">1326d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-upstream-moderation/0000000000002b8d0905c7c9a3a7%40google.com">1322d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-upstream-moderation/0000000000002b8d0905c7c9a3a7%40google.com">auto-closed as invalid on 2021/09/17 12:34</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=0c353646149a6d056e54">KASAN: slab-out-of-bounds Read in process_one_work</a>
+					<span class="bug-label"><a href="/upstream/s/kernel">kernel</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">1</td>
+			<td class="stat">860d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-upstream-moderation/000000000000925d0805ec5a5050%40google.com">856d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-upstream-moderation/000000000000925d0805ec5a5050%40google.com">auto-obsoleted due to no activity on 2023/01/25 20:05</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>android-6-1</td>
+			<td class="title">
+				<a href="/bug?extid=a652b345402bfb128209">KASAN: use-after-free Read in process_one_work</a>
+					<span class="bug-label"><a href="/android-6-1?label=origin%3Aupstream">origin:upstream</a></span>
+					<span class="bug-label"><a href="/android-6-1?label=missing-backport">missing-backport</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status">error</td>
+			<td class="bisect_status"></td>
+			<td class="stat ">727</td>
+			<td class="stat">2d06h</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-android-bugs/000000000000144a4905fc3c2ee2%40google.com">654d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/2</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-android-bugs/000000000000144a4905fc3c2ee2%40google.com">upstream: reported C repro on 2023/05/21 23:04</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=28475d18d834b094d219">KASAN: slab-use-after-free Read in process_one_work</a>
+					<span class="bug-label"><a href="/upstream/s/kernel">kernel</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">2</td>
+			<td class="stat">544d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-upstream-moderation/000000000000bb5f350604ba24ab%40google.com">546d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-upstream-moderation/000000000000bb5f350604ba24ab%40google.com">auto-obsoleted due to no activity on 2023/12/08 17:35</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>android-54</td>
+			<td class="title">
+				<a href="/bug?id=c3a440c439facc228c056fcffa4773eaf0cb2eba">KASAN: use-after-free Read in process_one_work</a>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">1</td>
+			<td class="stat">717d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-android-bugs/0000000000001dfc0705f7592843%40google.com">717d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/2</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-android-bugs/0000000000001dfc0705f7592843%40google.com">auto-obsoleted due to no activity on 2023/07/18 18:33</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=184d42de372244c97f6b5f331f8e70e9f8a6dde7">KMSAN: uninit-value in native_apic_mem_write (2)</a>
+					<span class="bug-label"><a href="/upstream/s/kernel">kernel</a></span>
+			</td>
+			<td class="stat">syz</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">148</td>
+			<td class="stat">744d</td>
+			<td class="stat">
+				
+					757d
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						auto-obsoleted due to no activity on 2023/05/13 00:04
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=c3e08b7cdcad13d48d7527020e46ee417d481019">KMSAN: uninit-value in inode_go_dump</a>
+					<span class="bug-label"><a href="/upstream/s/gfs2">gfs2</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">8</td>
+			<td class="stat">636d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000008b105805f2734d55%40google.com">779d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000008b105805f2734d55%40google.com">auto-obsoleted due to no activity on 2023/09/17 03:31</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=f06de9bb96a19352911ca24c7b02d5e2b55a3467">KMSAN: uninit-value in reiserfs_new_inode (2)</a>
+					<span class="bug-label"><a href="/upstream/s/reiserfs">reiserfs</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">1339</td>
+			<td class="stat">398d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/00000000000027f81605ee31ab88%40google.com">833d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/00000000000027f81605ee31ab88%40google.com">auto-obsoleted due to no activity on 2024/04/12 15:06</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=f7f71d41dee5a8b1e655e5c17114a33653a7718e">KMSAN: uninit-value in zswap_frontswap_store</a>
+					<span class="bug-label"><a href="/upstream/s/mm">mm</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">4027</td>
+			<td class="stat">346d</td>
+			<td class="stat">
+				
+					630d
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						auto-obsoleted due to no activity on 2024/06/01 21:32
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=3921c6924295b5daf7752fc57e6411e274ee7abf">KMSAN: uninit-value in geneve_udp_encap_recv</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">2</td>
+			<td class="stat">375d</td>
+			<td class="stat">
+				
+					405d
+				
+			</td>
+			
+			
+			
+				<td class="patched" title="geneve: make sure to pull inner header in geneve_rx()">25/28</td>
+			
+			
+				<td class="status">
+					
+						fixed on 2024/04/10 03:59
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=9ed8f68ab30761f3678e">general protection fault in process_one_work</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">2</td>
+			<td class="stat">1955d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000001c46d5059608892f%40google.com">1955d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" title="netdevsim: Fix use-after-free during device dismantle">13/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000001c46d5059608892f%40google.com">fixed on 2019/11/23 02:56</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=6eb713b7107c62e9f6c259adf944c96efc3cd524">KMSAN: uninit-value in aes_encrypt (4)</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">15041</td>
+			<td class="stat">422d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000008a7ae505aef61db1%40google.com">1638d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000008a7ae505aef61db1%40google.com">auto-obsoleted due to no activity on 2024/03/19 00:25</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=930efb522ecba939943e24ee4c1bfe22e7e4bae3">KMSAN: uninit-value in nf_nat_setup_info (2)</a>
+					<span class="bug-label"><a href="/upstream/s/netfilter">netfilter</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">764</td>
+			<td class="stat">1074d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000003118ba05d500cce1%40google.com">1154d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000003118ba05d500cce1%40google.com">auto-obsoleted due to no activity on 2022/09/28 07:28</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=cdbd40e0c3ca02cae3b7">KMSAN: kernel-infoleak in move_addr_to_user (6)</a>
+					<span class="bug-label"><a href="/upstream/s/tipc">tipc</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">4</td>
+			<td class="stat">1134d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/000000000000a8a64205d39672b8%40google.com">1172d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" title="net ticp:fix a kernel-infoleak in __tipc_sendmsg()">20/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/000000000000a8a64205d39672b8%40google.com">fixed on 2022/03/08 16:11</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=70a42f45e76bede082be">KMSAN: uninit-value in sctp_inq_pop (2)</a>
+					<span class="bug-label"><a href="/upstream/s/sctp">sctp</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">3726</td>
+			<td class="stat">1h32m</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/000000000000f81aa305d50d7e4c%40google.com">1153d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/000000000000f81aa305d50d7e4c%40google.com">upstream: reported C repro on 2022/01/08 08:00</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=5681e40d297b30f5b513">KMSAN: kernel-infoleak in raw_recvmsg</a>
+					<span class="bug-label"><a href="/upstream/s/can">can</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">121</td>
+			<td class="stat">266d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000007e4a2e0616fdde23%40google.com">314d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" title="net: can: j1939: Initialize unused data in j1939_send_one()">26/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000007e4a2e0616fdde23%40google.com">fixed on 2024/07/09 19:14</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+	</tbody>
+</table>
+
+
+
+			
+			
+			
+			
+		</div>
+	</div>
+	
+
+	
+	<br><b>Sample crash report:</b><br>
+	<div id="crash_div"><pre>netlink: 28 bytes leftover after parsing attributes in process `syz-executor292&#39;.
+=====================================================
+BUG: KMSAN: kernel-infoleak in instrument_copy_to_user <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/include/linux/instrumented.h#L121'>include/linux/instrumented.h:121</a> [inline]
+BUG: KMSAN: kernel-infoleak in copyout+0xbc/0x100 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/lib/iov_iter.c#L169'>lib/iov_iter.c:169</a>
+ instrument_copy_to_user <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/include/linux/instrumented.h#L121'>include/linux/instrumented.h:121</a> [inline]
+ copyout+0xbc/0x100 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/lib/iov_iter.c#L169'>lib/iov_iter.c:169</a>
+ _copy_to_iter+0x4f4/0x1fb0 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/lib/iov_iter.c#L529'>lib/iov_iter.c:529</a>
+ copy_to_iter <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/include/linux/uio.h#L179'>include/linux/uio.h:179</a> [inline]
+ simple_copy_to_iter+0x64/0xa0 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/core/datagram.c#L513'>net/core/datagram.c:513</a>
+ __skb_datagram_iter+0x123/0xdc0 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/core/datagram.c#L419'>net/core/datagram.c:419</a>
+ skb_copy_datagram_iter+0x53/0x1d0 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/core/datagram.c#L527'>net/core/datagram.c:527</a>
+ skb_copy_datagram_msg <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/include/linux/skbuff.h#L3908'>include/linux/skbuff.h:3908</a> [inline]
+ netlink_recvmsg+0x504/0x1650 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/netlink/af_netlink.c#L1988'>net/netlink/af_netlink.c:1988</a>
+ ____sys_recvmsg+0x2c4/0x810
+ ___sys_recvmsg+0x217/0x840 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/socket.c#L2737'>net/socket.c:2737</a>
+ do_recvmmsg+0x55a/0x1180 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/socket.c#L2831'>net/socket.c:2831</a>
+ __sys_recvmmsg <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/socket.c#L2910'>net/socket.c:2910</a> [inline]
+ __do_sys_recvmmsg <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/socket.c#L2933'>net/socket.c:2933</a> [inline]
+ __se_sys_recvmmsg <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/socket.c#L2926'>net/socket.c:2926</a> [inline]
+ __x64_sys_recvmmsg+0x3a7/0x4b0 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/socket.c#L2926'>net/socket.c:2926</a>
+ do_syscall_x64 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/arch/x86/entry/common.c#L50'>arch/x86/entry/common.c:50</a> [inline]
+ do_syscall_64+0x3d/0xb0 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/arch/x86/entry/common.c#L80'>arch/x86/entry/common.c:80</a>
+ entry_SYSCALL_64_after_hwframe+0x63/0xcd
+
+Uninit was stored to memory at:
+ __nla_put <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/lib/nlattr.c#L1006'>lib/nlattr.c:1006</a> [inline]
+ nla_put+0x1c2/0x230 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/lib/nlattr.c#L1064'>lib/nlattr.c:1064</a>
+ copy_to_user_state_extra+0x115e/0x1aa0 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/xfrm/xfrm_user.c#L1101'>net/xfrm/xfrm_user.c:1101</a>
+ dump_one_state+0x2c8/0x7c0 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/xfrm/xfrm_user.c#L1169'>net/xfrm/xfrm_user.c:1169</a>
+ xfrm_state_walk+0x727/0x1300 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/xfrm/xfrm_state.c#L2308'>net/xfrm/xfrm_state.c:2308</a>
+ xfrm_dump_sa+0x1e6/0x6b0 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/xfrm/xfrm_user.c#L1240'>net/xfrm/xfrm_user.c:1240</a>
+ netlink_dump+0xb18/0x1560 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/netlink/af_netlink.c#L2286'>net/netlink/af_netlink.c:2286</a>
+ __netlink_dump_start+0xa6d/0xc40 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/netlink/af_netlink.c#L2391'>net/netlink/af_netlink.c:2391</a>
+ netlink_dump_start <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/include/linux/netlink.h#L294'>include/linux/netlink.h:294</a> [inline]
+ xfrm_user_rcv_msg+0x828/0xf70 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/xfrm/xfrm_user.c#L3091'>net/xfrm/xfrm_user.c:3091</a>
+ netlink_rcv_skb+0x3f1/0x750 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/netlink/af_netlink.c#L2564'>net/netlink/af_netlink.c:2564</a>
+ xfrm_netlink_rcv+0x72/0xb0 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/xfrm/xfrm_user.c#L3128'>net/xfrm/xfrm_user.c:3128</a>
+ netlink_unicast_kernel <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/netlink/af_netlink.c#L1330'>net/netlink/af_netlink.c:1330</a> [inline]
+ netlink_unicast+0xf3b/0x1270 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/netlink/af_netlink.c#L1356'>net/netlink/af_netlink.c:1356</a>
+ netlink_sendmsg+0x127d/0x1430 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/netlink/af_netlink.c#L1932'>net/netlink/af_netlink.c:1932</a>
+ sock_sendmsg_nosec <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/socket.c#L714'>net/socket.c:714</a> [inline]
+ sock_sendmsg <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/socket.c#L734'>net/socket.c:734</a> [inline]
+ ____sys_sendmsg+0xa8e/0xe70 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/socket.c#L2476'>net/socket.c:2476</a>
+ ___sys_sendmsg+0x2a1/0x3f0 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/socket.c#L2530'>net/socket.c:2530</a>
+ __sys_sendmsg <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/socket.c#L2559'>net/socket.c:2559</a> [inline]
+ __do_sys_sendmsg <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/socket.c#L2568'>net/socket.c:2568</a> [inline]
+ __se_sys_sendmsg <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/socket.c#L2566'>net/socket.c:2566</a> [inline]
+ __x64_sys_sendmsg+0x367/0x540 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/socket.c#L2566'>net/socket.c:2566</a>
+ do_syscall_x64 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/arch/x86/entry/common.c#L50'>arch/x86/entry/common.c:50</a> [inline]
+ do_syscall_64+0x3d/0xb0 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/arch/x86/entry/common.c#L80'>arch/x86/entry/common.c:80</a>
+ entry_SYSCALL_64_after_hwframe+0x63/0xcd
+
+Uninit was created at:
+ slab_post_alloc_hook <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/mm/slab.h#L766'>mm/slab.h:766</a> [inline]
+ slab_alloc_node <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/mm/slub.c#L3452'>mm/slub.c:3452</a> [inline]
+ __kmem_cache_alloc_node+0x71f/0xce0 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/mm/slub.c#L3491'>mm/slub.c:3491</a>
+ kmalloc_trace+0x4d/0x1f0 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/mm/slab_common.c#L1062'>mm/slab_common.c:1062</a>
+ kmalloc <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/include/linux/slab.h#L580'>include/linux/slab.h:580</a> [inline]
+ pfkey_msg2xfrm_state <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/key/af_key.c#L1199'>net/key/af_key.c:1199</a> [inline]
+ pfkey_add+0x3124/0x3b90 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/key/af_key.c#L1504'>net/key/af_key.c:1504</a>
+ pfkey_process <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/key/af_key.c#L2844'>net/key/af_key.c:2844</a> [inline]
+ pfkey_sendmsg+0x1693/0x1b90 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/key/af_key.c#L3695'>net/key/af_key.c:3695</a>
+ sock_sendmsg_nosec <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/socket.c#L714'>net/socket.c:714</a> [inline]
+ sock_sendmsg <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/socket.c#L734'>net/socket.c:734</a> [inline]
+ ____sys_sendmsg+0xa8e/0xe70 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/socket.c#L2476'>net/socket.c:2476</a>
+ ___sys_sendmsg+0x2a1/0x3f0 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/socket.c#L2530'>net/socket.c:2530</a>
+ __sys_sendmmsg+0x40d/0xa40 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/socket.c#L2616'>net/socket.c:2616</a>
+ __do_sys_sendmmsg <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/socket.c#L2645'>net/socket.c:2645</a> [inline]
+ __se_sys_sendmmsg <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/socket.c#L2642'>net/socket.c:2642</a> [inline]
+ __x64_sys_sendmmsg+0xb8/0x120 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/net/socket.c#L2642'>net/socket.c:2642</a>
+ do_syscall_x64 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/arch/x86/entry/common.c#L50'>arch/x86/entry/common.c:50</a> [inline]
+ do_syscall_64+0x3d/0xb0 <a href='https://github.com/google/kmsan/blob/c9a4e3bf8138353520d97a1c61a050448ffc5c6c/arch/x86/entry/common.c#L80'>arch/x86/entry/common.c:80</a>
+ entry_SYSCALL_64_after_hwframe+0x63/0xcd
+
+Bytes 252-311 of 912 are uninitialized
+Memory access of size 912 starts at ffff88811c76b000
+Data copied to user address 0000000020001580
+
+CPU: 1 PID: 5027 Comm: syz-executor292 Not tainted 6.2.0-rc3-syzkaller-79340-gc9a4e3bf8138 #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 10/26/2022
+=====================================================
+</pre></div><br>
+	
+
+	
+
+<table class="list_table">
+	<caption>Crashes (6723):</caption>
+		<thead>
+		<tr>
+			<th><a onclick="return sortTable(this, 'Time', textSort, true)" href="#">Time</a></th>
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+			<th><a onclick="return sortTable(this, 'Commit', textSort)" href="#">Commit</a></th>
+			<th><a onclick="return sortTable(this, 'Syzkaller', textSort)" href="#">Syzkaller</a></th>
+			<th><a onclick="return sortTable(this, 'Config', textSort)" href="#">Config</a></th>
+			<th><a onclick="return sortTable(this, 'Log', textSort)" href="#">Log</a></th>
+			<th><a onclick="return sortTable(this, 'Report', reproSort)" href="#">Report</a></th>
+			<th><a onclick="return sortTable(this, 'Syz repro', reproSort)" href="#">Syz repro</a></th>
+			<th><a onclick="return sortTable(this, 'C repro', textSort)" href="#">C repro</a></th>
+			<th><a onclick="return sortTable(this, 'VM info', textSort)" href="#">VM info</a></th>
+			<th><a onclick="return sortTable(this, 'Assets', textSort)" href="#">Assets</a> (<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot_assets.md">help?</a>)</th>
+			<th><a onclick="return sortTable(this, 'Manager', textSort)" href="#">Manager</a></th>
+			<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		</tr>
+		</thead>
+		<tbody>
+		
+		<tr>
+			<td class="time">2023/01/10 13:40</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="c9a4e3bf8138353520d97a1c61a050448ffc5c6c
+	2023/01/09 09:27"><a href="https://github.com/google/kmsan/commits/c9a4e3bf8138353520d97a1c61a050448ffc5c6c">c9a4e3bf8138</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/1dac8c7a01e2bdd35cb04eb4901ddb157291ac2d">1dac8c7a</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b63e082c4fda2e77">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1347585a480000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=161cfa16480000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=12e0e61c480000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=16455df2480000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: kernel-infoleak in copyout</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/08/27 18:38</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="ac3859c02d7f40f59992737d63afcacda0a972ec
+	2022/08/26 12:09"><a href="https://github.com/google/kmsan/commits/ac3859c02d7f40f59992737d63afcacda0a972ec">ac3859c02d7f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/071779164d7640bc97cdb04864e59dbb91db6469">07177916</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=8e64bc5364a1307e">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=164e0e75080000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16942345080000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=13df8595080000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=177def1d080000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: kernel-infoleak in copyout</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2020/02/16 03:31</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="686a4f77cb0c003ef71a30978fba5e8146ebc8e9
+	2020/01/10 15:16"><a href="https://github.com/google/kmsan/commits/686a4f77cb0c003ef71a30978fba5e8146ebc8e9">686a4f77cb0c</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/5d7b90f1af2e3bf33992b75e7fcf0bab6bf49bd6">5d7b90f1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e10654781bc1f11c">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13235a31e00000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11520229e00000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=164789e9e00000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=1014a229e00000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager"></td>
+		</tr>
+		
+		<tr>
+			<td class="time">2020/02/10 13:57</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="686a4f77cb0c003ef71a30978fba5e8146ebc8e9
+	2020/01/10 15:16"><a href="https://github.com/google/kmsan/commits/686a4f77cb0c003ef71a30978fba5e8146ebc8e9">686a4f77cb0c</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/35f5e45ed3cc032d9f969f3a8700e29607c1364f">35f5e45e</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e10654781bc1f11c">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=149826b5e00000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1134fab5e00000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=13901809e00000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=15a466e9e00000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager"></td>
+		</tr>
+		
+		<tr>
+			<td class="time">2020/01/10 01:31</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="178db004661bc4a08ca57cc36c3d2f68fe0d8e0a
+	2020/01/08 15:35"><a href="https://github.com/google/kmsan/commits/178db004661bc4a08ca57cc36c3d2f68fe0d8e0a">178db004661b</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/4de4e9f01d7139b72102ae0b8a1e810730467774">4de4e9f0</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=44fd30c6fa691ed0">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14017325e00000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=145d2d49e00000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=1564ec69e00000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=107e4eaee00000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager"></td>
+		</tr>
+		
+		<tr>
+			<td class="time">2019/12/03 04:22</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="940694c19febf59d6ee716d8ab77bf13b663f950
+	2019/12/02 08:58"><a href="https://github.com/google/kmsan/commits/940694c19febf59d6ee716d8ab77bf13b663f950">940694c19feb</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ab342da3f9aa45e3f2d9e872576ab5cd3e3c350b">ab342da3</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=fde150fb1e865232">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13e1d196e00000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14a7942ae00000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=13de2e41e00000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=1439f641e00000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager"></td>
+		</tr>
+		
+		<tr>
+			<td class="time">2019/12/01 20:38</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="e2027b2c33b719fd421b573422e6ac4f8266cb54
+	2019/11/28 11:00"><a href="https://github.com/google/kmsan/commits/e2027b2c33b719fd421b573422e6ac4f8266cb54">e2027b2c33b7</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a76bf83ffac5c0bed0a686f8ebc98c74bfb34a0c">a76bf83f</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=fde150fb1e865232">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10f10abce00000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=105a08a6e00000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=10532696e00000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=15fd7336e00000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager"></td>
+		</tr>
+		
+		<tr>
+			<td class="time">2019/11/30 18:47</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="e2027b2c33b719fd421b573422e6ac4f8266cb54
+	2019/11/28 11:00"><a href="https://github.com/google/kmsan/commits/e2027b2c33b719fd421b573422e6ac4f8266cb54">e2027b2c33b7</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/3a75be00f50996031dd301d44b009d56db3485f0">3a75be00</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=fde150fb1e865232">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=134e0abce00000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1382e882e00000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=11819696e00000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=13a75a96e00000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager"></td>
+		</tr>
+		
+		<tr>
+			<td class="time">2019/07/20 00:33</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="beaab8a31e0d623b902ddcb0cd016758648477f8
+	2019/07/17 10:46"><a href="https://github.com/google/kmsan/commits/beaab8a31e0d623b902ddcb0cd016758648477f8">beaab8a31e0d</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/1656845f45f284c574eb4f8bfe85dd7916a47a3a">1656845f</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4db781fe35a84ef5">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=135eced0600000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17371a6c600000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=14374500600000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=153e3658600000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager"></td>
+		</tr>
+		
+		<tr>
+			<td class="time">2019/07/13 03:49</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="7280182c67baff3deb5deacce40734a799fa2cfa
+	2019/07/11 12:39"><a href="https://github.com/google/kmsan/commits/7280182c67baff3deb5deacce40734a799fa2cfa">7280182c67ba</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/baa5258a5eddb26cc15d56ac371cb2350a3f1302">baa5258a</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4db781fe35a84ef5">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=117096b7a00000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10253950600000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=14c78c84600000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=130071c0600000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager"></td>
+		</tr>
+		
+		<tr>
+			<td class="time">2019/06/28 11:31</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="41550654dedfffa27ca821c64d54c77aba4f5ea1
+	2019/06/26 13:54"><a href="https://github.com/google/kmsan/commits/41550654dedfffa27ca821c64d54c77aba4f5ea1">41550654dedf</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/7509bf360eba1461ac6059e4cacfbc29c9d2d4c7">7509bf36</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=40511ad0c5945201">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12bc8f79a00000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13008961a00000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=14dee7e9a00000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=12db42d9a00000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager"></td>
+		</tr>
+		
+		<tr>
+			<td class="time">2019/06/18 19:26</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="aad0f0dd72abeb2ff782954584bbdc27bcbc6d35
+	2019/06/17 11:28"><a href="https://github.com/google/kmsan/commits/aad0f0dd72abeb2ff782954584bbdc27bcbc6d35">aad0f0dd72ab</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/e3f76baaa97f5c1d27a6f49094f0de132592d96e">e3f76baa</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=40511ad0c5945201">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12143d21a00000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=154b42c6a00000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=1732de9ea00000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=126e1a2aa00000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager"></td>
+		</tr>
+		
+		<tr>
+			<td class="time">2019/06/17 20:04</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="aad0f0dd72abeb2ff782954584bbdc27bcbc6d35
+	2019/06/17 11:28"><a href="https://github.com/google/kmsan/commits/aad0f0dd72abeb2ff782954584bbdc27bcbc6d35">aad0f0dd72ab</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/442206d76b974cca2d83ec763d4cf5ee829eb7d6">442206d7</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=40511ad0c5945201">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13da8c31a00000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15ea2632a00000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=163c0921a00000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=1583ea76a00000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager"></td>
+		</tr>
+		
+		<tr>
+			<td class="time">2019/06/03 15:14</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="f75e4cfea97f67b7530b8b991b3005f991f04778
+	2019/05/22 10:30"><a href="https://github.com/google/kmsan/commits/f75e4cfea97f67b7530b8b991b3005f991f04778">f75e4cfea97f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/63bf051fc1ccc110060be8490f4f5492b0a78766">63bf051f</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=602468164ccdc30a">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1347245aa00000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=117b7e4aa00000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=11bc3d16a00000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=12db28f2a00000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager"></td>
+		</tr>
+		
+		<tr>
+			<td class="time">2019/09/05 23:13</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="040b8306f758c29f9f8806847e37a8d82d732085
+	2019/07/11 12:39"><a href="https://github.com/google/kmsan/commits/040b8306f758c29f9f8806847e37a8d82d732085">040b8306f758</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/040fda588472da50749a3f605e183ad5c02104f4">040fda58</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=f03c659d0830ab8d">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13a960b2600000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10d6c1c6600000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=11b979d6600000">syz</a>
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager"></td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/03/09 15:38</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="e61893130d87e77190a31084fd4fd2e9d39a8c9a
+	2023/03/06 10:57"><a href="https://github.com/google/kmsan/commits/e61893130d87e77190a31084fd4fd2e9d39a8c9a">e61893130d87</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f08b59ac0d8759f409d594ddca4f08c920e23237">f08b59ac</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ef8f90a9dd9b8eae">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10683442c80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=177d2114c80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=fcb3cca112fcb95d">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce-386</td>
+			<td class="manager">KMSAN: kernel-infoleak in copyout</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/04 07:48</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="89b7fd5d7f3ceda236cc1d0026986a5f57ecaf4a
+	2023/05/03 18:25"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=89b7fd5d7f3ceda236cc1d0026986a5f57ecaf4a">89b7fd5d7f3c</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/b591883083486fa625ad707452e97a9a8f282a64">b5918830</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a498c8d56f06ff6c">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=100c1082280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17b250d4280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ec139fdafc57fac">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/60406430a92a/disk-89b7fd5d.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/582f74b67d05/vmlinux-89b7fd5d.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b84e32a14d8e/bzImage-89b7fd5d.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">general protection fault in process_one_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/06/01 09:29</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="929ed21dfdb6ee94391db51c9eedb63314ef6847
+	2023/05/31 23:24"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=929ed21dfdb6ee94391db51c9eedb63314ef6847">929ed21dfdb6</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/babc43895723dd9cfadab49eeb039b9e06b89af7">babc4389</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=86c5b9a300533b22">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16bb415d280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13b83df5280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b7251512f428ea97">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-qemu2-arm32</td>
+			<td class="manager">Internal error in fib6_node_lookup_1</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/06/08 04:45</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="2741f1b02117770d3f458f3b14ae3b0215279a64
+	2023/05/30 08:36"><a href="https://github.com/google/kmsan/commits/2741f1b02117770d3f458f3b14ae3b0215279a64">2741f1b02117</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/7086cdb95114c57c35cee9db87b80d4225d8795d">7086cdb9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=753079601b2300f9">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15883d59280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10884695280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=2f5cc2011706b8df">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: uninit-value in validate_xmit_skb</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/06/07 19:29</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="2741f1b02117770d3f458f3b14ae3b0215279a64
+	2023/05/30 08:36"><a href="https://github.com/google/kmsan/commits/2741f1b02117770d3f458f3b14ae3b0215279a64">2741f1b02117</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/7086cdb95114c57c35cee9db87b80d4225d8795d">7086cdb9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=753079601b2300f9">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10e97e1b280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16ab2e1b280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=6d601bde3a2f3686">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: uninit-value in hsr_get_node</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/06/07 00:00</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="2741f1b02117770d3f458f3b14ae3b0215279a64
+	2023/05/30 08:36"><a href="https://github.com/google/kmsan/commits/2741f1b02117770d3f458f3b14ae3b0215279a64">2741f1b02117</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a4ae4f428721da42ac15f07d6f3b54584dedee27">a4ae4f42</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=753079601b2300f9">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17d99ce9280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13105da3280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7ed1d5a9e416b193">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_recvmsg</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/06/05 14:30</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="2741f1b02117770d3f458f3b14ae3b0215279a64
+	2023/05/30 08:36"><a href="https://github.com/google/kmsan/commits/2741f1b02117770d3f458f3b14ae3b0215279a64">2741f1b02117</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a4ae4f428721da42ac15f07d6f3b54584dedee27">a4ae4f42</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=753079601b2300f9">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=162dc3a3280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10f9ec2d280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=cb47105bf5979a93">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: kernel-infoleak in __skb_datagram_iter</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/06/05 12:01</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="2741f1b02117770d3f458f3b14ae3b0215279a64
+	2023/05/30 08:36"><a href="https://github.com/google/kmsan/commits/2741f1b02117770d3f458f3b14ae3b0215279a64">2741f1b02117</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a4ae4f428721da42ac15f07d6f3b54584dedee27">a4ae4f42</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=753079601b2300f9">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=145608dd280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1621b345280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b07dc2fe6d944daa">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: uninit-value in hsr_get_node</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/06/05 03:23</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="2741f1b02117770d3f458f3b14ae3b0215279a64
+	2023/05/30 08:36"><a href="https://github.com/google/kmsan/commits/2741f1b02117770d3f458f3b14ae3b0215279a64">2741f1b02117</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a4ae4f428721da42ac15f07d6f3b54584dedee27">a4ae4f42</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=753079601b2300f9">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16481715280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=104e69a5280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=3ed070159d66f4b">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: uninit-value in validate_xmit_skb</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/06/02 14:43</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="2741f1b02117770d3f458f3b14ae3b0215279a64
+	2023/05/30 08:36"><a href="https://github.com/google/kmsan/commits/2741f1b02117770d3f458f3b14ae3b0215279a64">2741f1b02117</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a4ae4f428721da42ac15f07d6f3b54584dedee27">a4ae4f42</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=753079601b2300f9">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1255c37d280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14920b71280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=8c586a5cb5f9d31f">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: uninit-value in __xfrm_decode_session</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/06/02 09:58</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="2741f1b02117770d3f458f3b14ae3b0215279a64
+	2023/05/30 08:36"><a href="https://github.com/google/kmsan/commits/2741f1b02117770d3f458f3b14ae3b0215279a64">2741f1b02117</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a4ae4f428721da42ac15f07d6f3b54584dedee27">a4ae4f42</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=753079601b2300f9">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1514ab71280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12d333d1280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=34ccce4d5ce0d5c2">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_recvmsg</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/06/02 02:37</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="2741f1b02117770d3f458f3b14ae3b0215279a64
+	2023/05/30 08:36"><a href="https://github.com/google/kmsan/commits/2741f1b02117770d3f458f3b14ae3b0215279a64">2741f1b02117</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a4ae4f428721da42ac15f07d6f3b54584dedee27">a4ae4f42</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=753079601b2300f9">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12cf2169280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17f55b83280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=82b8cf68aa88dd42">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: uninit-value in netif_skb_features</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/29 14:10</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="f93f2feda5d6f48ca98dffd152746017a76f5c5c
+	2023/05/22 07:41"><a href="https://github.com/google/kmsan/commits/f93f2feda5d6f48ca98dffd152746017a76f5c5c">f93f2feda5d6</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/cf1845599c0bdab59c69518eaa0ecb960ec7ddf0">cf184559</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=48f8790eec6dc1b6">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10bda599280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=101bf435280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=e6413b042434d638">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: uninit-value in hsr_get_node</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/29 08:59</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="f93f2feda5d6f48ca98dffd152746017a76f5c5c
+	2023/05/22 07:41"><a href="https://github.com/google/kmsan/commits/f93f2feda5d6f48ca98dffd152746017a76f5c5c">f93f2feda5d6</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/cf1845599c0bdab59c69518eaa0ecb960ec7ddf0">cf184559</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=48f8790eec6dc1b6">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12b9ea49280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13c29d99280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=bf374676e2cc94c2">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: uninit-value in hsr_get_node</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/28 20:19</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="f93f2feda5d6f48ca98dffd152746017a76f5c5c
+	2023/05/22 07:41"><a href="https://github.com/google/kmsan/commits/f93f2feda5d6f48ca98dffd152746017a76f5c5c">f93f2feda5d6</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/cf1845599c0bdab59c69518eaa0ecb960ec7ddf0">cf184559</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=48f8790eec6dc1b6">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1611f3bd280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=170d2ccd280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=34f73760b700d504">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: uninit-value in hsr_get_node</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/28 01:42</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="f93f2feda5d6f48ca98dffd152746017a76f5c5c
+	2023/05/22 07:41"><a href="https://github.com/google/kmsan/commits/f93f2feda5d6f48ca98dffd152746017a76f5c5c">f93f2feda5d6</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/cf1845599c0bdab59c69518eaa0ecb960ec7ddf0">cf184559</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=48f8790eec6dc1b6">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10fe6dc1280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1285e625280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=d5a6bc5171690649">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: uninit-value in __xfrm_decode_session</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/27 03:39</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="f93f2feda5d6f48ca98dffd152746017a76f5c5c
+	2023/05/22 07:41"><a href="https://github.com/google/kmsan/commits/f93f2feda5d6f48ca98dffd152746017a76f5c5c">f93f2feda5d6</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/cf1845599c0bdab59c69518eaa0ecb960ec7ddf0">cf184559</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=48f8790eec6dc1b6">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=144a501e280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17e5e64d280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=37da053166fae7ce">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: uninit-value in geneve_udp_encap_recv</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/26 16:07</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="f93f2feda5d6f48ca98dffd152746017a76f5c5c
+	2023/05/22 07:41"><a href="https://github.com/google/kmsan/commits/f93f2feda5d6f48ca98dffd152746017a76f5c5c">f93f2feda5d6</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/cf1845599c0bdab59c69518eaa0ecb960ec7ddf0">cf184559</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=48f8790eec6dc1b6">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1109721e280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11c4266d280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=9278725f67cc3a59">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: uninit-value in hsr_get_node</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/26 12:19</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="f93f2feda5d6f48ca98dffd152746017a76f5c5c
+	2023/05/22 07:41"><a href="https://github.com/google/kmsan/commits/f93f2feda5d6f48ca98dffd152746017a76f5c5c">f93f2feda5d6</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/b40ef614f9a2bc5aa16c9271c501851f8bcd0c41">b40ef614</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=48f8790eec6dc1b6">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15ddf025280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13851dde280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=f10afcfb3d503095">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: uninit-value in fib6_node_lookup_1</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/26 07:38</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="f93f2feda5d6f48ca98dffd152746017a76f5c5c
+	2023/05/22 07:41"><a href="https://github.com/google/kmsan/commits/f93f2feda5d6f48ca98dffd152746017a76f5c5c">f93f2feda5d6</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/b40ef614f9a2bc5aa16c9271c501851f8bcd0c41">b40ef614</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=48f8790eec6dc1b6">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=140b92fe280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=155902d5280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ac349002b5a006a0">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: uninit-value in hsr_get_node</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/26 04:39</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="f93f2feda5d6f48ca98dffd152746017a76f5c5c
+	2023/05/22 07:41"><a href="https://github.com/google/kmsan/commits/f93f2feda5d6f48ca98dffd152746017a76f5c5c">f93f2feda5d6</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/b40ef614f9a2bc5aa16c9271c501851f8bcd0c41">b40ef614</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=48f8790eec6dc1b6">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13f07989280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12c52f61280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=810952335234db0c">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: uninit-value in __xfrm_decode_session</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/24 17:06</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="f93f2feda5d6f48ca98dffd152746017a76f5c5c
+	2023/05/22 07:41"><a href="https://github.com/google/kmsan/commits/f93f2feda5d6f48ca98dffd152746017a76f5c5c">f93f2feda5d6</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/4bce1a3e705a8b62de8194bdb28f5eef89c8feec">4bce1a3e</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=48f8790eec6dc1b6">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10c1c689280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=122714ae280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=d0f6d6de2c33711c">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: uninit-value in __ipv6_addr_type</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/23 07:51</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="f93f2feda5d6f48ca98dffd152746017a76f5c5c
+	2023/05/22 07:41"><a href="https://github.com/google/kmsan/commits/f93f2feda5d6f48ca98dffd152746017a76f5c5c">f93f2feda5d6</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/4bce1a3e705a8b62de8194bdb28f5eef89c8feec">4bce1a3e</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=48f8790eec6dc1b6">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12a1c175280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12dd9a19280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=65862ca10c447c78">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: uninit-value in hsr_get_node</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/23 06:12</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="f93f2feda5d6f48ca98dffd152746017a76f5c5c
+	2023/05/22 07:41"><a href="https://github.com/google/kmsan/commits/f93f2feda5d6f48ca98dffd152746017a76f5c5c">f93f2feda5d6</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/4bce1a3e705a8b62de8194bdb28f5eef89c8feec">4bce1a3e</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=48f8790eec6dc1b6">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13983ef9280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17b9bd91280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=3ed070159d66f4b">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: uninit-value in hsr_get_node</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/22 13:35</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="f93f2feda5d6f48ca98dffd152746017a76f5c5c
+	2023/05/22 07:41"><a href="https://github.com/google/kmsan/commits/f93f2feda5d6f48ca98dffd152746017a76f5c5c">f93f2feda5d6</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/4bce1a3e705a8b62de8194bdb28f5eef89c8feec">4bce1a3e</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=48f8790eec6dc1b6">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=175b17d6280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14162555280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=186bbd1c71eeb7da">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: kernel-infoleak in __skb_datagram_iter</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/21 14:53</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="dad188c049f800a8201b1c58ced378db7664cbbe
+	2023/05/15 09:29"><a href="https://github.com/google/kmsan/commits/dad188c049f800a8201b1c58ced378db7664cbbe">dad188c049f8</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/4bce1a3e705a8b62de8194bdb28f5eef89c8feec">4bce1a3e</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=766d6e566e167481">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1681382e280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=120db7d6280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=6118d53334ff5447">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: kernel-infoleak in __skb_datagram_iter</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/20 20:55</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="dad188c049f800a8201b1c58ced378db7664cbbe
+	2023/05/15 09:29"><a href="https://github.com/google/kmsan/commits/dad188c049f800a8201b1c58ced378db7664cbbe">dad188c049f8</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/4bce1a3e705a8b62de8194bdb28f5eef89c8feec">4bce1a3e</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=766d6e566e167481">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10477509280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10338f7e280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b4a7b5eb7dab63cd">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: uninit-value in hsr_get_node</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/19 19:08</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="dad188c049f800a8201b1c58ced378db7664cbbe
+	2023/05/15 09:29"><a href="https://github.com/google/kmsan/commits/dad188c049f800a8201b1c58ced378db7664cbbe">dad188c049f8</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/3bb7af1def6b7b99e4c1c9573162eb41b5893cd3">3bb7af1d</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=766d6e566e167481">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13891d91280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=173aa4c5280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=93f1b66a5725719b">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: kernel-infoleak in __skb_datagram_iter</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/19 14:20</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="dad188c049f800a8201b1c58ced378db7664cbbe
+	2023/05/15 09:29"><a href="https://github.com/google/kmsan/commits/dad188c049f800a8201b1c58ced378db7664cbbe">dad188c049f8</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/3bb7af1def6b7b99e4c1c9573162eb41b5893cd3">3bb7af1d</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=766d6e566e167481">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14c6faee280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10005509280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b6079bec4540a3eb">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: uninit-value in validate_xmit_skb</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/18 03:55</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="dad188c049f800a8201b1c58ced378db7664cbbe
+	2023/05/15 09:29"><a href="https://github.com/google/kmsan/commits/dad188c049f800a8201b1c58ced378db7664cbbe">dad188c049f8</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/3bb7af1def6b7b99e4c1c9573162eb41b5893cd3">3bb7af1d</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=766d6e566e167481">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15a277e9280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11a70586280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=4f8d1a9af78b9257">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: uninit-value in hsr_get_node</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/17 16:39</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="dad188c049f800a8201b1c58ced378db7664cbbe
+	2023/05/15 09:29"><a href="https://github.com/google/kmsan/commits/dad188c049f800a8201b1c58ced378db7664cbbe">dad188c049f8</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/eaac4681d47d67269ffba8e824990026bda5eb46">eaac4681</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=766d6e566e167481">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1147e9aa280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11a0a1ce280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=1ec113e08db849a6">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/de13e9496b37/disk-dad188c0.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1eb91f6d2219/vmlinux-dad188c0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8f475c171989/bzImage-dad188c0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: uninit-value in validate_xmit_skb</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/14 11:39</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="46e8b6e7cfeb67a3d270ab738018050d35271c0b
+	2023/05/08 07:22"><a href="https://github.com/google/kmsan/commits/46e8b6e7cfeb67a3d270ab738018050d35271c0b">46e8b6e7cfeb</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/2b9ba477a18ed0cc53e6b29a9641292709a7ba24">2b9ba477</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a7a1059074b7bdce">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15e1bd52280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13805962280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=faf9a0b517cdf59a">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6d18287717c6/disk-46e8b6e7.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2f03652dc887/vmlinux-46e8b6e7.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5bdef74dc4e4/bzImage-46e8b6e7.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: uninit-value in validate_xmit_skb</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/10 19:16</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="46e8b6e7cfeb67a3d270ab738018050d35271c0b
+	2023/05/08 07:22"><a href="https://github.com/google/kmsan/commits/46e8b6e7cfeb67a3d270ab738018050d35271c0b">46e8b6e7cfeb</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0fbd49f48637cff2f7cf1ab0150e2c4ce8d97527">0fbd49f4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a7a1059074b7bdce">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17c53e46280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=150746dc280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=754874c375f4bb8b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fd35fbc10f8f/disk-46e8b6e7.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/60cff0271466/vmlinux-46e8b6e7.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c8b54835495d/bzImage-46e8b6e7.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: uninit-value in hsr_get_node</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/09 19:09</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="81af97bdef5e553b0d7018a08e24d12adceedd09
+	2023/04/24 11:05"><a href="https://github.com/google/kmsan/commits/81af97bdef5e553b0d7018a08e24d12adceedd09">81af97bdef5e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/30aa2a7ee322e62aaed06c29bf8a57b802dca8c2">30aa2a7e</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e22ba9393f3dff59">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=108fbaea280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15b21266280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=13ed6829f736f9c6">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: uninit-value in __xfrm_decode_session</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/09 14:28</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="81af97bdef5e553b0d7018a08e24d12adceedd09
+	2023/04/24 11:05"><a href="https://github.com/google/kmsan/commits/81af97bdef5e553b0d7018a08e24d12adceedd09">81af97bdef5e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/30aa2a7ee322e62aaed06c29bf8a57b802dca8c2">30aa2a7e</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e22ba9393f3dff59">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13049e66280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17850c32280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=a8ce79ab4868e10d">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: kernel-infoleak in __skb_datagram_iter</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/09 10:25</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="81af97bdef5e553b0d7018a08e24d12adceedd09
+	2023/04/24 11:05"><a href="https://github.com/google/kmsan/commits/81af97bdef5e553b0d7018a08e24d12adceedd09">81af97bdef5e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f41681037faf693b3f0c5ab1023d90ad97b572c2">f4168103</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ee7e125556b25104">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=124e86a2280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=128f7d4c280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=52def7c38708050d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/00b0f311889c/disk-81af97bd.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a3291e9cce5a/vmlinux-81af97bd.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/09b5e66af8b4/bzImage-81af97bd.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: uninit-value in __xfrm_decode_session</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/06 05:23</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="81af97bdef5e553b0d7018a08e24d12adceedd09
+	2023/04/24 11:05"><a href="https://github.com/google/kmsan/commits/81af97bdef5e553b0d7018a08e24d12adceedd09">81af97bdef5e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/90c93c40627cb0ac3c2c7cb99d807fd4c137adcb">90c93c40</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ee7e125556b25104">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1528fb90280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=110e70a2280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ff2e0136633cc866">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/00b0f311889c/disk-81af97bd.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a3291e9cce5a/vmlinux-81af97bd.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/09b5e66af8b4/bzImage-81af97bd.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: uninit-value in __xfrm_decode_session</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/05 20:57</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="81af97bdef5e553b0d7018a08e24d12adceedd09
+	2023/04/24 11:05"><a href="https://github.com/google/kmsan/commits/81af97bdef5e553b0d7018a08e24d12adceedd09">81af97bdef5e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/4cec9341d5812957f3f34bafeef1c11036e286c0">4cec9341</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ee7e125556b25104">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1716d138280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14777938280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=8d01738cc336eb0">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: uninit-value in __ipv6_addr_type</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/05 13:45</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="81af97bdef5e553b0d7018a08e24d12adceedd09
+	2023/04/24 11:05"><a href="https://github.com/google/kmsan/commits/81af97bdef5e553b0d7018a08e24d12adceedd09">81af97bdef5e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/518a39a63148f6aee9c82e5b6b1c20889a21f698">518a39a6</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ee7e125556b25104">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10bff870280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=148cf04c280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b8a377bc57f72eb8">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/00b0f311889c/disk-81af97bd.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a3291e9cce5a/vmlinux-81af97bd.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/09b5e66af8b4/bzImage-81af97bd.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: uninit-value in __xfrm_decode_session</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/04 17:40</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="81af97bdef5e553b0d7018a08e24d12adceedd09
+	2023/04/24 11:05"><a href="https://github.com/google/kmsan/commits/81af97bdef5e553b0d7018a08e24d12adceedd09">81af97bdef5e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/3a5604637f3a205052b07863f7157900a8bd936e">3a560463</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ee7e125556b25104">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1634da82280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=151c4e14280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7bce6db7b3669127">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: uninit-value in ip6_route_output_flags</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/03 02:13</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="81af97bdef5e553b0d7018a08e24d12adceedd09
+	2023/04/24 11:05"><a href="https://github.com/google/kmsan/commits/81af97bdef5e553b0d7018a08e24d12adceedd09">81af97bdef5e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/48e0a81d77e80af7bdc154ef423accc74517f806">48e0a81d</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ee7e125556b25104">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12d9dbd8280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15774ad8280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=97f1d6a74554e09">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/00b0f311889c/disk-81af97bd.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a3291e9cce5a/vmlinux-81af97bd.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/09b5e66af8b4/bzImage-81af97bd.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: uninit-value in validate_xmit_skb</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/04/29 06:14</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="81af97bdef5e553b0d7018a08e24d12adceedd09
+	2023/04/24 11:05"><a href="https://github.com/google/kmsan/commits/81af97bdef5e553b0d7018a08e24d12adceedd09">81af97bdef5e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/62df2017e3b1edd786a4c737bd4ccba2b4581d88">62df2017</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ee7e125556b25104">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17f12b1c280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=129d276fc80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=e02f5fb277b8b0a3">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/00b0f311889c/disk-81af97bd.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a3291e9cce5a/vmlinux-81af97bd.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/09b5e66af8b4/bzImage-81af97bd.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: uninit-value in geneve_xmit</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/04/24 06:56</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="0255004d2a8eb1575e1b9f9fabe0715a7a44288c
+	2023/04/17 07:52"><a href="https://github.com/google/kmsan/commits/0255004d2a8eb1575e1b9f9fabe0715a7a44288c">0255004d2a8e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/2b32bd342578ed1b9cdd4720af23a16d2eca96d8">2b32bd34</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=72a7c5e8d91ee3ca">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15f8e680280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1164d46fc80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=df8ed81a349edac4">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1cc4bf187534/disk-0255004d.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/96b8225b77d4/vmlinux-0255004d.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/78f3cd6dc4a1/bzImage-0255004d.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: uninit-value in process_one_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/04/10 04:46</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="9189d4cb698025283c364ae256868ab05811af13
+	2023/04/03 08:27"><a href="https://github.com/google/kmsan/commits/9189d4cb698025283c364ae256868ab05811af13">9189d4cb6980</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/71147e2975d4444919920d1fd05dd20219dbc315">71147e29</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=5f6b6e18680db0ad">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=111df503c80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=131f464bc80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=3f45e070c088a2a5">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager">KMSAN: uninit-value in ip_route_output_key_hash_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2020/05/10 10:06</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="a7b0442ddfb0a4fbe7078090db37f1f7e7f7c618
+	2020/05/09 08:07"><a href="https://github.com/google/kmsan/commits/a7b0442ddfb0a4fbe7078090db37f1f7e7f7c618">a7b0442ddfb0</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/8742a2b9dba1ce2869b29fff6c5359cc9116c719">8742a2b9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a5915107b3106aaa">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10133568100000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15b70dec100000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager"></td>
+		</tr>
+		
+		<tr>
+			<td class="time">2019/05/15 23:46</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="3b955a409bf35ee89405e9abe75e073099de02b2
+	2017/10/13 17:32"><a href="https://github.com/google/kmsan/commits/3b955a409bf35ee89405e9abe75e073099de02b2">3b955a409bf3</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/051c49fe0d110e04d94a6187796996fec349fe60">051c49fe</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9968699b6aa77c91">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=113a18f4a00000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1352f054a00000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce</td>
+			<td class="manager"></td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/06/07 21:01</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="2741f1b02117770d3f458f3b14ae3b0215279a64
+	2023/05/30 08:36"><a href="https://github.com/google/kmsan/commits/2741f1b02117770d3f458f3b14ae3b0215279a64">2741f1b02117</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/7086cdb95114c57c35cee9db87b80d4225d8795d">7086cdb9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=753079601b2300f9">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12574d2b280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10a17295280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=f10afcfb3d503095">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce-386</td>
+			<td class="manager">KMSAN: uninit-value in hsr_get_node</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/06/06 09:11</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="2741f1b02117770d3f458f3b14ae3b0215279a64
+	2023/05/30 08:36"><a href="https://github.com/google/kmsan/commits/2741f1b02117770d3f458f3b14ae3b0215279a64">2741f1b02117</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a4ae4f428721da42ac15f07d6f3b54584dedee27">a4ae4f42</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=753079601b2300f9">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13307659280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1211e495280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=3484ddc184cc6e27">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce-386</td>
+			<td class="manager">KMSAN: kernel-infoleak in __skb_datagram_iter</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/06/05 16:02</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="2741f1b02117770d3f458f3b14ae3b0215279a64
+	2023/05/30 08:36"><a href="https://github.com/google/kmsan/commits/2741f1b02117770d3f458f3b14ae3b0215279a64">2741f1b02117</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a4ae4f428721da42ac15f07d6f3b54584dedee27">a4ae4f42</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=753079601b2300f9">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1110e645280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15a1aac9280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=430078866a6c9c06">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce-386</td>
+			<td class="manager">KMSAN: kernel-infoleak in __skb_datagram_iter</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/06/01 11:12</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="2741f1b02117770d3f458f3b14ae3b0215279a64
+	2023/05/30 08:36"><a href="https://github.com/google/kmsan/commits/2741f1b02117770d3f458f3b14ae3b0215279a64">2741f1b02117</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/babc43895723dd9cfadab49eeb039b9e06b89af7">babc4389</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=753079601b2300f9">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14d8ff36280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1624ed15280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=50849cffd50bd6b1">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce-386</td>
+			<td class="manager">KMSAN: kernel-infoleak in __skb_datagram_iter</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/25 16:14</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="f93f2feda5d6f48ca98dffd152746017a76f5c5c
+	2023/05/22 07:41"><a href="https://github.com/google/kmsan/commits/f93f2feda5d6f48ca98dffd152746017a76f5c5c">f93f2feda5d6</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0513b3e670c9ff1eb79183e59e0f7d46ea76d243">0513b3e6</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=48f8790eec6dc1b6">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=131491fe280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=170902d5280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=c99f57ad33c859c3">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce-386</td>
+			<td class="manager">KMSAN: kernel-infoleak in __skb_datagram_iter</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/24 05:46</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="f1fcbaa18b28dec10281551dfe6ed3a3ed80e3d6
+	2023/05/14 19:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=f1fcbaa18b28dec10281551dfe6ed3a3ed80e3d6">f1fcbaa18b28</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/4bce1a3e705a8b62de8194bdb28f5eef89c8feec">4bce1a3e</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=3dc1cdd68141cdc3">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10023391280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=113592fe280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=eaafbce7986de9ac">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f9e1748cceea/disk-f1fcbaa1.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6dea99343621/vmlinux-f1fcbaa1.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f5a93f86012d/Image-f1fcbaa1.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">KASAN: slab-out-of-bounds Read in __xfrm_decode_session</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/23 05:02</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="f93f2feda5d6f48ca98dffd152746017a76f5c5c
+	2023/05/22 07:41"><a href="https://github.com/google/kmsan/commits/f93f2feda5d6f48ca98dffd152746017a76f5c5c">f93f2feda5d6</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/4bce1a3e705a8b62de8194bdb28f5eef89c8feec">4bce1a3e</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=48f8790eec6dc1b6">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14a504c5280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17b6d65a280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=3170eae284725c41">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce-386</td>
+			<td class="manager">KMSAN: kernel-infoleak in __skb_datagram_iter</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/23 02:13</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="f93f2feda5d6f48ca98dffd152746017a76f5c5c
+	2023/05/22 07:41"><a href="https://github.com/google/kmsan/commits/f93f2feda5d6f48ca98dffd152746017a76f5c5c">f93f2feda5d6</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/4bce1a3e705a8b62de8194bdb28f5eef89c8feec">4bce1a3e</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=48f8790eec6dc1b6">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15d0c5f9280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13c9e2c5280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=1a3e75e231335405">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce-386</td>
+			<td class="manager">KMSAN: kernel-infoleak in __skb_datagram_iter</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/09 16:01</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="14f8db1c0f9a79c4256c48e45f50e5db74d55109
+	2023/04/20 17:03"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=14f8db1c0f9a79c4256c48e45f50e5db74d55109">14f8db1c0f9a</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/30aa2a7ee322e62aaed06c29bf8a57b802dca8c2">30aa2a7e</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a837a8ba7e88bb45">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15cf6a66280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16c249ca280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=eaafbce7986de9ac">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ad6ce516eed3/disk-14f8db1c.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1f38c2cc7667/vmlinux-14f8db1c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d795115eee39/Image-14f8db1c.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">KASAN: slab-out-of-bounds Read in __xfrm_decode_session</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/09 11:28</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="81af97bdef5e553b0d7018a08e24d12adceedd09
+	2023/04/24 11:05"><a href="https://github.com/google/kmsan/commits/81af97bdef5e553b0d7018a08e24d12adceedd09">81af97bdef5e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f41681037faf693b3f0c5ab1023d90ad97b572c2">f4168103</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ee7e125556b25104">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14af8834280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14b75f6c280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=866f3348d3862284">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/839a9c3d19c8/disk-81af97bd.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f7301182249a/vmlinux-81af97bd.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2b6c44dbe935/bzImage-81af97bd.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-386</td>
+			<td class="manager">KMSAN: uninit-value in __xfrm_decode_session</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/09 10:01</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="81af97bdef5e553b0d7018a08e24d12adceedd09
+	2023/04/24 11:05"><a href="https://github.com/google/kmsan/commits/81af97bdef5e553b0d7018a08e24d12adceedd09">81af97bdef5e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f41681037faf693b3f0c5ab1023d90ad97b572c2">f4168103</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ee7e125556b25104">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11876cea280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=115d0250280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=dd744e6054736c1c">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/839a9c3d19c8/disk-81af97bd.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f7301182249a/vmlinux-81af97bd.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2b6c44dbe935/bzImage-81af97bd.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-386</td>
+			<td class="manager">KMSAN: uninit-value in __ipv6_addr_type</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/06 07:05</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="81af97bdef5e553b0d7018a08e24d12adceedd09
+	2023/04/24 11:05"><a href="https://github.com/google/kmsan/commits/81af97bdef5e553b0d7018a08e24d12adceedd09">81af97bdef5e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/90c93c40627cb0ac3c2c7cb99d807fd4c137adcb">90c93c40</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ee7e125556b25104">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17cbb824280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13f2bab8280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=4d667397cfdf149b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/839a9c3d19c8/disk-81af97bd.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f7301182249a/vmlinux-81af97bd.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2b6c44dbe935/bzImage-81af97bd.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-386</td>
+			<td class="manager">KMSAN: kernel-infoleak in __skb_datagram_iter</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/05/05 19:05</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="81af97bdef5e553b0d7018a08e24d12adceedd09
+	2023/04/24 11:05"><a href="https://github.com/google/kmsan/commits/81af97bdef5e553b0d7018a08e24d12adceedd09">81af97bdef5e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/4cec9341d5812957f3f34bafeef1c11036e286c0">4cec9341</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ee7e125556b25104">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12385b6a280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16a0fb5c280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=523635a9a2f2f882">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kmsan-gce-386</td>
+			<td class="manager">KMSAN: kernel-infoleak in __skb_datagram_iter</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/04/30 22:03</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="81af97bdef5e553b0d7018a08e24d12adceedd09
+	2023/04/24 11:05"><a href="https://github.com/google/kmsan/commits/81af97bdef5e553b0d7018a08e24d12adceedd09">81af97bdef5e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/62df2017e3b1edd786a4c737bd4ccba2b4581d88">62df2017</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ee7e125556b25104">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1118a1f8280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10d8d4e4280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=98563bb687536ba7">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/839a9c3d19c8/disk-81af97bd.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f7301182249a/vmlinux-81af97bd.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2b6c44dbe935/bzImage-81af97bd.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-386</td>
+			<td class="manager">KMSAN: kernel-infoleak in __skb_datagram_iter</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/04/30 10:24</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="81af97bdef5e553b0d7018a08e24d12adceedd09
+	2023/04/24 11:05"><a href="https://github.com/google/kmsan/commits/81af97bdef5e553b0d7018a08e24d12adceedd09">81af97bdef5e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/62df2017e3b1edd786a4c737bd4ccba2b4581d88">62df2017</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ee7e125556b25104">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=153536f8280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16945330280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=3c08a07cf6caaf35">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/839a9c3d19c8/disk-81af97bd.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f7301182249a/vmlinux-81af97bd.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2b6c44dbe935/bzImage-81af97bd.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-386</td>
+			<td class="manager">KMSAN: uninit-value in __ipv6_addr_type</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/04/30 03:00</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="81af97bdef5e553b0d7018a08e24d12adceedd09
+	2023/04/24 11:05"><a href="https://github.com/google/kmsan/commits/81af97bdef5e553b0d7018a08e24d12adceedd09">81af97bdef5e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/62df2017e3b1edd786a4c737bd4ccba2b4581d88">62df2017</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ee7e125556b25104">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15accb64280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=118d0010280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7d02823e95518208">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/839a9c3d19c8/disk-81af97bd.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f7301182249a/vmlinux-81af97bd.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2b6c44dbe935/bzImage-81af97bd.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-386</td>
+			<td class="manager">KMSAN: kernel-infoleak in __skb_datagram_iter</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/04/29 13:33</td>
+			<td class="kernel" title="https://github.com/google/kmsan.git master">https://github.com/google/kmsan.git master</td>
+			<td class="tag" title="81af97bdef5e553b0d7018a08e24d12adceedd09
+	2023/04/24 11:05"><a href="https://github.com/google/kmsan/commits/81af97bdef5e553b0d7018a08e24d12adceedd09">81af97bdef5e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/62df2017e3b1edd786a4c737bd4ccba2b4581d88">62df2017</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ee7e125556b25104">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1388c1f7c80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=158cb844280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=859bf1d790355147">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/839a9c3d19c8/disk-81af97bd.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f7301182249a/vmlinux-81af97bd.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2b6c44dbe935/bzImage-81af97bd.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-386</td>
+			<td class="manager">KMSAN: uninit-value in geneve_xmit</td>
+		</tr>
+		
+		</tbody>
+</table>
+<i>* <s>Struck through</s> repros no longer work on HEAD.</i>
+
+
+</body>
+</html>

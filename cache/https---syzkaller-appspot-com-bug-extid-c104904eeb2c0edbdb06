@@ -1,0 +1,2238 @@
+
+
+<!doctype html>
+<html>
+<head>
+	
+	<link rel="stylesheet" href="/static/style.css"/>
+	<script src="/static/common.js"></script>
+	
+		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-116117799-1"></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag() { dataLayer.push(arguments); }
+			gtag('js', new Date());
+			gtag('config', 'UA-116117799-1');
+		</script>
+	
+
+	<title>BUG: corrupted list in loop_process_work</title>
+</head>
+<body>
+	
+	<header id="topbar">
+		<table class="position_table">
+			<tr>
+				<td>
+					<h1><a href="/upstream">syzbot</a></h1>
+				</td>
+				<td class="namespace_td">
+					<select class="namespace" onchange="window.location.href = '/' + this.value + '';">
+						
+							<option value="android-5-10" >Android 5.10</option>
+							<option value="android-5-15" >Android 5.15</option>
+							<option value="android-54" >Android 5.4</option>
+							<option value="android-6-1" >Android 6.1</option>
+							<option value="freebsd" >FreeBSD</option>
+							<option value="upstream" selected="1">Linux</option>
+							<option value="linux-5.15" >Linux 5.15</option>
+							<option value="linux-6.1" >Linux 6.1</option>
+							<option value="netbsd" >NetBSD</option>
+							<option value="openbsd" >OpenBSD</option>
+							<option value="gvisor" >gVisor</option></select>
+				</td>
+				<td class="search">
+					
+					
+						<a href="https://syzkaller.appspot.com/_ah/conflogin?continue=https://syzkaller.appspot.com/bug%3Fextid%3Dc104904eeb2c0edbdb06">sign-in</a> |
+					
+					<a href="https://groups.google.com/forum/#!forum/syzkaller" target="_blank">mailing list</a> |
+					<a href="https://github.com/google/syzkaller" target="_blank">source</a> |
+					<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md" target="_blank">docs</a>
+				</td>
+			</tr>
+		</table>
+		
+		<div class="navigation">
+			<div class="navigation_tab">
+				<a href='/upstream'><span style="color:DeepPink;">🐞</span> Open [1660]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/subsystems'><span style="color:DeepPink;">≡</span> Subsystems</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/fixed'><span style="color:ForestGreen;">🐞</span> Fixed [6081]</a>
+			</div>
+
+			<div class="navigation_tab" href='/upstream/invalid'>
+				<a href='/upstream/invalid'><span style="color:RoyalBlue;">🐞</span> Invalid [15100]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/backports'><span style="color:ForestGreen;">⬇</span> Missing Backports [157]</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/graph/crashes'><span style="color:ForestGreen;">≡</span> Crashes</a>
+			</div>
+
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Graphs</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href='/upstream/graph/bugs'>Kernel&nbsp;Health</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/found-bugs'>Bugs/Month</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/lifetimes'>Bug&nbsp;Lifetimes</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/fuzzing'>Fuzzing</a>
+				</div>
+			</div>
+
+			
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Coverage</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href="/upstream/graph/coverage?period=quarter">Total</a>
+					<a class="navigation_tab"
+						href="/upstream/coverage?period=month">Repo&nbsp;Heatmap</a>
+					
+						<a class="navigation_tab"
+							href="/upstream/coverage/subsystems?period=month">Subsystems&nbsp;Heatmap</a>
+					
+				</div>
+			</div>
+			
+			
+			<div class="navigation_tab navigation_right">
+				<a href='mailto:syzkaller@googlegroups.com'><span style="color:ForestGreen;">💬</span> Send us feedback</a>
+			</div>
+			
+		</div>
+		
+	</header>
+	<br>
+
+
+	<b>BUG: corrupted list in loop_process_work</b><br><br>
+	Status: <a href="https://groups.google.com/d/msgid/syzkaller-bugs/67afa060.050a0220.21dd3.0051.GAE@google.com">upstream: reported C repro on 2025/02/14 19:58</a><br>
+	
+		
+			Subsystems: 
+				<span class="bug-label"><a href="/upstream/s/block">block</a></span>
+		<br>
+		
+	<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md#labels">[Documentation on labels]</a><br>
+	
+	
+	Reported-by: syzbot&#43;c104904eeb2c0edbdb06@syzkaller.appspotmail.com<br>
+	
+	First crash: 21d, last: 7d09h<br>
+	
+	<div>
+		<div class="bug-bisection-info">
+
+	
+	
+	
+		
+			<b>Cause bisection: introduced by</b>
+		
+		<b>(<a href="https://syzkaller.appspot.com/x/bisect.txt?x=161029b0580000">bisect log</a>)</b> <span class="bad"></span>:<br>
+		<span class="mono">
+		
+		commit 3bee991f2b68175c828dc3f9c26367fe1827319a<br>
+		Author: Zhaoyang Huang &lt;zhaoyang.huang@unisoc.com&gt;<br>
+		Date:   Fri Feb 7 09:19:42 2025 &#43;0000<br>
+		<br>
+		&nbsp;&nbsp;<a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/commit/?id=3bee991f2b68175c828dc3f9c26367fe1827319a">loop: release the lo_work_lock before queue_work</a><br>
+		</span><br>
+	
+	
+		Crash: <a href="https://syzkaller.appspot.com/x/report.txt?x=151029b0580000">BUG: corrupted list in loop_process_work</a> (<a href="https://syzkaller.appspot.com/x/log.txt?x=111029b0580000">log</a>)<br>
+		Repro: <a href="/text?tag=ReproC&x=17e18aa4580000">C</a>
+		<a href="/text?tag=ReproSyz&x=158a3bdf980000">syz</a>
+		<a href="/text?tag=KernelConfig&x=a0fd539126ae5541">.config</a><br>
+	
+
+	
+	&nbsp;&nbsp;
+	
+
+</div>
+		
+		<div class="bug-bisection-stop"></div>
+	</div>
+
+	
+	<div class="collapsible collapsible-show">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Discussions (2)</span>
+		</div>
+		<div class="content">
+			
+			
+			
+
+<table class="list_table">
+	<thead>
+	<tr>
+		<th>Title</th>
+		<th>Replies (including bot)</th>
+		<th>Last reply</th>
+	</tr>
+	</thead>
+	<tbody>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/CAGWkznFFN-wBXFc4ReCdEpFFNuc_m_EXDDopfQzZtTHt2t-wKw@mail.gmail.com/T/">Re: reply: [syzbot] [block?] BUG: corrupted list in loop_process_work</a></td>
+			<td class="stat">2 (2)</td>
+			<td class="stat">2025/02/18 03:33</td>
+		</tr>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/67afa060.050a0220.21dd3.0051.GAE@google.com/T/">[syzbot] [block?] BUG: corrupted list in loop_process_work</a></td>
+			<td class="stat">1 (3)</td>
+			<td class="stat">2025/02/16 02:00</td>
+		</tr>
+	
+	</tbody>
+</table>
+
+
+			
+			
+		</div>
+	</div>
+	
+	<div class="collapsible collapsible-hide">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Similar bugs (2)</span>
+		</div>
+		<div class="content">
+			
+
+
+<table class="list_table">
+	
+	<thead>
+	<tr>
+		
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+		
+		<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		<th><a onclick="return sortTable(this, 'Repro', reproSort)" href="#">Repro</a></th>
+		<th><a onclick="return sortTable(this, 'Cause bisect', textSort)" href="#">Cause bisect</a></th>
+		<th><a onclick="return sortTable(this, 'Fix bisect', textSort)" href="#">Fix bisect</a></th>
+		<th><a onclick="return sortTable(this, 'Count', numSort)" href="#">Count</a></th>
+		<th><a onclick="return sortTable(this, 'Last', timeSort)" href="#">Last</a></th>
+		<th><a onclick="return sortTable(this, 'Reported', timeSort)" href="#">Reported</a></th>
+		
+		
+		
+			<th><a onclick="return sortTable(this, 'Patched', patchedSort)" href="#">Patched</a></th>
+		
+		
+			<th><a onclick="return sortTable(this, 'Status', textSort)" href="#">Status</a></th>
+		
+		
+	</tr>
+	</thead>
+	<tbody>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=22a9b4590effe9303ba6">general protection fault in loop_process_work (2)</a>
+					<span class="bug-label"><a href="/upstream/s/block">block</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">1</td>
+			<td class="stat">499d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-upstream-moderation/000000000000c648710608b77731%40google.com">495d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-upstream-moderation/000000000000c648710608b77731%40google.com">auto-obsoleted due to no activity on 2024/01/21 18:59</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=bc101b09ce9e3199f3ce">general protection fault in loop_process_work</a>
+					<span class="bug-label"><a href="/upstream/s/block">block</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">1</td>
+			<td class="stat">607d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-upstream-moderation/0000000000002afe16060041415a%40google.com">603d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-upstream-moderation/0000000000002afe16060041415a%40google.com">auto-obsoleted due to no activity on 2023/10/06 02:37</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+	</tbody>
+</table>
+
+
+
+			
+			
+			
+			
+		</div>
+	</div>
+	
+	<div class="collapsible collapsible-hide">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Last patch testing requests (1)</span>
+		</div>
+		<div class="content">
+			
+			
+
+	<table class="list_table">
+		<caption id="jobs"><a class="plain" href="#jobs"></a></caption>
+		<thead>
+		<tr>
+			
+			<th>Created</th>
+			<th>Duration</th>
+			<th>User</th>
+			<th>Patch</th>
+			<th>Repo</th>
+			
+			<th>Result</th>
+		</tr>
+		</thead>
+		<tbody>
+		
+			<tr>
+				
+				<td class="time">2025/02/15 23:40</td>
+				<td class="time" title="started: 2025/02/15 23:52&#013;finished: 2025/02/16 01:59">
+					2h06m
+				</td>
+				<td>
+					
+						hdanton@sina.com
+					
+				</td>
+				<td><a href="/text?tag=Patch&x=12220898580000">patch</a></td>
+				<td class="kernel" title="linux-next"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/commit/?id=0ae0fa3bf0b44c8611d114a9f69985bf451010c3">linux-next</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=13a5d9a4580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+		</tbody>
+	</table>
+
+
+			
+			
+			
+		</div>
+	</div>
+	
+
+	
+	<br><b>Sample crash report:</b><br>
+	<div id="crash_div"><pre>list_add double add: new=ffff888024a09f70, prev=ffff888024a09f70, next=ffff888141755160.
+------------[ cut here ]------------
+kernel BUG at <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/lib/list_debug.c?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717#n37'>lib/list_debug.c:37</a>!
+Oops: invalid opcode: 0000 [#1] PREEMPT SMP KASAN PTI
+CPU: 0 UID: 0 PID: 1142 Comm: kworker/u8:7 Not tainted 6.14.0-rc3-next-20250218-syzkaller #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 02/12/2025
+Workqueue: loop0 loop_workfn
+RIP: 0010:__list_add_valid_or_report+0xa4/0x130 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/lib/list_debug.c?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717#n35'>lib/list_debug.c:35</a>
+Code: f7 74 11 b0 01 5b 41 5c 41 5d 41 5e 41 5f 5d c3 cc cc cc cc 48 c7 c7 a0 59 81 8c 4c 89 fe 4c 89 e2 4c 89 f1 e8 0d e8 27 fc 90 &lt;0f&gt; 0b 48 c7 c7 a0 57 81 8c e8 fe e7 27 fc 90 0f 0b 48 c7 c7 40 58
+RSP: 0018:ffffc90003f4f628 EFLAGS: 00010046
+RAX: 0000000000000058 RBX: 1ffff110049413ee RCX: 1b2d5b65614e9a00
+RDX: 0000000000000000 RSI: 0000000080000001 RDI: 0000000000000000
+RBP: 1ffff110282eaa2d R08: ffffffff81a170dc R09: 1ffff920007e9e60
+R10: dffffc0000000000 R11: fffff520007e9e61 R12: ffff888024a09f70
+R13: dffffc0000000000 R14: ffff888141755160 R15: ffff888024a09f70
+FS:  0000000000000000(0000) GS:ffff8880b8600000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 000055558696dca8 CR3: 0000000034276000 CR4: 00000000003526f0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+Call Trace:
+ &lt;TASK&gt;
+ __list_add_valid <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/include/linux/list.h?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717#n88'>include/linux/list.h:88</a> [inline]
+ __list_add <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/include/linux/list.h?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717#n150'>include/linux/list.h:150</a> [inline]
+ list_add_tail <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/include/linux/list.h?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717#n183'>include/linux/list.h:183</a> [inline]
+ loop_process_work+0x1f96/0x21c0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/drivers/block/loop.c?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717#n1977'>drivers/block/loop.c:1977</a>
+ process_one_work <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/workqueue.c?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717#n3238'>kernel/workqueue.c:3238</a> [inline]
+ process_scheduled_works+0xabe/0x18e0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/workqueue.c?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717#n3319'>kernel/workqueue.c:3319</a>
+ worker_thread+0x870/0xd30 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/workqueue.c?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717#n3400'>kernel/workqueue.c:3400</a>
+ kthread+0x7a9/0x920 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/kthread.c?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717#n464'>kernel/kthread.c:464</a>
+ ret_from_fork+0x4b/0x80 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/arch/x86/kernel/process.c?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717#n148'>arch/x86/kernel/process.c:148</a>
+ ret_from_fork_asm+0x1a/0x30 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/arch/x86/entry/entry_64.S?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717#n245'>arch/x86/entry/entry_64.S:245</a>
+ &lt;/TASK&gt;
+Modules linked in:
+---[ end trace 0000000000000000 ]---
+RIP: 0010:__list_add_valid_or_report+0xa4/0x130 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/lib/list_debug.c?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717#n35'>lib/list_debug.c:35</a>
+Code: f7 74 11 b0 01 5b 41 5c 41 5d 41 5e 41 5f 5d c3 cc cc cc cc 48 c7 c7 a0 59 81 8c 4c 89 fe 4c 89 e2 4c 89 f1 e8 0d e8 27 fc 90 &lt;0f&gt; 0b 48 c7 c7 a0 57 81 8c e8 fe e7 27 fc 90 0f 0b 48 c7 c7 40 58
+RSP: 0018:ffffc90003f4f628 EFLAGS: 00010046
+RAX: 0000000000000058 RBX: 1ffff110049413ee RCX: 1b2d5b65614e9a00
+RDX: 0000000000000000 RSI: 0000000080000001 RDI: 0000000000000000
+RBP: 1ffff110282eaa2d R08: ffffffff81a170dc R09: 1ffff920007e9e60
+R10: dffffc0000000000 R11: fffff520007e9e61 R12: ffff888024a09f70
+R13: dffffc0000000000 R14: ffff888141755160 R15: ffff888024a09f70
+FS:  0000000000000000(0000) GS:ffff8880b8600000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 000055558696dca8 CR3: 0000000034276000 CR4: 00000000003526f0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+</pre></div><br>
+	
+
+	
+
+<table class="list_table">
+	<caption>Crashes (1809):</caption>
+		<thead>
+		<tr>
+			<th><a onclick="return sortTable(this, 'Time', textSort, true)" href="#">Time</a></th>
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+			<th><a onclick="return sortTable(this, 'Commit', textSort)" href="#">Commit</a></th>
+			<th><a onclick="return sortTable(this, 'Syzkaller', textSort)" href="#">Syzkaller</a></th>
+			<th><a onclick="return sortTable(this, 'Config', textSort)" href="#">Config</a></th>
+			<th><a onclick="return sortTable(this, 'Log', textSort)" href="#">Log</a></th>
+			<th><a onclick="return sortTable(this, 'Report', reproSort)" href="#">Report</a></th>
+			<th><a onclick="return sortTable(this, 'Syz repro', reproSort)" href="#">Syz repro</a></th>
+			<th><a onclick="return sortTable(this, 'C repro', textSort)" href="#">C repro</a></th>
+			<th><a onclick="return sortTable(this, 'VM info', textSort)" href="#">VM info</a></th>
+			<th><a onclick="return sortTable(this, 'Assets', textSort)" href="#">Assets</a> (<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot_assets.md">help?</a>)</th>
+			<th><a onclick="return sortTable(this, 'Manager', textSort)" href="#">Manager</a></th>
+			<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		</tr>
+		</thead>
+		<tbody>
+		
+		<tr>
+			<td class="time">2025/02/26 06:01</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17051c98580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16fff7f8580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=168dffdf980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=13e5a6e4580000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=175277a4580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/45c4ca35ad11/mount_0.gz">mounted in repro</a> (<a href="https://syzkaller.appspot.com/x/fsck.log?x=12fff7f8580000">clean fs</a>)]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/26 00:40</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17cc1c98580000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1511f7f8580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=11a2ffdf980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=10d4a6e4580000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=1213b7a4580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cb118d619083/mount_0.gz">mounted in repro</a> (<a href="https://syzkaller.appspot.com/x/fsck.log?x=1735edb0580000">clean fs</a>)]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/25 19:33</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=164bec98580000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14e257a4580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=16e2edb0580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=12e257a4580000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=1144f7f8580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d56abba5ed64/mount_1.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/25 14:52</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=175737a4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12376db0580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=138797a4580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=13b17fdf980000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=1476ec98580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0324527eac42/mount_1.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/23 03:33</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13b94db0580000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=126107a4580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=14e87498580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=12e87498580000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=113457f8580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/617315121b31/mount_0.gz">mounted in repro</a> (<a href="https://syzkaller.appspot.com/x/fsck.log?x=12a65fdf980000">clean fs</a>)]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/23 00:45</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10cf97f8580000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=173347a4580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=122a07a4580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=11b64db0580000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=14cf97f8580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3f566118f701/mount_0.gz">mounted in repro</a> (<a href="https://syzkaller.appspot.com/x/fsck.log?x=142a07a4580000">clean fs</a>)]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/22 21:46</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13a947a4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16a4fae4580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=1785b498580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=154e63b8580000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=16a05fdf980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a9134746a0ea/mount_0.gz">mounted in repro</a> (<a href="https://syzkaller.appspot.com/x/fsck.log?x=17f807a4580000">corrupt fs</a>)]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/22 13:33</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17b17ae4580000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1158b498580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=126047a4580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=12fe9fdf980000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=15afa3b8580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fb9543ce7c34/mount_0.gz">mounted in repro</a> (<a href="https://syzkaller.appspot.com/x/fsck.log?x=1658b498580000">clean fs</a>)]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/19 09:48</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9a14138f4fc02e412262b751acdc4dd70665a726">9a14138f</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=100dc7f8580000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15bb1ae4580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=165a4ba4580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=155a4ba4580000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=115a4ba4580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3d9f61ebab9b/mount_0.gz">mounted in repro</a> (<a href="https://syzkaller.appspot.com/x/fsck.log?x=14912fdf980000">corrupt fs</a>)]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/18 17:03</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c37c724966f290881c3123580e5e708f620086bf">c37c7249</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=156b65b0580000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=133a03a4580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=136b65b0580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=153877df980000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=174c7bf8580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/368b911e7724/mount_0.gz">mounted in repro</a> (<a href="https://syzkaller.appspot.com/x/fsck.log?x=17ca2498580000">corrupt fs</a>)]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/17 23:09</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="253c82b3a2cec22bf9db65645f934fbe095899a3
+	2025/02/17 07:07"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=253c82b3a2cec22bf9db65645f934fbe095899a3">253c82b3a2ce</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9be4ace34ffed29b36f379311c49249a457dabf3">9be4ace3</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=f984ff1d92cb4017">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14a77da4580000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=106637df980000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=15d53bf8580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=17ec1898580000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=15eca5b0580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/af8b0f79abb4/disk-253c82b3.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/463f7d416e09/vmlinux-253c82b3.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/07101e97dd04/bzImage-253c82b3.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e69b1c7f05e0/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/17 07:46</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="0ae0fa3bf0b44c8611d114a9f69985bf451010c3
+	2025/02/14 10:00"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=0ae0fa3bf0b44c8611d114a9f69985bf451010c3">0ae0fa3bf0b4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/40a34ec944732a2502ee67d92cc8c023355dfad4">40a34ec9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c67242141a7e5bdd">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=120252e4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11ebc5b0580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=155a6898580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=14a3b5a4580000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=113adbf8580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c195964eb850/disk-0ae0fa3b.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2945fafee978/vmlinux-0ae0fa3b.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/787bc2d34175/bzImage-0ae0fa3b.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9aba34df047f/mount_0.gz">mounted in repro</a> (<a href="https://syzkaller.appspot.com/x/fsck.log?x=1014d7df980000">clean fs</a>)]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/17 05:51</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="0ae0fa3bf0b44c8611d114a9f69985bf451010c3
+	2025/02/14 10:00"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=0ae0fa3bf0b44c8611d114a9f69985bf451010c3">0ae0fa3bf0b4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/40a34ec944732a2502ee67d92cc8c023355dfad4">40a34ec9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c67242141a7e5bdd">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1391b5a4580000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13046898580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=1674dbf8580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=17046898580000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=1791b5a4580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c195964eb850/disk-0ae0fa3b.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2945fafee978/vmlinux-0ae0fa3b.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/787bc2d34175/bzImage-0ae0fa3b.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/810cfc73cf9c/mount_0.gz">mounted in repro</a> (<a href="https://syzkaller.appspot.com/x/fsck.log?x=15046898580000">clean fs</a>)]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/17 00:04</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="0ae0fa3bf0b44c8611d114a9f69985bf451010c3
+	2025/02/14 10:00"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=0ae0fa3bf0b44c8611d114a9f69985bf451010c3">0ae0fa3bf0b4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/40a34ec944732a2502ee67d92cc8c023355dfad4">40a34ec9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c67242141a7e5bdd">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=105b35a4580000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1778c5b0580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=1526a898580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=145b35a4580000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=10ce57df980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c195964eb850/disk-0ae0fa3b.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2945fafee978/vmlinux-0ae0fa3b.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/787bc2d34175/bzImage-0ae0fa3b.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c0085b48b5a4/mount_0.gz">mounted in repro</a> (<a href="https://syzkaller.appspot.com/x/fsck.log?x=174e57df980000">clean fs</a>)]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/14 10:11</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="7b7a883c7f4de1ee5040bd1c32aabaafde54d209
+	2025/02/13 05:30"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=7b7a883c7f4de1ee5040bd1c32aabaafde54d209">7b7a883c7f4d</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d9a046cf66ed7650b10bc0e6a567e089644d9004">d9a046cf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c7cd9ec98874714c">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17cf0f18580000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=164a4ce4580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=102f0f18580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=12e707df980000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=16450bf8580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6839ee6af55e/disk-7b7a883c.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9baf5013ef16/vmlinux-7b7a883c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f2e7bcc8cfc7/bzImage-7b7a883c.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a0b50ba97816/mount_0.gz">mounted in repro</a> (<a href="https://syzkaller.appspot.com/x/fsck.log?x=143261a4580000">corrupt fs</a>)]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/12 12:51</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="c674aa7c289e51659e40dda0f954886ef7f80042
+	2025/02/12 05:31"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=c674aa7c289e51659e40dda0f954886ef7f80042">c674aa7c289e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2baddf5cfc118066483050e29627cea6b63bcfb">f2baddf5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a0fd539126ae5541">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=125063f8580000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16ff0ea4580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=158a3bdf980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=12dfc4e4580000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=17e18aa4580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cc5b357d26d3/disk-c674aa7c.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/11dcf272a27b/vmlinux-c674aa7c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4e487b1c1c6e/bzImage-c674aa7c.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4ea41e9eae4d/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/24 10:04</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12520c98580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=148e3fdf980000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=13bb86e4580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=16520c98580000">log</a>
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1723837701c9/mount_0.gz">mounted in repro</a> (<a href="https://syzkaller.appspot.com/x/fsck.log?x=11e637f8580000">clean fs</a>)]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/21 19:30</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0808a665bc75ab0845906bfeca0d12fb520ae6eb">0808a665</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=112fd498580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=152fd498580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=12261fdf980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=157e0db0580000">log</a>
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2c6a1f56b707/mount_9.gz">mounted in repro</a> (<a href="https://syzkaller.appspot.com/x/fsck.log?x=164e83b8580000">corrupt fs</a>)]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/17 04:13</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="0ae0fa3bf0b44c8611d114a9f69985bf451010c3
+	2025/02/14 10:00"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=0ae0fa3bf0b44c8611d114a9f69985bf451010c3">0ae0fa3bf0b4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/40a34ec944732a2502ee67d92cc8c023355dfad4">40a34ec9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c67242141a7e5bdd">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15a1c5b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1777a898580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=16e0dbf8580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=114f57df980000">log</a>
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c195964eb850/disk-0ae0fa3b.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2945fafee978/vmlinux-0ae0fa3b.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/787bc2d34175/bzImage-0ae0fa3b.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c52fea8b9eb6/mount_0.gz">mounted in repro</a> (<a href="https://syzkaller.appspot.com/x/fsck.log?x=12e0dbf8580000">clean fs</a>)]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/16 13:39</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="0ae0fa3bf0b44c8611d114a9f69985bf451010c3
+	2025/02/14 10:00"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=0ae0fa3bf0b44c8611d114a9f69985bf451010c3">0ae0fa3bf0b4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/40a34ec944732a2502ee67d92cc8c023355dfad4">40a34ec9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c67242141a7e5bdd">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12d197df980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1571d5a4580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=14d082e4580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=167279b0580000">log</a>
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c195964eb850/disk-0ae0fa3b.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2945fafee978/vmlinux-0ae0fa3b.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/787bc2d34175/bzImage-0ae0fa3b.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/30ffb24ba434/mount_0.gz">mounted in repro</a> (<a href="https://syzkaller.appspot.com/x/fsck.log?x=10d082e4580000">clean fs</a>)]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/15 23:11</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="0ae0fa3bf0b44c8611d114a9f69985bf451010c3
+	2025/02/14 10:00"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=0ae0fa3bf0b44c8611d114a9f69985bf451010c3">0ae0fa3bf0b4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/40a34ec944732a2502ee67d92cc8c023355dfad4">40a34ec9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c67242141a7e5bdd">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=156c0898580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15c2b9b0580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=107217df980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=1192d9a4580000">log</a>
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c195964eb850/disk-0ae0fa3b.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2945fafee978/vmlinux-0ae0fa3b.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/787bc2d34175/bzImage-0ae0fa3b.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/61d1cff8ac49/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/12 22:51</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="c674aa7c289e51659e40dda0f954886ef7f80042
+	2025/02/12 05:31"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=c674aa7c289e51659e40dda0f954886ef7f80042">c674aa7c289e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/b27c24029033bbfb41289458ca671507a01cb784">b27c2402</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a0fd539126ae5541">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1575b718580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1050e3f8580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=107e49b0580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=17ae4aa4580000">log</a>
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cc5b357d26d3/disk-c674aa7c.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/11dcf272a27b/vmlinux-c674aa7c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4e487b1c1c6e/bzImage-c674aa7c.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/155c7d1895e6/mount_0.gz">mounted in repro</a> (<a href="https://syzkaller.appspot.com/x/fsck.log?x=157abbdf980000">clean fs</a>)]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/12 12:21</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="c674aa7c289e51659e40dda0f954886ef7f80042
+	2025/02/12 05:31"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=c674aa7c289e51659e40dda0f954886ef7f80042">c674aa7c289e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2baddf5cfc118066483050e29627cea6b63bcfb">f2baddf5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a0fd539126ae5541">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13e23bdf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=140e89b0580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=11018aa4580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=11cfc4e4580000">log</a>
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cc5b357d26d3/disk-c674aa7c.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/11dcf272a27b/vmlinux-c674aa7c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4e487b1c1c6e/bzImage-c674aa7c.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/61ba8efd0cb0/mount_0.gz">mounted in repro</a> (<a href="https://syzkaller.appspot.com/x/fsck.log?x=16234718580000">clean fs</a>)]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/26 16:54</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=145166e4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11a05fa4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=4111ce8129bbbd5e">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/26 15:48</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10ae66e4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13669c98580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=f3c7badee58f461c">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/26 15:35</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1474f7a4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15071db0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=3cad8132bac2d24a">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/26 14:28</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=168a003f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=152b9fa4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=cc9495e16d138c2">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/26 13:27</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13df77a4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=117c003f980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ad212251fbd777c">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/26 12:15</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=157b77a4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14d91db0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=e0dcc0f92f630288">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/26 11:10</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15a11db0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16e60ff8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=73a45d35663124b7">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/26 10:31</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=109e1db0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=145a0ff8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=4132b2b641a0eaf1">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/26 09:26</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10461db0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12769fa4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=c514750de4b7fe9d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/26 07:54</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13131c98580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12e40ff8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=af80def5021397f4">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/26 06:49</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=135da6e4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1023ffdf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=788026fee5607da9">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/26 04:43</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1687f7f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12a9ffdf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=bec9e0aaff1c9c94">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/26 03:33</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1157edb0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1513f7f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=e4c7f7aac42a6415">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/26 02:10</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12e5f7f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1697b7a4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=1b6a166511c5e346">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/26 01:57</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1092a6e4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12e3edb0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=a439f8f0003d7b03">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/25 23:25</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13f4ffdf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1055b7a4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=2505ffb39137bb07">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/25 22:09</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1109b7a4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=126af7f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=acbc2a65e4e4eaf2">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/25 21:04</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=150726e4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13a6edb0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=f26c7bf219750458">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/25 20:33</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13f6b7a4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15ab26e4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=f09c0db2446d4625">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/25 19:29</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=128bec98580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10e77fdf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=9626bc5619802b87">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/25 18:27</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1770f7f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14cb7fdf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=c644296e5e140b95">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/25 18:06</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=116cb7a4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16337fdf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=a82173d8f4ad778a">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/25 16:52</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10b777f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13ad7fdf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=3739ed01eb176c9">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/25 15:52</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13c0b7a4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17d626e4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=30be455a889ab831">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/25 14:17</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1006ec98580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11417fdf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=f61bdff87ed7153f">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/25 12:24</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14bd6db0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=177a7fdf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=4b42593fe777512e">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/25 11:20</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17527fdf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16b137a4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=156a15d4ec0a7a11">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/25 10:54</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=122677f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16427fdf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=2b53be3d5bea55bf">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/25 09:54</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10f697a4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14f277f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=530bb1c3d907135f">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/25 08:22</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12d297a4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15287fdf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=1282b933c888f2dc">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/25 07:10</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=134b6c98580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12ea6db0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=2bfcbbd151778261">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/25 07:09</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=126a6db0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=138b6c98580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=9797bc453b975072">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/25 06:05</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=151897a4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15a7bfdf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=869e0ce81acdb7dc">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/25 05:00</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=110037a4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=168c6db0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=6fbcb9fbf1b045d5">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/25 04:50</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=106ec6e4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11b46db0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=9ada10c455b5884d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/25 03:35</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=146ac6e4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=126ac6e4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=474a0f8c8bd80946">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/25 02:34</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13e98c98580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1653d7a4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=802490082293a5fa">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/25 01:38</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1494c6e4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=108fadb0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=db47ab7649a8baec">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/24 23:32</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1081d7a4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15bf46e4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=104374f58dba8986">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/24 22:28</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16728c98580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=145ab7f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=3514ee998889e9e9">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/24 21:47</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12c617a4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1755adb0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=84f769f54a36b4d2">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/24 20:29</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=129cbfdf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=155cd7a4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=4fad4a5e6b691166">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/24 18:55</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=127f0c98580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13a8b7f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=d9d190cd360b1c02">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: corrupted list in loop_process_work</td>
+		</tr>
+		
+		</tbody>
+</table>
+<i>* <s>Struck through</s> repros no longer work on HEAD.</i>
+
+
+</body>
+</html>

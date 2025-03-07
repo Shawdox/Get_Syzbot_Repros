@@ -1,0 +1,1722 @@
+
+
+<!doctype html>
+<html>
+<head>
+	
+	<link rel="stylesheet" href="/static/style.css"/>
+	<script src="/static/common.js"></script>
+	
+		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-116117799-1"></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag() { dataLayer.push(arguments); }
+			gtag('js', new Date());
+			gtag('config', 'UA-116117799-1');
+		</script>
+	
+
+	<title>WARNING: locking bug in sched_core_balance</title>
+</head>
+<body>
+	
+	<header id="topbar">
+		<table class="position_table">
+			<tr>
+				<td>
+					<h1><a href="/upstream">syzbot</a></h1>
+				</td>
+				<td class="namespace_td">
+					<select class="namespace" onchange="window.location.href = '/' + this.value + '';">
+						
+							<option value="android-5-10" >Android 5.10</option>
+							<option value="android-5-15" >Android 5.15</option>
+							<option value="android-54" >Android 5.4</option>
+							<option value="android-6-1" >Android 6.1</option>
+							<option value="freebsd" >FreeBSD</option>
+							<option value="upstream" selected="1">Linux</option>
+							<option value="linux-5.15" >Linux 5.15</option>
+							<option value="linux-6.1" >Linux 6.1</option>
+							<option value="netbsd" >NetBSD</option>
+							<option value="openbsd" >OpenBSD</option>
+							<option value="gvisor" >gVisor</option></select>
+				</td>
+				<td class="search">
+					
+					
+						<a href="https://syzkaller.appspot.com/_ah/conflogin?continue=https://syzkaller.appspot.com/bug%3Fextid%3D14641d8d78cc029add8a">sign-in</a> |
+					
+					<a href="https://groups.google.com/forum/#!forum/syzkaller" target="_blank">mailing list</a> |
+					<a href="https://github.com/google/syzkaller" target="_blank">source</a> |
+					<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md" target="_blank">docs</a>
+				</td>
+			</tr>
+		</table>
+		
+		<div class="navigation">
+			<div class="navigation_tab">
+				<a href='/upstream'><span style="color:DeepPink;">🐞</span> Open [1659]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/subsystems'><span style="color:DeepPink;">≡</span> Subsystems</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/fixed'><span style="color:ForestGreen;">🐞</span> Fixed [6081]</a>
+			</div>
+
+			<div class="navigation_tab" href='/upstream/invalid'>
+				<a href='/upstream/invalid'><span style="color:RoyalBlue;">🐞</span> Invalid [15101]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/backports'><span style="color:ForestGreen;">⬇</span> Missing Backports [157]</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/graph/crashes'><span style="color:ForestGreen;">≡</span> Crashes</a>
+			</div>
+
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Graphs</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href='/upstream/graph/bugs'>Kernel&nbsp;Health</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/found-bugs'>Bugs/Month</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/lifetimes'>Bug&nbsp;Lifetimes</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/fuzzing'>Fuzzing</a>
+				</div>
+			</div>
+
+			
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Coverage</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href="/upstream/graph/coverage?period=quarter">Total</a>
+					<a class="navigation_tab"
+						href="/upstream/coverage?period=month">Repo&nbsp;Heatmap</a>
+					
+						<a class="navigation_tab"
+							href="/upstream/coverage/subsystems?period=month">Subsystems&nbsp;Heatmap</a>
+					
+				</div>
+			</div>
+			
+			
+			<div class="navigation_tab navigation_right">
+				<a href='mailto:syzkaller@googlegroups.com'><span style="color:ForestGreen;">💬</span> Send us feedback</a>
+			</div>
+			
+		</div>
+		
+	</header>
+	<br>
+
+
+	<b>WARNING: locking bug in sched_core_balance</b><br><br>
+	Status: <a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000006d4e02061b6cbf22%40google.com">upstream: reported C repro on 2024/06/21 21:02</a><br>
+	
+		
+			Subsystems: 
+				<span class="bug-label"><a href="/upstream/s/kernel">kernel</a></span>
+		<br>
+		
+	<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md#labels">[Documentation on labels]</a><br>
+	
+	
+	Reported-by: syzbot&#43;14641d8d78cc029add8a@syzkaller.appspotmail.com<br>
+	
+	First crash: 261d, last: 1d14h<br>
+	
+	<div>
+		<div class="bug-bisection-info">
+
+	
+	
+	
+		
+			<b>Cause bisection: introduced by</b>
+		
+		<b>(<a href="https://syzkaller.appspot.com/x/bisect.txt?x=111018b0580000">bisect log</a>)</b> <span class="bad"></span>:<br>
+		<span class="mono">
+		
+		commit 7908632f2927b65f7486ae6b67c24071666ba43f<br>
+		Author: Maíra Canal &lt;mcanal@igalia.com&gt;<br>
+		Date:   Thu Sep 14 10:19:02 2023 &#43;0000<br>
+		<br>
+		&nbsp;&nbsp;<a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=7908632f2927b65f7486ae6b67c24071666ba43f">Revert &#34;drm/vkms: Fix race-condition between the hrtimer and the atomic commit&#34;</a><br>
+		</span><br>
+	
+	
+		Crash: <a href="https://syzkaller.appspot.com/x/report.txt?x=131018b0580000">WARNING: locking bug in sched_core_balance</a> (<a href="https://syzkaller.appspot.com/x/log.txt?x=151018b0580000">log</a>)<br>
+		Repro: <a href="/text?tag=ReproC&x=172306c4580000">C</a>
+		<a href="/text?tag=ReproSyz&x=127f3818580000">syz</a>
+		<a href="/text?tag=KernelConfig&x=1c541fa8af5c9cc7">.config</a><br>
+	
+
+	
+	&nbsp;&nbsp;
+	
+
+</div>
+		
+		<div class="bug-bisection-stop"></div>
+	</div>
+
+	
+	<div class="collapsible collapsible-show">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Discussions (2)</span>
+		</div>
+		<div class="content">
+			
+			
+			
+
+<table class="list_table">
+	<thead>
+	<tr>
+		<th>Title</th>
+		<th>Replies (including bot)</th>
+		<th>Last reply</th>
+	</tr>
+	</thead>
+	<tbody>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/0000000000006d4e02061b6cbf22@google.com/T/">[syzbot] [kernel?] WARNING: locking bug in sched_core_balance</a></td>
+			<td class="stat">1 (5)</td>
+			<td class="stat">2025/01/02 12:15</td>
+		</tr>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/676d1b69.050a0220.226966.007d.GAE@google.com/T/">[syzbot] Monthly io-uring report (Dec 2024)</a></td>
+			<td class="stat">0 (1)</td>
+			<td class="stat">2024/12/26 09:01</td>
+		</tr>
+	
+	</tbody>
+</table>
+
+
+			
+			
+		</div>
+	</div>
+	
+	<div class="collapsible collapsible-hide">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Similar bugs (1)</span>
+		</div>
+		<div class="content">
+			
+
+
+<table class="list_table">
+	
+	<thead>
+	<tr>
+		
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+		
+		<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		<th><a onclick="return sortTable(this, 'Repro', reproSort)" href="#">Repro</a></th>
+		<th><a onclick="return sortTable(this, 'Cause bisect', textSort)" href="#">Cause bisect</a></th>
+		<th><a onclick="return sortTable(this, 'Fix bisect', textSort)" href="#">Fix bisect</a></th>
+		<th><a onclick="return sortTable(this, 'Count', numSort)" href="#">Count</a></th>
+		<th><a onclick="return sortTable(this, 'Last', timeSort)" href="#">Last</a></th>
+		<th><a onclick="return sortTable(this, 'Reported', timeSort)" href="#">Reported</a></th>
+		
+		
+		
+			<th><a onclick="return sortTable(this, 'Patched', patchedSort)" href="#">Patched</a></th>
+		
+		
+			<th><a onclick="return sortTable(this, 'Status', textSort)" href="#">Status</a></th>
+		
+		
+	</tr>
+	</thead>
+	<tbody>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=e361290b470983702774b394660b8d99981dd60a">KASAN: slab-use-after-free Read in sched_core_balance</a>
+					<span class="bug-label"><a href="/upstream/s/kernel">kernel</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">21</td>
+			<td class="stat">189d</td>
+			<td class="stat">
+				
+					197d
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						closed as invalid on 2024/09/13 10:29
+					
+				</td>
+			
+			
+		</tr>
+	
+	</tbody>
+</table>
+
+
+
+			
+			
+			
+			
+		</div>
+	</div>
+	
+
+	
+	<br><b>Sample crash report:</b><br>
+	<div id="crash_div"><pre>BUG: unable to handle page fault for address: fffffbfff3f8171b
+#PF: supervisor read access in kernel mode
+#PF: error_code(0x0000) - not-present page
+PGD 23ffe4067 P4D 23ffe4067 PUD 23ffe3067 PMD 0 
+Oops: Oops: 0000 [#1] PREEMPT SMP KASAN NOPTI
+CPU: 0 UID: 0 PID: 0 Comm: swapper/0 Not tainted 6.13.0-rc5-syzkaller-00004-gccb98ccef0e5 #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 09/13/2024
+RIP: 0010:bytes_is_nonzero <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/kasan/generic.c?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0#n87'>mm/kasan/generic.c:87</a> [inline]
+RIP: 0010:memory_is_nonzero <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/kasan/generic.c?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0#n104'>mm/kasan/generic.c:104</a> [inline]
+RIP: 0010:memory_is_poisoned_n <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/kasan/generic.c?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0#n129'>mm/kasan/generic.c:129</a> [inline]
+RIP: 0010:memory_is_poisoned <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/kasan/generic.c?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0#n161'>mm/kasan/generic.c:161</a> [inline]
+RIP: 0010:check_region_inline <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/kasan/generic.c?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0#n180'>mm/kasan/generic.c:180</a> [inline]
+RIP: 0010:kasan_check_range+0x82/0x290 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/kasan/generic.c?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0#n189'>mm/kasan/generic.c:189</a>
+Code: 01 00 00 00 00 fc ff df 4f 8d 3c 31 4c 89 fd 4c 29 dd 48 83 fd 10 7f 29 48 85 ed 0f 84 3e 01 00 00 4c 89 cd 48 f7 d5 48 01 dd &lt;41&gt; 80 3b 00 0f 85 c9 01 00 00 49 ff c3 48 ff c5 75 ee e9 1e 01 00
+RSP: 0018:ffffffff8e607640 EFLAGS: 00010086
+RAX: 000000000172ce01 RBX: 1ffffffff3f8171b RCX: ffffffff817ac174
+RDX: 0000000000000000 RSI: 0000000000000008 RDI: ffffffff9fc0b8d8
+RBP: ffffffffffffffff R08: ffffffff9fc0b8df R09: 1ffffffff3f8171b
+R10: dffffc0000000000 R11: fffffbfff3f8171b R12: ffffffff8e697084
+R13: ffffffff8e6965c0 R14: dffffc0000000001 R15: fffffbfff3f8171c
+FS:  0000000000000000(0000) GS:ffff8880b8600000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: fffffbfff3f8171b CR3: 0000000077460000 CR4: 0000000000350ef0
+Call Trace:
+ &lt;TASK&gt;
+ instrument_atomic_read <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/instrumented.h?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0#n68'>include/linux/instrumented.h:68</a> [inline]
+ _test_bit <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/asm-generic/bitops/instrumented-non-atomic.h?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0#n141'>include/asm-generic/bitops/instrumented-non-atomic.h:141</a> [inline]
+ __lock_acquire+0xc94/0x2100 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/locking/lockdep.c?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0#n5196'>kernel/locking/lockdep.c:5196</a>
+ lock_acquire+0x1ed/0x550 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/locking/lockdep.c?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0#n5849'>kernel/locking/lockdep.c:5849</a>
+ _raw_spin_lock_nested+0x31/0x40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/locking/spinlock.c?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0#n378'>kernel/locking/spinlock.c:378</a>
+ raw_spin_rq_lock_nested+0xb0/0x140 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/sched/core.c?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0#n606'>kernel/sched/core.c:606</a>
+ raw_spin_rq_lock <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/sched/sched.h?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0#n1523'>kernel/sched/sched.h:1523</a> [inline]
+ raw_spin_rq_lock_irq <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/sched/sched.h?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0#n1529'>kernel/sched/sched.h:1529</a> [inline]
+ sched_core_balance+0xd87/0xf50 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/sched/core.c?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0#n6411'>kernel/sched/core.c:6411</a>
+ do_balance_callbacks <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/sched/core.c?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0#n5021'>kernel/sched/core.c:5021</a> [inline]
+ __balance_callbacks+0x18a/0x280 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/sched/core.c?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0#n5075'>kernel/sched/core.c:5075</a>
+ finish_lock_switch <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/sched/core.c?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0#n5122'>kernel/sched/core.c:5122</a> [inline]
+ finish_task_switch+0x1d3/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/sched/core.c?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0#n5241'>kernel/sched/core.c:5241</a>
+ context_switch <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/sched/core.c?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0#n5372'>kernel/sched/core.c:5372</a> [inline]
+ __schedule+0x1858/0x4c30 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/sched/core.c?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0#n6756'>kernel/sched/core.c:6756</a>
+ schedule_idle+0x56/0x90 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/sched/core.c?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0#n6874'>kernel/sched/core.c:6874</a>
+ do_idle+0x567/0x5c0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/sched/idle.c?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0#n353'>kernel/sched/idle.c:353</a>
+ cpu_startup_entry+0x42/0x60 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/sched/idle.c?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0#n423'>kernel/sched/idle.c:423</a>
+ rest_init+0x2dc/0x300 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/init/main.c?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0#n747'>init/main.c:747</a>
+ start_kernel+0x47f/0x500 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/init/main.c?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0#n1102'>init/main.c:1102</a>
+ x86_64_start_reservations+0x2a/0x30 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/kernel/head64.c?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0#n507'>arch/x86/kernel/head64.c:507</a>
+ x86_64_start_kernel+0x9f/0xa0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/kernel/head64.c?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0#n488'>arch/x86/kernel/head64.c:488</a>
+ common_startup_64+0x13e/0x147
+ &lt;/TASK&gt;
+Modules linked in:
+CR2: fffffbfff3f8171b
+---[ end trace 0000000000000000 ]---
+RIP: 0010:bytes_is_nonzero <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/kasan/generic.c?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0#n87'>mm/kasan/generic.c:87</a> [inline]
+RIP: 0010:memory_is_nonzero <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/kasan/generic.c?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0#n104'>mm/kasan/generic.c:104</a> [inline]
+RIP: 0010:memory_is_poisoned_n <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/kasan/generic.c?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0#n129'>mm/kasan/generic.c:129</a> [inline]
+RIP: 0010:memory_is_poisoned <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/kasan/generic.c?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0#n161'>mm/kasan/generic.c:161</a> [inline]
+RIP: 0010:check_region_inline <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/kasan/generic.c?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0#n180'>mm/kasan/generic.c:180</a> [inline]
+RIP: 0010:kasan_check_range+0x82/0x290 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/kasan/generic.c?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0#n189'>mm/kasan/generic.c:189</a>
+Code: 01 00 00 00 00 fc ff df 4f 8d 3c 31 4c 89 fd 4c 29 dd 48 83 fd 10 7f 29 48 85 ed 0f 84 3e 01 00 00 4c 89 cd 48 f7 d5 48 01 dd &lt;41&gt; 80 3b 00 0f 85 c9 01 00 00 49 ff c3 48 ff c5 75 ee e9 1e 01 00
+RSP: 0018:ffffffff8e607640 EFLAGS: 00010086
+RAX: 000000000172ce01 RBX: 1ffffffff3f8171b RCX: ffffffff817ac174
+RDX: 0000000000000000 RSI: 0000000000000008 RDI: ffffffff9fc0b8d8
+RBP: ffffffffffffffff R08: ffffffff9fc0b8df R09: 1ffffffff3f8171b
+R10: dffffc0000000000 R11: fffffbfff3f8171b R12: ffffffff8e697084
+R13: ffffffff8e6965c0 R14: dffffc0000000001 R15: fffffbfff3f8171c
+FS:  0000000000000000(0000) GS:ffff8880b8600000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: fffffbfff3f8171b CR3: 0000000077460000 CR4: 0000000000350ef0
+----------------
+Code disassembly (best guess), 7 bytes skipped:
+   0:	df 4f 8d             	fisttps -0x73(%rdi)
+   3:	3c 31                	cmp    $0x31,%al
+   5:	4c 89 fd             	mov    %r15,%rbp
+   8:	4c 29 dd             	sub    %r11,%rbp
+   b:	48 83 fd 10          	cmp    $0x10,%rbp
+   f:	7f 29                	jg     0x3a
+  11:	48 85 ed             	test   %rbp,%rbp
+  14:	0f 84 3e 01 00 00    	je     0x158
+  1a:	4c 89 cd             	mov    %r9,%rbp
+  1d:	48 f7 d5             	not    %rbp
+  20:	48 01 dd             	add    %rbx,%rbp
+* 23:	41 80 3b 00          	cmpb   $0x0,(%r11) &lt;-- trapping instruction
+  27:	0f 85 c9 01 00 00    	jne    0x1f6
+  2d:	49 ff c3             	inc    %r11
+  30:	48 ff c5             	inc    %rbp
+  33:	75 ee                	jne    0x23
+  35:	e9                   	.byte 0xe9
+  36:	1e                   	(bad)
+  37:	01 00                	add    %eax,(%rax)
+</pre></div><br>
+	
+
+	
+
+<table class="list_table">
+	<caption>Crashes (92):</caption>
+		<thead>
+		<tr>
+			<th><a onclick="return sortTable(this, 'Time', textSort, true)" href="#">Time</a></th>
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+			<th><a onclick="return sortTable(this, 'Commit', textSort)" href="#">Commit</a></th>
+			<th><a onclick="return sortTable(this, 'Syzkaller', textSort)" href="#">Syzkaller</a></th>
+			<th><a onclick="return sortTable(this, 'Config', textSort)" href="#">Config</a></th>
+			<th><a onclick="return sortTable(this, 'Log', textSort)" href="#">Log</a></th>
+			<th><a onclick="return sortTable(this, 'Report', reproSort)" href="#">Report</a></th>
+			<th><a onclick="return sortTable(this, 'Syz repro', reproSort)" href="#">Syz repro</a></th>
+			<th><a onclick="return sortTable(this, 'C repro', textSort)" href="#">C repro</a></th>
+			<th><a onclick="return sortTable(this, 'VM info', textSort)" href="#">VM info</a></th>
+			<th><a onclick="return sortTable(this, 'Assets', textSort)" href="#">Assets</a> (<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot_assets.md">help?</a>)</th>
+			<th><a onclick="return sortTable(this, 'Manager', textSort)" href="#">Manager</a></th>
+			<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		</tr>
+		</thead>
+		<tbody>
+		
+		<tr>
+			<td class="time">2025/01/01 20:58</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ccb98ccef0e543c2bd4ef1a72270461957f3d8d0
+	2024/12/30 19:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0">ccb98ccef0e5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1c541fa8af5c9cc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13c3d6df980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10a83af8580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=127f3818580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=165a68b0580000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=172306c4580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0ebebb2cf79b/disk-ccb98cce.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8da8041cbc40/vmlinux-ccb98cce.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8de730af73c0/bzImage-ccb98cce.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">BUG: unable to handle kernel paging request in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/17 11:25</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ce69b4019001407f9cd738dd2ba217b3a8ab831b
+	2025/01/16 17:09"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ce69b4019001407f9cd738dd2ba217b3a8ab831b">ce69b4019001</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f9e07a6e597b68d3397864e6ee4550f9065c3518">f9e07a6e</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=aadf89e2f6db86cc">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16cfa9df980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=149742b0580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=11cfa9df980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=11f6be64580000">log</a>
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/93a02dc954e4/disk-ce69b401.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/808ad4c3c091/vmlinux-ce69b401.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5950ce586323/bzImage-ce69b401.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">WARNING: locking bug in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/25 06:52</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9b2ffa6148b1e4468d08f7e0e7e371c43cac9ffe
+	2024/12/24 17:08"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9b2ffa6148b1e4468d08f7e0e7e371c43cac9ffe">9b2ffa6148b1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/444551c40edde85b5e4900ae27d432bd1da7079c">444551c4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d269ef41b9262400">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10a00018580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17a36adf980000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=14ad74c4580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=17d900b0580000">log</a>
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/73bb7d109a64/disk-9b2ffa61.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/001f7910aa4e/vmlinux-9b2ffa61.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/11e525a24c33/bzImage-9b2ffa61.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">BUG: unable to handle kernel paging request in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/03/04 14:34</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="99fa936e8e4f117d62f229003c9799686f74cebc
+	2025/03/03 17:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=99fa936e8e4f117d62f229003c9799686f74cebc">99fa936e8e4f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c3901742785ff25afdc6f470af7b25b69d7c4f2f">c3901742</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=2040405600e83619">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=110057a0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=115f1464580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=1e542f50472701c1">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b65e754b8aa5/disk-99fa936e.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/70361199f58d/vmlinux-99fa936e.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/26615efaaa79/bzImage-99fa936e.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">WARNING: locking bug in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/25 18:47</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="d082ecbc71e9e0bf49883ee4afd435a77a5101b6
+	2025/02/23 20:32"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=d082ecbc71e9e0bf49883ee4afd435a77a5101b6">d082ecbc71e9</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=5b4c41bdaeea1964">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=110d26e4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=149cedb0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=bd3b2ef9d52933f4">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1e5dabe499e7/disk-d082ecbc.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1e0f27be469a/vmlinux-d082ecbc.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7e058c08d6c9/bzImage-d082ecbc.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">WARNING: locking bug in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/14 11:21</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ab68d7eb7b1a64f3f4710da46cc5f93c6c154942
+	2025/02/13 16:43"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ab68d7eb7b1a64f3f4710da46cc5f93c6c154942">ab68d7eb7b1a</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d9a046cf66ed7650b10bc0e6a567e089644d9004">d9a046cf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=3c2347dd6174fbe2">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=172087df980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16664ce4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=483d88e8d1313b7b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a412c7685764/disk-ab68d7eb.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/85139b2401ff/vmlinux-ab68d7eb.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2b61e0ffb288/bzImage-ab68d7eb.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">WARNING: locking bug in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/12 09:54</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="09fbf3d502050282bf47ab3babe1d4ed54dd1fd8
+	2025/02/11 18:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=09fbf3d502050282bf47ab3babe1d4ed54dd1fd8">09fbf3d50205</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2baddf5cfc118066483050e29627cea6b63bcfb">f2baddf5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=3c2347dd6174fbe2">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=178289b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=104289b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=9dbbb21fbc4368eb">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5ba421ac17b3/disk-09fbf3d5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/07a8421428be/vmlinux-09fbf3d5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d30cde1d9a7a/bzImage-09fbf3d5.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">WARNING: locking bug in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/09 17:22</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9946eaf552b194bb352c2945b54ff98c8193b3f1
+	2025/02/08 22:12"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9946eaf552b194bb352c2945b54ff98c8193b3f1">9946eaf552b1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ef44b750e8fab8d6d5cb84920680581b13e0d470">ef44b750</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1909f2f0d8e641ce">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=175edb18580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=115d91b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b49a3001b0e0f122">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f2f6b8f5634e/disk-9946eaf5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/efc4220cb142/vmlinux-9946eaf5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0dc7254a4975/bzImage-9946eaf5.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">WARNING: locking bug in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/20 00:44</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9528d418de4d83c7ada69314ddd8d4427b1f703a
+	2025/01/19 17:33"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9528d418de4d83c7ada69314ddd8d4427b1f703a">9528d418de4d</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2cb035c8f931efff4a020b164e657f16f51934b">f2cb035c</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=dcee3f28e1eddf64">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15a84618580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17a6d9df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=d3feae8c8c277fda">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/34f9fb976852/disk-9528d418.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4b52dfd2ccb2/vmlinux-9528d418.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0e91bfa241e5/bzImage-9528d418.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">WARNING: locking bug in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/15 23:28</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="619f0b6fad524f08d493a98d55bac9ab8895e3a6
+	2025/01/14 22:10"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=619f0b6fad524f08d493a98d55bac9ab8895e3a6">619f0b6fad52</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/968edaf491504462b98e794257533160d7087792">968edaf4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=aadf89e2f6db86cc">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1388c9df980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10f6c1f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ead01e71f8fa236a">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/820c5fcece46/disk-619f0b6f.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/22a2cbc89593/vmlinux-619f0b6f.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/09df72182529/bzImage-619f0b6f.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">WARNING: locking bug in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/15 10:40</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="619f0b6fad524f08d493a98d55bac9ab8895e3a6
+	2025/01/14 22:10"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=619f0b6fad524f08d493a98d55bac9ab8895e3a6">619f0b6fad52</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/7315a7cf6c6eb74abe6888b820a131efaae8a0f4">7315a7cf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=aadf89e2f6db86cc">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12c9ce64580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=145b6a18580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=d0b977c87015ecd1">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/820c5fcece46/disk-619f0b6f.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/22a2cbc89593/vmlinux-619f0b6f.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/09df72182529/bzImage-619f0b6f.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">WARNING: locking bug in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/14 22:06</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="c3812b15000cc5b7b17c7238f8b12f6a22df0b1d
+	2025/01/14 18:07"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=c3812b15000cc5b7b17c7238f8b12f6a22df0b1d">c3812b15000c</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/7315a7cf6c6eb74abe6888b820a131efaae8a0f4">7315a7cf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=aadf89e2f6db86cc">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=127881f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1575aa18580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=edb01b34b4a86075">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9440c82f6a02/disk-c3812b15.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/aea3abc1c73f/vmlinux-c3812b15.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/54ee95dc71cf/bzImage-c3812b15.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">WARNING: locking bug in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/09 11:30</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="eea6e4b4dfb8859446177c32961c96726d0117be
+	2025/01/08 19:55"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=eea6e4b4dfb8859446177c32961c96726d0117be">eea6e4b4dfb8</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4ef22c4fce5135b4">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=163013c4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1435d4b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=f8740d7e2921c2d6">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7799f5f5d801/disk-eea6e4b4.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cec875b5dd3b/vmlinux-eea6e4b4.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/62f642ea768e/bzImage-eea6e4b4.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">WARNING: locking bug in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/06 18:43</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="5428dc1906dde5fb5ab283cda4714011f9811aa1
+	2025/01/06 14:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=5428dc1906dde5fb5ab283cda4714011f9811aa1">5428dc1906dd</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4ef22c4fce5135b4">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=116e79c4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=136e9edf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=49cfa0e8b9b45c02">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/031c28a69d2f/disk-5428dc19.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ba871b8b8623/vmlinux-5428dc19.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f1dd2b4ec40e/bzImage-5428dc19.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">WARNING: locking bug in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/31 01:39</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ccb98ccef0e543c2bd4ef1a72270461957f3d8d0
+	2024/12/30 19:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0">ccb98ccef0e5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1c541fa8af5c9cc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12d76ac4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=137888b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce5f7943f6eb19fd">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0ebebb2cf79b/disk-ccb98cce.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8da8041cbc40/vmlinux-ccb98cce.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8de730af73c0/bzImage-ccb98cce.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">WARNING: locking bug in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/28 03:15</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="8379578b11d5e073792b5db2690faa12effce8e0
+	2024/12/27 19:10"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=8379578b11d5e073792b5db2690faa12effce8e0">8379578b11d5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d269ef41b9262400">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=155290b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11fa52c4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=d37d40d29f4c7a86">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/50e5cf1d6c5e/disk-8379578b.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/12691c71b7c1/vmlinux-8379578b.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7d962baf5879/bzImage-8379578b.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">WARNING: locking bug in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/22 23:05</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="bcde95ce32b666478d6737219caa4f8005a8f201
+	2024/12/22 16:40"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=bcde95ce32b666478d6737219caa4f8005a8f201">bcde95ce32b6</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/b4fbdbd43bfd6a8d0392238f019dc602335346d0">b4fbdbd4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=6a2b862bf4a5409f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=126c58c4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=140e5f30580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=93f0a267d9842271">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f879f7d839a1/disk-bcde95ce.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a0da5810bd75/vmlinux-bcde95ce.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/61d18c20695f/bzImage-bcde95ce.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">WARNING: locking bug in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/16 04:38</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dccbe2047a5b0859de24bf463dae9eeea8e01c1e
+	2024/12/15 18:01"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dccbe2047a5b0859de24bf463dae9eeea8e01c1e">dccbe2047a5b</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/7cbfbb3ab457b0a8ecf525a27a65a2078c5dcaa8">7cbfbb3a</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=fee25f93665c89ac">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16191730580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=143247e8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=1ca8771bf326ee43">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/86f95f883c61/disk-dccbe204.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/698eeaeff646/vmlinux-dccbe204.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/924cab245a26/bzImage-dccbe204.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">WARNING: locking bug in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/15 03:11</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a0e3919a2df29b373b19a8fbd6e4c4c38fc10d87
+	2024/12/14 17:35"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a0e3919a2df29b373b19a8fbd6e4c4c38fc10d87">a0e3919a2df2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/7cbfbb3ab457b0a8ecf525a27a65a2078c5dcaa8">7cbfbb3a</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=fee25f93665c89ac">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14aafbe8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=120e4344580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=23af12ae678b335a">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/68343cd50c6a/disk-a0e3919a.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4f9cdbf4bcd2/vmlinux-a0e3919a.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d4ba4f0da744/bzImage-a0e3919a.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">WARNING: locking bug in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/13 08:37</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="150b567e0d572342ef08bace7ee7aff80fd75327
+	2024/12/12 19:28"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=150b567e0d572342ef08bace7ee7aff80fd75327">150b567e0d57</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/3547e30f257972086e8e28292f3ff266f914b58b">3547e30f</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=fee25f93665c89ac">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10504730580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13631cdf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b9939bbf208b1f58">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5b4b057d78fe/disk-150b567e.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/11b6d095893b/vmlinux-150b567e.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cc42c180e38e/bzImage-150b567e.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">WARNING: locking bug in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/12 16:05</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="231825b2e1ff6ba799c5eaf396d3ab2354e37c6b
+	2024/12/11 22:11"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=231825b2e1ff6ba799c5eaf396d3ab2354e37c6b">231825b2e1ff</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/941924ebb4fc1ba15d5d3f12730ce32d7a6ace5f">941924eb</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=fee25f93665c89ac">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11c584f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16b61be8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=1433c495dd87dd3c">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cccc3de6da24/disk-231825b2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/52aa0b826dae/vmlinux-231825b2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7473962659d8/bzImage-231825b2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">WARNING: locking bug in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/09 14:19</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="fac04efc5c793dccbd07e2d59af9f90b7fc0dca4
+	2024/12/08 22:03"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=fac04efc5c793dccbd07e2d59af9f90b7fc0dca4">fac04efc5c79</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9ac0fdc66500475f1914254ef369b32d51adbff9">9ac0fdc6</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=fee25f93665c89ac">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13d428f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=112b2b30580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=33d1188ec31033af">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f90573112767/disk-fac04efc.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/61d16d565670/vmlinux-fac04efc.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5e59a2a87268/bzImage-fac04efc.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">WARNING: locking bug in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/08 22:52</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="62b5a46999c74497fe10eabd7d19701c505b23e3
+	2024/12/08 01:27"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=62b5a46999c74497fe10eabd7d19701c505b23e3">62b5a46999c7</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9ac0fdc66500475f1914254ef369b32d51adbff9">9ac0fdc6</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1362a5aee630ff34">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=147f4b30580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13bb14df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=a436195eeb8249a1">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1e012a6ce365/disk-62b5a469.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/792a4bddfdc7/vmlinux-62b5a469.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e8d666e29e96/bzImage-62b5a469.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">WARNING: locking bug in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/07 23:38</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="7503345ac5f5e82fd9a36d6e6b447c016376403a
+	2024/12/07 18:07"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=7503345ac5f5e82fd9a36d6e6b447c016376403a">7503345ac5f5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9ac0fdc66500475f1914254ef369b32d51adbff9">9ac0fdc6</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1362a5aee630ff34">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11f770f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15f770f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7f5080cc7c3663d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f66ad6e028a7/disk-7503345a.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/822436e7e431/vmlinux-7503345a.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/264599a99f7f/bzImage-7503345a.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">WARNING: locking bug in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/07 01:21</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="b8f52214c61a5b99a54168145378e91b40d10c90
+	2024/12/05 23:11"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=b8f52214c61a5b99a54168145378e91b40d10c90">b8f52214c61a</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9ac0fdc66500475f1914254ef369b32d51adbff9">9ac0fdc6</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1362a5aee630ff34">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=142d30f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=172c3330580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=5cf50d0c80e03ed2">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4540f6dd564a/disk-b8f52214.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/157a827df004/vmlinux-b8f52214.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9a2030d832ff/bzImage-b8f52214.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">WARNING: locking bug in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/04 22:14</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="feffde684ac29a3b7aec82d2df850fbdbdee55e4
+	2024/12/03 19:02"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=feffde684ac29a3b7aec82d2df850fbdbdee55e4">feffde684ac2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/b50eb251af3b122fb1b2c574dde0c3d16f6a8cfd">b50eb251</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=50c7a61469ce77e7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=149f5fc0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1035c8df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=1ab159e0101d65a2">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e1b8e8f20900/disk-feffde68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e2d09cdae8f4/vmlinux-feffde68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/79e84371a127/bzImage-feffde68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">WARNING: locking bug in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/04 16:52</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="feffde684ac29a3b7aec82d2df850fbdbdee55e4
+	2024/12/03 19:02"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=feffde684ac29a3b7aec82d2df850fbdbdee55e4">feffde684ac2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/b50eb251af3b122fb1b2c574dde0c3d16f6a8cfd">b50eb251</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=50c7a61469ce77e7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=103760f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16c65fc0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=6d6ffead27e52eb3">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e1b8e8f20900/disk-feffde68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e2d09cdae8f4/vmlinux-feffde68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/79e84371a127/bzImage-feffde68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">WARNING: locking bug in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/06/19 13:36</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="2ccbdf43d5e758f8493a95252073cf9078a5fea5
+	2024/06/12 23:58"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=2ccbdf43d5e758f8493a95252073cf9078a5fea5">2ccbdf43d5e7</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/41b7e219b69c98529757e036f4b8fb1e9fa77040">41b7e219</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=fa0ce06dcc735711">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17c092b6980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11ba5dde980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=3e1b72c435dc2a2d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/27e64d7472ce/disk-2ccbdf43.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e1c494bb5c9c/vmlinux-2ccbdf43.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/752498985a5e/bzImage-2ccbdf43.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">WARNING: locking bug in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/06/17 20:56</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="2ccbdf43d5e758f8493a95252073cf9078a5fea5
+	2024/06/12 23:58"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=2ccbdf43d5e758f8493a95252073cf9078a5fea5">2ccbdf43d5e7</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/1f11cfd7279ff3046e6e7f871eeb195c48ccbfa9">1f11cfd7</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=fa0ce06dcc735711">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13233bca980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14d9590e980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=3fa93923ae6ae71b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/27e64d7472ce/disk-2ccbdf43.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e1c494bb5c9c/vmlinux-2ccbdf43.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/752498985a5e/bzImage-2ccbdf43.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">WARNING: locking bug in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/03/04 03:19</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="99fa936e8e4f117d62f229003c9799686f74cebc
+	2025/03/03 17:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=99fa936e8e4f117d62f229003c9799686f74cebc">99fa936e8e4f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c3901742785ff25afdc6f470af7b25b69d7c4f2f">c3901742</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=2040405600e83619">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10ce35a8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=130398b7980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=9c4e1e36d6625ba0">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b65e754b8aa5/disk-99fa936e.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/70361199f58d/vmlinux-99fa936e.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/26615efaaa79/bzImage-99fa936e.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">BUG: unable to handle kernel paging request in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/03/02 02:47</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="03d38806a902b36bf364cae8de6f1183c0a35a67
+	2025/03/01 02:02"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=03d38806a902b36bf364cae8de6f1183c0a35a67">03d38806a902</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c3901742785ff25afdc6f470af7b25b69d7c4f2f">c3901742</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=5b4c41bdaeea1964">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1460a5a8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10883a97980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=71c0d3251024968f">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/16040682a6b4/disk-03d38806.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ebfe7863ef2d/vmlinux-03d38806.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/58dacdc02037/bzImage-03d38806.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">BUG: unable to handle kernel paging request in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/27 02:05</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="5394eea106517d5b0d4a372f00e63d5db8cb0370
+	2025/02/26 20:57"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=5394eea106517d5b0d4a372f00e63d5db8cb0370">5394eea10651</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6a8fcbc4a6172c831c89c507007f59fba13408aa">6a8fcbc4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=5b4c41bdaeea1964">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15fd5fa4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=177d7fa4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=4807c4e8f0cec57b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/43765bcce35b/disk-5394eea1.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0ae9955b6dfd/vmlinux-5394eea1.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/30dc82cc0b60/bzImage-5394eea1.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">BUG: unable to handle kernel paging request in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/25 14:53</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="d082ecbc71e9e0bf49883ee4afd435a77a5101b6
+	2025/02/23 20:32"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=d082ecbc71e9e0bf49883ee4afd435a77a5101b6">d082ecbc71e9</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=5b4c41bdaeea1964">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12717fdf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12d737a4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=565f07519edaec8">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1e5dabe499e7/disk-d082ecbc.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1e0f27be469a/vmlinux-d082ecbc.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7e058c08d6c9/bzImage-d082ecbc.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">BUG: unable to handle kernel paging request in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/24 08:31</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="d082ecbc71e9e0bf49883ee4afd435a77a5101b6
+	2025/02/23 20:32"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=d082ecbc71e9e0bf49883ee4afd435a77a5101b6">d082ecbc71e9</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=5b4c41bdaeea1964">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16c2a7a4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=115237f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=2ede5d78b472c9f8">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1e5dabe499e7/disk-d082ecbc.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1e0f27be469a/vmlinux-d082ecbc.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7e058c08d6c9/bzImage-d082ecbc.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">BUG: unable to handle kernel paging request in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/24 06:40</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="d082ecbc71e9e0bf49883ee4afd435a77a5101b6
+	2025/02/23 20:32"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=d082ecbc71e9e0bf49883ee4afd435a77a5101b6">d082ecbc71e9</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=5b4c41bdaeea1964">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12cc3fdf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10b8a7a4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ff1388034917a73a">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1e5dabe499e7/disk-d082ecbc.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1e0f27be469a/vmlinux-d082ecbc.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7e058c08d6c9/bzImage-d082ecbc.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">BUG: unable to handle kernel paging request in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/11 06:20</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="febbc555cf0fff895546ddb8ba2c9a523692fb55
+	2025/02/10 21:11"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=febbc555cf0fff895546ddb8ba2c9a523692fb55">febbc555cf0f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/43f51a00700e5960fc890e6c3d596846757bf29d">43f51a00</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=3c2347dd6174fbe2">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1494f2a4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1641c3f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=c76eb1292dde444b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dc3843df5f8e/disk-febbc555.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d2479b1805b4/vmlinux-febbc555.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/376129ca3722/bzImage-febbc555.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">BUG: unable to handle kernel paging request in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/08 07:07</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="7ee983c850b40043ac4751836fbd9a2b4d0c5937
+	2025/02/07 20:21"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=7ee983c850b40043ac4751836fbd9a2b4d0c5937">7ee983c850b4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a4f327c25a415765c6cca57d7d9fb572861fe158">a4f327c2</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1909f2f0d8e641ce">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1409f0e4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17074ca4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=310b6f8e6ccf637f">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/57ec05f6fa09/disk-7ee983c8.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/afcba7f68833/vmlinux-7ee983c8.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d352d71ec7f2/bzImage-7ee983c8.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">BUG: unable to handle kernel paging request in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/06 13:13</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="92514ef226f511f2ca1fb1b8752966097518edc0
+	2025/02/05 16:13"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=92514ef226f511f2ca1fb1b8752966097518edc0">92514ef226f5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/577d049b4ea56e459da6e49f4b92fc1981c92440">577d049b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1909f2f0d8e641ce">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10746df8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=171e33df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=1766c3ed630d6e0d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/21de52a3ad7b/disk-92514ef2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d9b2fb41323e/vmlinux-92514ef2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/30e8ac92af66/bzImage-92514ef2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">BUG: unable to handle kernel paging request in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/01 23:26</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="69e858e0b8b2ea07759e995aa383e8780d9d140c
+	2025/01/31 02:29"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=69e858e0b8b2ea07759e995aa383e8780d9d140c">69e858e0b8b2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0dff8567c67759be4a708acb57229945322c6c88">0dff8567</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d033b14aeef39158">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=146a4eb0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1448d5f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=407fcbda54c19291">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0c358838d66a/disk-69e858e0.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/29a6852a21ee/vmlinux-69e858e0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fb214c6e7c43/bzImage-69e858e0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">KASAN: wild-memory-access Read in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/21 21:42</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="b9d8a295ed6bc3cee846f8e3f27c9c6e9ebe43f2
+	2025/01/21 17:38"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=b9d8a295ed6bc3cee846f8e3f27c9c6e9ebe43f2">b9d8a295ed6b</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6e87cfa299c98d36e79e8b8718a4126899a3ba2f">6e87cfa2</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e2a36553cf555b86">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=178d45df980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=175ce824580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=dc323920e966adf0">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4d5835b4a4d5/disk-b9d8a295.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5f3336eadbf1/vmlinux-b9d8a295.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c4b7182ce9f2/bzImage-b9d8a295.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">KASAN: wild-memory-access Read in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/06 10:05</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ab75170520d4964f3acf8bb1f91d34cbc650688e
+	2025/01/04 18:59"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ab75170520d4964f3acf8bb1f91d34cbc650688e">ab75170520d4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1c541fa8af5c9cc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15fe1edf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=115f44b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=3b30c90aaa6d033a">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4d752d5dc5aa/disk-ab751705.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/146ff38a4872/vmlinux-ab751705.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d68e63897d18/bzImage-ab751705.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">BUG: unable to handle kernel paging request in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/03 18:06</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="0bc21e701a6ffacfdde7f04f87d664d82e8a13bf
+	2025/01/02 18:43"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=0bc21e701a6ffacfdde7f04f87d664d82e8a13bf">0bc21e701a6f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1c541fa8af5c9cc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12fed8b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=126ea6f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=c6b7692aa63492d6">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d08262de1999/disk-0bc21e70.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/21be6f3c8d03/vmlinux-0bc21e70.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/77a04534ea8c/bzImage-0bc21e70.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">BUG: unable to handle kernel paging request in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/02 03:34</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="56e6a3499e14716b9a28a307bb6d18c10e95301e
+	2025/01/01 19:22"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=56e6a3499e14716b9a28a307bb6d18c10e95301e">56e6a3499e14</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1c541fa8af5c9cc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=134936df980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13a33af8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=3db2289c7d6e7858">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/95959ac4505b/disk-56e6a349.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/31b8b66ec89d/vmlinux-56e6a349.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e53ad48ce085/bzImage-56e6a349.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">BUG: unable to handle kernel paging request in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/01 15:34</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ccb98ccef0e543c2bd4ef1a72270461957f3d8d0
+	2024/12/30 19:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0">ccb98ccef0e5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1c541fa8af5c9cc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1035a8b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1758d6df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=1ad829dc0d5709df">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0ebebb2cf79b/disk-ccb98cce.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8da8041cbc40/vmlinux-ccb98cce.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8de730af73c0/bzImage-ccb98cce.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">BUG: unable to handle kernel paging request in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/30 17:58</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="fc033cf25e612e840e545f8d5ad2edd6ba613ed5
+	2024/12/29 21:15"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=fc033cf25e612e840e545f8d5ad2edd6ba613ed5">fc033cf25e61</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1c541fa8af5c9cc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15f3a6df980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14ac08b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=80a044c5b08fb321">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/49595f3c2e13/disk-fc033cf2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d81468e23409/vmlinux-fc033cf2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8e3cbfb171e5/bzImage-fc033cf2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">BUG: unable to handle kernel paging request in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/30 11:32</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="fc033cf25e612e840e545f8d5ad2edd6ba613ed5
+	2024/12/29 21:15"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=fc033cf25e612e840e545f8d5ad2edd6ba613ed5">fc033cf25e61</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1c541fa8af5c9cc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=103b6818580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=143b6818580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=3eb7c6c10d852d6c">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/49595f3c2e13/disk-fc033cf2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d81468e23409/vmlinux-fc033cf2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8e3cbfb171e5/bzImage-fc033cf2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">BUG: unable to handle kernel paging request in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/25 05:33</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9b2ffa6148b1e4468d08f7e0e7e371c43cac9ffe
+	2024/12/24 17:08"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9b2ffa6148b1e4468d08f7e0e7e371c43cac9ffe">9b2ffa6148b1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/444551c40edde85b5e4900ae27d432bd1da7079c">444551c4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d269ef41b9262400">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=150974c4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=110e22f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=5643e2da6c1f0e67">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/73bb7d109a64/disk-9b2ffa61.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/001f7910aa4e/vmlinux-9b2ffa61.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/11e525a24c33/bzImage-9b2ffa61.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">BUG: unable to handle kernel paging request in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/22 13:06</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="48f506ad0b683d3e7e794efa60c5785c4fdc86fa
+	2024/12/21 23:45"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=48f506ad0b683d3e7e794efa60c5785c4fdc86fa">48f506ad0b68</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d7f584ee3c24504bb07d04526a23b7d8df38b8ed">d7f584ee</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=6a2b862bf4a5409f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=126d9fe8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=112cc10f980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=beabdfc77aeec4a">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/90ab4304aa3d/disk-48f506ad.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/17993e8b36f8/vmlinux-48f506ad.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/397ee02a9ad0/bzImage-48f506ad.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">BUG: unable to handle kernel paging request in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/30 13:53</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="2ba9f676d0a2e408aef14d679984c26373bf37b7
+	2024/11/29 21:06"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=2ba9f676d0a2e408aef14d679984c26373bf37b7">2ba9f676d0a2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/689146651cb695ec7836080377ad32933a0b9bce">68914665</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7903df3280dd39ea">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14249f78580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17b979e8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=a9ea57a2b8551678">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e84f83a0add4/disk-2ba9f676.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7468420d8610/vmlinux-2ba9f676.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fd3f74d41f94/bzImage-2ba9f676.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">KASAN: wild-memory-access Read in sched_core_balance</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/30 13:44</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="2ba9f676d0a2e408aef14d679984c26373bf37b7
+	2024/11/29 21:06"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=2ba9f676d0a2e408aef14d679984c26373bf37b7">2ba9f676d0a2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/689146651cb695ec7836080377ad32933a0b9bce">68914665</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7903df3280dd39ea">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1237ff5f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=164eed30580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=1720932d9e46a18">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e84f83a0add4/disk-2ba9f676.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7468420d8610/vmlinux-2ba9f676.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fd3f74d41f94/bzImage-2ba9f676.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">KASAN: wild-memory-access Read in sched_core_balance</td>
+		</tr>
+		
+		</tbody>
+</table>
+<i>* <s>Struck through</s> repros no longer work on HEAD.</i>
+
+
+</body>
+</html>

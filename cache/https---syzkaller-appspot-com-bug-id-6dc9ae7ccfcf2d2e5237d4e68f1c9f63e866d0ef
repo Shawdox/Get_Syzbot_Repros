@@ -1,0 +1,1258 @@
+
+
+<!doctype html>
+<html>
+<head>
+	
+	<link rel="stylesheet" href="/static/style.css"/>
+	<script src="/static/common.js"></script>
+	
+		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-116117799-1"></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag() { dataLayer.push(arguments); }
+			gtag('js', new Date());
+			gtag('config', 'UA-116117799-1');
+		</script>
+	
+
+	<title>KASAN: use-after-free Read in madvise_update_vma</title>
+</head>
+<body>
+	
+	<header id="topbar">
+		<table class="position_table">
+			<tr>
+				<td>
+					<h1><a href="/upstream">syzbot</a></h1>
+				</td>
+				<td class="namespace_td">
+					<select class="namespace" onchange="window.location.href = '/' + this.value + '';">
+						
+							<option value="android-5-10" >Android 5.10</option>
+							<option value="android-5-15" >Android 5.15</option>
+							<option value="android-54" >Android 5.4</option>
+							<option value="android-6-1" >Android 6.1</option>
+							<option value="freebsd" >FreeBSD</option>
+							<option value="upstream" selected="1">Linux</option>
+							<option value="linux-5.15" >Linux 5.15</option>
+							<option value="linux-6.1" >Linux 6.1</option>
+							<option value="netbsd" >NetBSD</option>
+							<option value="openbsd" >OpenBSD</option>
+							<option value="gvisor" >gVisor</option></select>
+				</td>
+				<td class="search">
+					
+					
+						<a href="https://syzkaller.appspot.com/_ah/conflogin?continue=https://syzkaller.appspot.com/bug%3Fid%3D6dc9ae7ccfcf2d2e5237d4e68f1c9f63e866d0ef">sign-in</a> |
+					
+					<a href="https://groups.google.com/forum/#!forum/syzkaller" target="_blank">mailing list</a> |
+					<a href="https://github.com/google/syzkaller" target="_blank">source</a> |
+					<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md" target="_blank">docs</a>
+				</td>
+			</tr>
+		</table>
+		
+		<div class="navigation">
+			<div class="navigation_tab">
+				<a href='/upstream'><span style="color:DeepPink;">🐞</span> Open [1654]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/subsystems'><span style="color:DeepPink;">≡</span> Subsystems</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/fixed'><span style="color:ForestGreen;">🐞</span> Fixed [6082]</a>
+			</div>
+
+			<div class="navigation_tab" href='/upstream/invalid'>
+				<a href='/upstream/invalid'><span style="color:RoyalBlue;">🐞</span> Invalid [15107]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/backports'><span style="color:ForestGreen;">⬇</span> Missing Backports [157]</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/graph/crashes'><span style="color:ForestGreen;">≡</span> Crashes</a>
+			</div>
+
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Graphs</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href='/upstream/graph/bugs'>Kernel&nbsp;Health</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/found-bugs'>Bugs/Month</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/lifetimes'>Bug&nbsp;Lifetimes</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/fuzzing'>Fuzzing</a>
+				</div>
+			</div>
+
+			
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Coverage</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href="/upstream/graph/coverage?period=quarter">Total</a>
+					<a class="navigation_tab"
+						href="/upstream/coverage?period=month">Repo&nbsp;Heatmap</a>
+					
+						<a class="navigation_tab"
+							href="/upstream/coverage/subsystems?period=month">Subsystems&nbsp;Heatmap</a>
+					
+				</div>
+			</div>
+			
+			
+			<div class="navigation_tab navigation_right">
+				<a href='mailto:syzkaller@googlegroups.com'><span style="color:ForestGreen;">💬</span> Send us feedback</a>
+			</div>
+			
+		</div>
+		
+	</header>
+	<br>
+
+
+	<b>KASAN: use-after-free Read in madvise_update_vma</b><br><br>
+	Status: fixed on 2023/02/24 13:50<br>
+	
+	
+	
+	
+		<b>Fix commit:</b> 
+
+	<span class="mono">
+		
+			942341dcc574
+		
+		<a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=942341dcc5748d9c1fc7009a359fc1916bfe0ef0">mm: fix use-after-free when anon vma name is used after vma is freed</a>
+	</span>
+
+<br>
+		
+	
+	First crash: 1122d, last: 1105d<br>
+	
+	<div>
+		<div class="bug-bisection-info">
+
+	
+	
+	
+		
+			<b>Cause bisection: introduced by</b>
+		
+		<b>(<a href="https://syzkaller.appspot.com/x/bisect.txt?x=12672378700000">bisect log</a>)</b> <span class="bad"></span>:<br>
+		<span class="mono">
+		
+		commit 9a10064f5625d5572c3626c1516e0bebc6c9fe9b<br>
+		Author: Colin Cross &lt;ccross@google.com&gt;<br>
+		Date:   Fri Jan 14 22:05:59 2022 &#43;0000<br>
+		<br>
+		&nbsp;&nbsp;<a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=9a10064f5625d5572c3626c1516e0bebc6c9fe9b">mm: add a field to store names for private anonymous memory</a><br>
+		</span><br>
+	
+	
+		Crash: <a href="https://syzkaller.appspot.com/x/report.txt?x=11672378700000">KASAN: use-after-free Read in madvise_update_vma</a> (<a href="https://syzkaller.appspot.com/x/log.txt?x=16672378700000">log</a>)<br>
+		Repro: <a href="/text?tag=ReproC&x=16272378700000">C</a>
+		<a href="/text?tag=ReproSyz&x=157f44fc700000">syz</a>
+		<a href="/text?tag=KernelConfig&x=266de9da75c71a45">.config</a><br>
+	
+
+	
+	&nbsp;&nbsp;
+	
+
+</div>
+		
+		<div class="bug-bisection-stop"></div>
+	</div>
+
+	
+	<div class="collapsible collapsible-show">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Discussions (7)</span>
+		</div>
+		<div class="content">
+			
+			
+			
+
+<table class="list_table">
+	<thead>
+	<tr>
+		<th>Title</th>
+		<th>Replies (including bot)</th>
+		<th>Last reply</th>
+	</tr>
+	</thead>
+	<tbody>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/20220305042859.13555C340F1@smtp.kernel.org/T/">[patch 4/8] mm: fix use-after-free when anon vma name is used after vma is freed</a></td>
+			<td class="stat">1 (1)</td>
+			<td class="stat">2022/03/05 04:28</td>
+		</tr>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/20220223153613.835563-1-surenb@google.com/T/">[PATCH v2 1/3] mm: refactor vm_area_struct::anon_vma_name usage code</a></td>
+			<td class="stat">7 (7)</td>
+			<td class="stat">2022/02/24 23:22</td>
+		</tr>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/20220224231834.1481408-1-surenb@google.com/T/">[PATCH v3 1/3] mm: refactor vm_area_struct::anon_vma_name usage code</a></td>
+			<td class="stat">3 (3)</td>
+			<td class="stat">2022/02/24 23:18</td>
+		</tr>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/20220222054025.3412898-1-surenb@google.com/T/">[PATCH 1/3] mm: refactor vm_area_struct::anon_vma_name usage code</a></td>
+			<td class="stat">16 (16)</td>
+			<td class="stat">2022/02/23 15:38</td>
+		</tr>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/20220211013032.623763-1-surenb@google.com/T/">[PATCH v3 1/1] mm: fix use-after-free when anon vma name is used after vma is freed</a></td>
+			<td class="stat">9 (9)</td>
+			<td class="stat">2022/02/22 05:48</td>
+		</tr>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/20220210043215.42794-1-surenb@google.com/T/">[PATCH v2 1/1] mm: fix use-after-free when anon vma name is used after vma is freed</a></td>
+			<td class="stat">10 (10)</td>
+			<td class="stat">2022/02/11 01:33</td>
+		</tr>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/20220210001801.15413-1-surenb@google.com/T/">[PATCH 1/1] mm: Fix UAF when anon vma name is used after vma is freed</a></td>
+			<td class="stat">5 (5)</td>
+			<td class="stat">2022/02/10 04:34</td>
+		</tr>
+	
+	</tbody>
+</table>
+
+
+			
+			
+		</div>
+	</div>
+	
+	<div class="collapsible collapsible-hide">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Last patch testing requests (1)</span>
+		</div>
+		<div class="content">
+			
+			
+
+	<table class="list_table">
+		<caption id="jobs"><a class="plain" href="#jobs"></a></caption>
+		<thead>
+		<tr>
+			
+			<th>Created</th>
+			<th>Duration</th>
+			<th>User</th>
+			<th>Patch</th>
+			<th>Repo</th>
+			
+			<th>Result</th>
+		</tr>
+		</thead>
+		<tbody>
+		
+			<tr>
+				
+				<td class="time">2022/08/31 05:27</td>
+				<td class="time" title="started: 2022/08/31 05:47&#013;finished: 2022/08/31 06:18">
+					30m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=dcf8e5633e2e69ad60b730ab5905608b756a032f">upstream</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=10cb007d080000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+		</tbody>
+	</table>
+
+
+			
+			
+			
+		</div>
+	</div>
+	
+
+	
+	<br><b>Sample crash report:</b><br>
+	<div id="crash_div"><pre>==================================================================
+BUG: KASAN: use-after-free in strcmp+0x9b/0xb0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/lib/string.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n346'>lib/string.c:346</a>
+Read of size 1 at addr ffff88807f0711c4 by task syz-executor286/3588
+
+CPU: 1 PID: 3588 Comm: syz-executor286 Not tainted 5.17.0-rc3-syzkaller #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 01/01/2011
+Call Trace:
+ &lt;TASK&gt;
+ __dump_stack <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/lib/dump_stack.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n88'>lib/dump_stack.c:88</a> [inline]
+ dump_stack_lvl+0xcd/0x134 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/lib/dump_stack.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n106'>lib/dump_stack.c:106</a>
+ print_address_description.constprop.0.cold+0x8d/0x336 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/kasan/report.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n255'>mm/kasan/report.c:255</a>
+ __kasan_report <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/kasan/report.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n442'>mm/kasan/report.c:442</a> [inline]
+ kasan_report.cold+0x83/0xdf <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/kasan/report.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n459'>mm/kasan/report.c:459</a>
+ strcmp+0x9b/0xb0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/lib/string.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n346'>lib/string.c:346</a>
+ replace_vma_anon_name <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/madvise.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n141'>mm/madvise.c:141</a> [inline]
+ madvise_update_vma+0x4e6/0x7f0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/madvise.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n212'>mm/madvise.c:212</a>
+ madvise_vma_behavior+0x116/0x1910 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/madvise.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n1043'>mm/madvise.c:1043</a>
+ madvise_walk_vmas+0x1d5/0x2d0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/madvise.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n1207'>mm/madvise.c:1207</a>
+ do_madvise <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/madvise.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n1385'>mm/madvise.c:1385</a> [inline]
+ do_madvise+0x249/0x3c0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/madvise.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n1343'>mm/madvise.c:1343</a>
+ __do_sys_madvise <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/madvise.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n1398'>mm/madvise.c:1398</a> [inline]
+ __se_sys_madvise <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/madvise.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n1396'>mm/madvise.c:1396</a> [inline]
+ __x64_sys_madvise+0xa6/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/madvise.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n1396'>mm/madvise.c:1396</a>
+ do_syscall_x64 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n50'>arch/x86/entry/common.c:50</a> [inline]
+ do_syscall_64+0x35/0xb0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n80'>arch/x86/entry/common.c:80</a>
+ entry_SYSCALL_64_after_hwframe+0x44/0xae
+RIP: 0033:0x7f28f5af2ff9
+Code: 28 c3 e8 2a 14 00 00 66 2e 0f 1f 84 00 00 00 00 00 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 &lt;48&gt; 3d 01 f0 ff ff 73 01 c3 48 c7 c1 c0 ff ff ff f7 d8 64 89 01 48
+RSP: 002b:00007ffd839620d8 EFLAGS: 00000246 ORIG_RAX: 000000000000001c
+RAX: ffffffffffffffda RBX: 0000000000000000 RCX: 00007f28f5af2ff9
+RDX: 000000000000000b RSI: 0000000000001000 RDI: 0000000020ffc000
+RBP: 00007f28f5ab6fe0 R08: 0000000000000000 R09: 0000000000000000
+R10: 0000000020000000 R11: 0000000000000246 R12: 00007f28f5ab7070
+R13: 0000000000000000 R14: 0000000000000000 R15: 0000000000000000
+ &lt;/TASK&gt;
+
+Allocated by task 3588:
+ kasan_save_stack+0x1e/0x40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/kasan/common.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n38'>mm/kasan/common.c:38</a>
+ kasan_set_track <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/kasan/common.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n45'>mm/kasan/common.c:45</a> [inline]
+ set_alloc_info <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/kasan/common.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n436'>mm/kasan/common.c:436</a> [inline]
+ ____kasan_kmalloc <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/kasan/common.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n515'>mm/kasan/common.c:515</a> [inline]
+ ____kasan_kmalloc <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/kasan/common.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n474'>mm/kasan/common.c:474</a> [inline]
+ __kasan_kmalloc+0xa9/0xd0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/kasan/common.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n524'>mm/kasan/common.c:524</a>
+ kmalloc <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/slab.h?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n586'>include/linux/slab.h:586</a> [inline]
+ anon_vma_name_alloc <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/madvise.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n75'>mm/madvise.c:75</a> [inline]
+ replace_vma_anon_name <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/madvise.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n146'>mm/madvise.c:146</a> [inline]
+ madvise_update_vma+0x546/0x7f0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/madvise.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n212'>mm/madvise.c:212</a>
+ madvise_vma_anon_name+0x7c/0xc0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/madvise.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n1236'>mm/madvise.c:1236</a>
+ madvise_walk_vmas+0x1d5/0x2d0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/madvise.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n1207'>mm/madvise.c:1207</a>
+ madvise_set_anon_name+0xac/0xe0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/madvise.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n1269'>mm/madvise.c:1269</a>
+ prctl_set_vma <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/sys.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n2305'>kernel/sys.c:2305</a> [inline]
+ __do_sys_prctl+0xeb5/0x12d0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/sys.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n2594'>kernel/sys.c:2594</a>
+ do_syscall_x64 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n50'>arch/x86/entry/common.c:50</a> [inline]
+ do_syscall_64+0x35/0xb0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n80'>arch/x86/entry/common.c:80</a>
+ entry_SYSCALL_64_after_hwframe+0x44/0xae
+
+Freed by task 3588:
+ kasan_save_stack+0x1e/0x40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/kasan/common.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n38'>mm/kasan/common.c:38</a>
+ kasan_set_track+0x21/0x30 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/kasan/common.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n45'>mm/kasan/common.c:45</a>
+ kasan_set_free_info+0x20/0x30 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/kasan/generic.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n370'>mm/kasan/generic.c:370</a>
+ ____kasan_slab_free <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/kasan/common.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n366'>mm/kasan/common.c:366</a> [inline]
+ ____kasan_slab_free+0x130/0x160 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/kasan/common.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n328'>mm/kasan/common.c:328</a>
+ kasan_slab_free <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/kasan.h?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n236'>include/linux/kasan.h:236</a> [inline]
+ slab_free_hook <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n1728'>mm/slub.c:1728</a> [inline]
+ slab_free_freelist_hook+0x8b/0x1c0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n1754'>mm/slub.c:1754</a>
+ slab_free <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n3509'>mm/slub.c:3509</a> [inline]
+ kfree+0xcb/0x280 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n4562'>mm/slub.c:4562</a>
+ vma_anon_name_free <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/madvise.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n88'>mm/madvise.c:88</a> [inline]
+ kref_put <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/kref.h?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n65'>include/linux/kref.h:65</a> [inline]
+ free_vma_anon_name <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/madvise.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n125'>mm/madvise.c:125</a> [inline]
+ free_vma_anon_name+0xeb/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/madvise.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n116'>mm/madvise.c:116</a>
+ vm_area_free+0x11/0x30 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/fork.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n376'>kernel/fork.c:376</a>
+ __vma_adjust+0x836/0x24a0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/mmap.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n962'>mm/mmap.c:962</a>
+ vma_merge+0x860/0xeb0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/mmap.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n1217'>mm/mmap.c:1217</a>
+ madvise_update_vma+0x1b6/0x7f0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/madvise.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n180'>mm/madvise.c:180</a>
+ madvise_vma_behavior+0x116/0x1910 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/madvise.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n1043'>mm/madvise.c:1043</a>
+ madvise_walk_vmas+0x1d5/0x2d0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/madvise.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n1207'>mm/madvise.c:1207</a>
+ do_madvise <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/madvise.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n1385'>mm/madvise.c:1385</a> [inline]
+ do_madvise+0x249/0x3c0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/madvise.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n1343'>mm/madvise.c:1343</a>
+ __do_sys_madvise <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/madvise.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n1398'>mm/madvise.c:1398</a> [inline]
+ __se_sys_madvise <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/madvise.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n1396'>mm/madvise.c:1396</a> [inline]
+ __x64_sys_madvise+0xa6/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/madvise.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n1396'>mm/madvise.c:1396</a>
+ do_syscall_x64 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n50'>arch/x86/entry/common.c:50</a> [inline]
+ do_syscall_64+0x35/0xb0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n80'>arch/x86/entry/common.c:80</a>
+ entry_SYSCALL_64_after_hwframe+0x44/0xae
+
+The buggy address belongs to the object at ffff88807f0711c0
+ which belongs to the cache kmalloc-32 of size 32
+The buggy address is located 4 bytes inside of
+ 32-byte region [ffff88807f0711c0, ffff88807f0711e0)
+The buggy address belongs to the page:
+page:ffffea0001fc1c40 refcount:1 mapcount:0 mapping:0000000000000000 index:0x0 pfn:0x7f071
+flags: 0xfff00000000200(slab|node=0|zone=1|lastcpupid=0x7ff)
+raw: 00fff00000000200 0000000000000000 dead000000000001 ffff888010c41500
+raw: 0000000000000000 0000000080400040 00000001ffffffff 0000000000000000
+page dumped because: kasan: bad access detected
+page_owner tracks the page as allocated
+page last allocated via order 0, migratetype Unmovable, gfp_mask 0x12c40(GFP_NOFS|__GFP_NOWARN|__GFP_NORETRY), pid 2962, ts 21704624424, free_ts 19381656493
+ prep_new_page <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/page_alloc.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n2434'>mm/page_alloc.c:2434</a> [inline]
+ get_page_from_freelist+0xa72/0x2f50 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/page_alloc.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n4165'>mm/page_alloc.c:4165</a>
+ __alloc_pages+0x1b2/0x500 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/page_alloc.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n5389'>mm/page_alloc.c:5389</a>
+ alloc_pages+0x1aa/0x310 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/mempolicy.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n2271'>mm/mempolicy.c:2271</a>
+ alloc_slab_page <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n1799'>mm/slub.c:1799</a> [inline]
+ allocate_slab <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n1944'>mm/slub.c:1944</a> [inline]
+ new_slab+0x28a/0x3b0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n2004'>mm/slub.c:2004</a>
+ ___slab_alloc+0x87c/0xe90 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n3018'>mm/slub.c:3018</a>
+ __slab_alloc.constprop.0+0x4d/0xa0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n3105'>mm/slub.c:3105</a>
+ slab_alloc_node <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n3196'>mm/slub.c:3196</a> [inline]
+ slab_alloc <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n3238'>mm/slub.c:3238</a> [inline]
+ __kmalloc+0x2fb/0x340 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n4420'>mm/slub.c:4420</a>
+ kmalloc <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/slab.h?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n586'>include/linux/slab.h:586</a> [inline]
+ kzalloc <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/slab.h?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n715'>include/linux/slab.h:715</a> [inline]
+ tomoyo_encode2.part.0+0xe9/0x3a0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/security/tomoyo/realpath.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n45'>security/tomoyo/realpath.c:45</a>
+ tomoyo_encode2 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/security/tomoyo/realpath.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n31'>security/tomoyo/realpath.c:31</a> [inline]
+ tomoyo_encode+0x28/0x50 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/security/tomoyo/realpath.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n80'>security/tomoyo/realpath.c:80</a>
+ tomoyo_realpath_from_path+0x186/0x620 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/security/tomoyo/realpath.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n288'>security/tomoyo/realpath.c:288</a>
+ tomoyo_get_realpath <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/security/tomoyo/file.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n151'>security/tomoyo/file.c:151</a> [inline]
+ tomoyo_check_open_permission+0x272/0x380 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/security/tomoyo/file.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n771'>security/tomoyo/file.c:771</a>
+ tomoyo_file_open <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/security/tomoyo/tomoyo.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n311'>security/tomoyo/tomoyo.c:311</a> [inline]
+ tomoyo_file_open+0xa3/0xd0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/security/tomoyo/tomoyo.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n306'>security/tomoyo/tomoyo.c:306</a>
+ security_file_open+0x45/0xb0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/security/security.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n1638'>security/security.c:1638</a>
+ do_dentry_open+0x358/0x1240 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/open.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n811'>fs/open.c:811</a>
+ do_open <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namei.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n3476'>fs/namei.c:3476</a> [inline]
+ path_openat+0x1c9e/0x2940 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namei.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n3609'>fs/namei.c:3609</a>
+ do_filp_open+0x1aa/0x400 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namei.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n3636'>fs/namei.c:3636</a>
+page last free stack trace:
+ reset_page_owner <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/page_owner.h?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n24'>include/linux/page_owner.h:24</a> [inline]
+ free_pages_prepare <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/page_alloc.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n1352'>mm/page_alloc.c:1352</a> [inline]
+ free_pcp_prepare+0x374/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/page_alloc.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n1404'>mm/page_alloc.c:1404</a>
+ free_unref_page_prepare <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/page_alloc.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n3325'>mm/page_alloc.c:3325</a> [inline]
+ free_unref_page+0x19/0x690 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/page_alloc.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n3404'>mm/page_alloc.c:3404</a>
+ __vunmap+0x798/0xc50 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/vmalloc.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n2635'>mm/vmalloc.c:2635</a>
+ free_work+0x58/0x70 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/vmalloc.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n97'>mm/vmalloc.c:97</a>
+ process_one_work+0x9ac/0x1650 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/workqueue.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n2307'>kernel/workqueue.c:2307</a>
+ worker_thread+0x657/0x1110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/workqueue.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n2454'>kernel/workqueue.c:2454</a>
+ kthread+0x2e9/0x3a0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/kthread.c?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n377'>kernel/kthread.c:377</a>
+ ret_from_fork+0x1f/0x30 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/entry_64.S?id=dfd42facf1e4ada021b939b4e19c935dcdd55566#n295'>arch/x86/entry/entry_64.S:295</a>
+
+Memory state around the buggy address:
+ ffff88807f071080: fa fb fb fb fc fc fc fc fb fb fb fb fc fc fc fc
+ ffff88807f071100: fa fb fb fb fc fc fc fc fb fb fb fb fc fc fc fc
+&gt;ffff88807f071180: fb fb fb fb fc fc fc fc fa fb fb fb fc fc fc fc
+                                           ^
+ ffff88807f071200: fb fb fb fb fc fc fc fc 00 00 06 fc fc fc fc fc
+ ffff88807f071280: fb fb fb fb fc fc fc fc fb fb fb fb fc fc fc fc
+==================================================================
+</pre></div><br>
+	
+
+	
+
+<table class="list_table">
+	<caption>Crashes (38):</caption>
+		<thead>
+		<tr>
+			<th><a onclick="return sortTable(this, 'Time', textSort, true)" href="#">Time</a></th>
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+			<th><a onclick="return sortTable(this, 'Commit', textSort)" href="#">Commit</a></th>
+			<th><a onclick="return sortTable(this, 'Syzkaller', textSort)" href="#">Syzkaller</a></th>
+			<th><a onclick="return sortTable(this, 'Config', textSort)" href="#">Config</a></th>
+			<th><a onclick="return sortTable(this, 'Log', textSort)" href="#">Log</a></th>
+			<th><a onclick="return sortTable(this, 'Report', reproSort)" href="#">Report</a></th>
+			<th><a onclick="return sortTable(this, 'Syz repro', reproSort)" href="#">Syz repro</a></th>
+			<th><a onclick="return sortTable(this, 'C repro', textSort)" href="#">C repro</a></th>
+			<th><a onclick="return sortTable(this, 'VM info', textSort)" href="#">VM info</a></th>
+			<th><a onclick="return sortTable(this, 'Assets', textSort)" href="#">Assets</a> (<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot_assets.md">help?</a>)</th>
+			<th><a onclick="return sortTable(this, 'Manager', textSort)" href="#">Manager</a></th>
+			<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		</tr>
+		</thead>
+		<tbody>
+		
+		<tr>
+			<td class="time">2022/02/07 22:31</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dfd42facf1e4ada021b939b4e19c935dcdd55566
+	2022/02/06 20:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dfd42facf1e4ada021b939b4e19c935dcdd55566">dfd42facf1e4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a7dab6385c1d95547a88e22577fb56fbcd5c37eb">a7dab638</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=266de9da75c71a45">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=139133dc700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=126a021c700000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=124fe028700000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=12acd584700000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/07 22:10</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dfd42facf1e4ada021b939b4e19c935dcdd55566
+	2022/02/06 20:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dfd42facf1e4ada021b939b4e19c935dcdd55566">dfd42facf1e4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a7dab6385c1d95547a88e22577fb56fbcd5c37eb">a7dab638</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=266de9da75c71a45">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1315211c700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1303c8a0700000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=152a8d78700000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=1760cc52700000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/07 21:49</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dfd42facf1e4ada021b939b4e19c935dcdd55566
+	2022/02/06 20:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dfd42facf1e4ada021b939b4e19c935dcdd55566">dfd42facf1e4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a7dab6385c1d95547a88e22577fb56fbcd5c37eb">a7dab638</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=266de9da75c71a45">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16ec6d78700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15099162700000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=163c4872700000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=118a4052700000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/07 21:29</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dfd42facf1e4ada021b939b4e19c935dcdd55566
+	2022/02/06 20:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dfd42facf1e4ada021b939b4e19c935dcdd55566">dfd42facf1e4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a7dab6385c1d95547a88e22577fb56fbcd5c37eb">a7dab638</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=266de9da75c71a45">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=136c6d78700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=101f89b4700000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=1601f8c2700000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=128a4052700000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/07 21:08</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dfd42facf1e4ada021b939b4e19c935dcdd55566
+	2022/02/06 20:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dfd42facf1e4ada021b939b4e19c935dcdd55566">dfd42facf1e4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a7dab6385c1d95547a88e22577fb56fbcd5c37eb">a7dab638</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=266de9da75c71a45">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16230784700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13cd122c700000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=11cef758700000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=10319eb4700000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/07 20:41</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dfd42facf1e4ada021b939b4e19c935dcdd55566
+	2022/02/06 20:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dfd42facf1e4ada021b939b4e19c935dcdd55566">dfd42facf1e4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a7dab6385c1d95547a88e22577fb56fbcd5c37eb">a7dab638</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=5707221760c00a20">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11e37524700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12f7518a700000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=11c55758700000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=10cef758700000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kasan-gce-selinux-root</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/07 20:39</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dfd42facf1e4ada021b939b4e19c935dcdd55566
+	2022/02/06 20:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dfd42facf1e4ada021b939b4e19c935dcdd55566">dfd42facf1e4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a7dab6385c1d95547a88e22577fb56fbcd5c37eb">a7dab638</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=88e0a6a3dbf057cf">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=117bc277b00000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1215211c700000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=162a8d78700000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=10dabf42700000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kasan-gce-smack-root</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/07 20:39</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dfd42facf1e4ada021b939b4e19c935dcdd55566
+	2022/02/06 20:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dfd42facf1e4ada021b939b4e19c935dcdd55566">dfd42facf1e4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a7dab6385c1d95547a88e22577fb56fbcd5c37eb">a7dab638</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=266de9da75c71a45">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16e37524700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13602e68700000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=157f44fc700000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=16272378700000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/07 20:42</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="ef6b35306dd8f15a7e5e5a2532e665917a43c5d9
+	2022/02/04 04:12"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=ef6b35306dd8f15a7e5e5a2532e665917a43c5d9">ef6b35306dd8</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a7dab6385c1d95547a88e22577fb56fbcd5c37eb">a7dab638</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e0431e0b00810b4f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=129ca21c700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15cd122c700000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=15f19162700000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=140343b4700000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/07 20:37</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dfd42facf1e4ada021b939b4e19c935dcdd55566
+	2022/02/06 20:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dfd42facf1e4ada021b939b4e19c935dcdd55566">dfd42facf1e4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a7dab6385c1d95547a88e22577fb56fbcd5c37eb">a7dab638</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=5707221760c00a20">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=176343dc700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=154b6562700000">report</a></td>
+			<td class="repro stale_repro">
+				<a href="/text?tag=ReproSyz&amp;x=16a46968700000">syz</a>
+				
+			</td>
+			<td class="repro stale_repro"><a href="/text?tag=ReproC&amp;x=102db2b4700000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets"></td>
+			<td class="manager">ci-qemu-upstream</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/25 08:38</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="73878e5eb1bd3c9656685ca60bc3a49d17311e0c
+	2022/02/24 19:15"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=73878e5eb1bd3c9656685ca60bc3a49d17311e0c">73878e5eb1bd</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/7c33726645532432752ae4074ccaad36638db7b1">7c337266</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=f2a8c25b60d49d24">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=178ba24e700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10b90366700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=f2dd7f6268609892">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kasan-gce-selinux-root</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/25 08:32</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="73878e5eb1bd3c9656685ca60bc3a49d17311e0c
+	2022/02/24 19:15"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=73878e5eb1bd3c9656685ca60bc3a49d17311e0c">73878e5eb1bd</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/7c33726645532432752ae4074ccaad36638db7b1">7c337266</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=f2a8c25b60d49d24">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=109acdfe700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16eb9b32700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7de4df2cac8d967f">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-qemu-upstream</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/25 08:32</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="73878e5eb1bd3c9656685ca60bc3a49d17311e0c
+	2022/02/24 19:15"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=73878e5eb1bd3c9656685ca60bc3a49d17311e0c">73878e5eb1bd</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/7c33726645532432752ae4074ccaad36638db7b1">7c337266</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=15187fc11a461d83">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17fb4b46700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1448c28e700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=abd84185b08fcc8d">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/25 08:31</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="73878e5eb1bd3c9656685ca60bc3a49d17311e0c
+	2022/02/24 19:15"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=73878e5eb1bd3c9656685ca60bc3a49d17311e0c">73878e5eb1bd</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/7c33726645532432752ae4074ccaad36638db7b1">7c337266</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=2829222fcd149be2">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14f584ea700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=122da722700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=bb4e10bb29090ea1">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kasan-gce-smack-root</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/25 08:28</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="73878e5eb1bd3c9656685ca60bc3a49d17311e0c
+	2022/02/24 19:15"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=73878e5eb1bd3c9656685ca60bc3a49d17311e0c">73878e5eb1bd</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/7c33726645532432752ae4074ccaad36638db7b1">7c337266</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=15187fc11a461d83">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14e369ea700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11ab32c6700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=8c09d5023feb7ae4">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/17 07:59</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="3593030761630e09200072a4bd06468892c27be3
+	2022/02/16 18:13"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=3593030761630e09200072a4bd06468892c27be3">359303076163</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/2bea8a2770f985a4dac311503dc4d23b8d0164ee">2bea8a27</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a78b064590b9f912">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1356a986700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13fb4fe2700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=74ce5052c8de3b20">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/14 07:10</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="42964a18f81c9e514dce2d11277b7cc546146723
+	2022/02/13 17:43"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=42964a18f81c9e514dce2d11277b7cc546146723">42964a18f81c</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/8b9ca619df135211a89cc19719f2705d0016045d">8b9ca619</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=88e0a6a3dbf057cf">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=141e859a700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=139f5472700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=c73865e4aa4e01a4">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kasan-gce-smack-root</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/12 20:31</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="83e396641110663d3c7bb25b9bc0c6a750359ecf
+	2022/02/11 21:40"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=83e396641110663d3c7bb25b9bc0c6a750359ecf">83e396641110</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/8b9ca619df135211a89cc19719f2705d0016045d">8b9ca619</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=5707221760c00a20">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=123f4b62700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=123d3f72700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=fbc9fda6245866b4">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kasan-gce-selinux-root</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/12 20:30</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="83e396641110663d3c7bb25b9bc0c6a750359ecf
+	2022/02/11 21:40"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=83e396641110663d3c7bb25b9bc0c6a750359ecf">83e396641110</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/8b9ca619df135211a89cc19719f2705d0016045d">8b9ca619</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=5707221760c00a20">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=131c724a700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=119b19ba700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=8c09d5023feb7ae4">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kasan-gce-selinux-root</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/12 20:28</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="83e396641110663d3c7bb25b9bc0c6a750359ecf
+	2022/02/11 21:40"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=83e396641110663d3c7bb25b9bc0c6a750359ecf">83e396641110</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/8b9ca619df135211a89cc19719f2705d0016045d">8b9ca619</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=88e0a6a3dbf057cf">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14b04b9a700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17595054700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ece50836991095de">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kasan-gce-smack-root</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/12 20:28</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="83e396641110663d3c7bb25b9bc0c6a750359ecf
+	2022/02/11 21:40"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=83e396641110663d3c7bb25b9bc0c6a750359ecf">83e396641110</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/8b9ca619df135211a89cc19719f2705d0016045d">8b9ca619</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=88e0a6a3dbf057cf">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15dcaaac700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1578cad2700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=110b0d416efc672c">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kasan-gce-smack-root</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/12 20:28</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="83e396641110663d3c7bb25b9bc0c6a750359ecf
+	2022/02/11 21:40"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=83e396641110663d3c7bb25b9bc0c6a750359ecf">83e396641110</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/8b9ca619df135211a89cc19719f2705d0016045d">8b9ca619</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=266de9da75c71a45">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=103d3f72700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14a9671c700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b8ef9e1519655e18">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/12 20:27</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="83e396641110663d3c7bb25b9bc0c6a750359ecf
+	2022/02/11 21:40"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=83e396641110663d3c7bb25b9bc0c6a750359ecf">83e396641110</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/8b9ca619df135211a89cc19719f2705d0016045d">8b9ca619</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=266de9da75c71a45">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1003b4a4700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16987362700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=488c20f30502a064">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/12 20:25</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="83e396641110663d3c7bb25b9bc0c6a750359ecf
+	2022/02/11 21:40"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=83e396641110663d3c7bb25b9bc0c6a750359ecf">83e396641110</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/8b9ca619df135211a89cc19719f2705d0016045d">8b9ca619</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=266de9da75c71a45">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15b1918c700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13b76b06700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=abd84185b08fcc8d">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/12 20:19</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="83e396641110663d3c7bb25b9bc0c6a750359ecf
+	2022/02/11 21:40"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=83e396641110663d3c7bb25b9bc0c6a750359ecf">83e396641110</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/8b9ca619df135211a89cc19719f2705d0016045d">8b9ca619</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=266de9da75c71a45">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12eb4faa700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13f76b9a700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=74ce5052c8de3b20">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/07 20:38</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dfd42facf1e4ada021b939b4e19c935dcdd55566
+	2022/02/06 20:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dfd42facf1e4ada021b939b4e19c935dcdd55566">dfd42facf1e4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a7dab6385c1d95547a88e22577fb56fbcd5c37eb">a7dab638</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=266de9da75c71a45">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12559568700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16b67eb4700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b8ef9e1519655e18">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/07 20:31</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dfd42facf1e4ada021b939b4e19c935dcdd55566
+	2022/02/06 20:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dfd42facf1e4ada021b939b4e19c935dcdd55566">dfd42facf1e4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a7dab6385c1d95547a88e22577fb56fbcd5c37eb">a7dab638</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=5707221760c00a20">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=101133dc700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14f7518a700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b66995fde9fed1ec">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-qemu-upstream</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/07 20:30</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dfd42facf1e4ada021b939b4e19c935dcdd55566
+	2022/02/06 20:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dfd42facf1e4ada021b939b4e19c935dcdd55566">dfd42facf1e4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a7dab6385c1d95547a88e22577fb56fbcd5c37eb">a7dab638</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=5707221760c00a20">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16270852700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15602e68700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b240b7800f43884a">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kasan-gce-selinux-root</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/07 20:29</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dfd42facf1e4ada021b939b4e19c935dcdd55566
+	2022/02/06 20:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dfd42facf1e4ada021b939b4e19c935dcdd55566">dfd42facf1e4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a7dab6385c1d95547a88e22577fb56fbcd5c37eb">a7dab638</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=266de9da75c71a45">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=124d1c28700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=148fe028700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=abd84185b08fcc8d">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/07 20:28</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dfd42facf1e4ada021b939b4e19c935dcdd55566
+	2022/02/06 20:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dfd42facf1e4ada021b939b4e19c935dcdd55566">dfd42facf1e4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a7dab6385c1d95547a88e22577fb56fbcd5c37eb">a7dab638</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=88e0a6a3dbf057cf">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=116343dc700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17857d58700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7368d75a3e68402e">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kasan-gce-smack-root</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/25 08:34</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="73878e5eb1bd3c9656685ca60bc3a49d17311e0c
+	2022/02/24 19:15"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=73878e5eb1bd3c9656685ca60bc3a49d17311e0c">73878e5eb1bd</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/7c33726645532432752ae4074ccaad36638db7b1">7c337266</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=15187fc11a461d83">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=173d8a8e700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=107512ea700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=560cfaf0c23df1b8">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kasan-gce-386</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/25 08:33</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="73878e5eb1bd3c9656685ca60bc3a49d17311e0c
+	2022/02/24 19:15"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=73878e5eb1bd3c9656685ca60bc3a49d17311e0c">73878e5eb1bd</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/7c33726645532432752ae4074ccaad36638db7b1">7c337266</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=15187fc11a461d83">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11de3e2e700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=164c15b6700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=d5eecd2f25acdb9e">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-qemu-upstream-386</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/12 20:31</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="83e396641110663d3c7bb25b9bc0c6a750359ecf
+	2022/02/11 21:40"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=83e396641110663d3c7bb25b9bc0c6a750359ecf">83e396641110</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/8b9ca619df135211a89cc19719f2705d0016045d">8b9ca619</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=266de9da75c71a45">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15f5be9c700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16d5218c700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b8ef9e1519655e18">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kasan-gce-386</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/07 20:40</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dfd42facf1e4ada021b939b4e19c935dcdd55566
+	2022/02/06 20:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dfd42facf1e4ada021b939b4e19c935dcdd55566">dfd42facf1e4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a7dab6385c1d95547a88e22577fb56fbcd5c37eb">a7dab638</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=266de9da75c71a45">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=164d1c28700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=174ef758700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=78e366ba760153be">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-kasan-gce-386</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/07 20:32</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dfd42facf1e4ada021b939b4e19c935dcdd55566
+	2022/02/06 20:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dfd42facf1e4ada021b939b4e19c935dcdd55566">dfd42facf1e4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a7dab6385c1d95547a88e22577fb56fbcd5c37eb">a7dab638</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=266de9da75c71a45">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=156343dc700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=105505dc700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=56cd79ff2459218b">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-qemu-upstream-386</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/12 20:31</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="ef6b35306dd8f15a7e5e5a2532e665917a43c5d9
+	2022/02/04 04:12"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=ef6b35306dd8f15a7e5e5a2532e665917a43c5d9">ef6b35306dd8</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/8b9ca619df135211a89cc19719f2705d0016045d">8b9ca619</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e0431e0b00810b4f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1778cad2700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17759ef8700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ece50836991095de">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/12 20:31</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="ef6b35306dd8f15a7e5e5a2532e665917a43c5d9
+	2022/02/04 04:12"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=ef6b35306dd8f15a7e5e5a2532e665917a43c5d9">ef6b35306dd8</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/8b9ca619df135211a89cc19719f2705d0016045d">8b9ca619</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e0431e0b00810b4f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15d93faa700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=161b4774700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=689f7fcb476b29ae">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/02/07 20:30</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="ef6b35306dd8f15a7e5e5a2532e665917a43c5d9
+	2022/02/04 04:12"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=ef6b35306dd8f15a7e5e5a2532e665917a43c5d9">ef6b35306dd8</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a7dab6385c1d95547a88e22577fb56fbcd5c37eb">a7dab638</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e0431e0b00810b4f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=159b5a28700000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=178b341c700000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=c73865e4aa4e01a4">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">KASAN: use-after-free Read in madvise_update_vma</td>
+		</tr>
+		
+		</tbody>
+</table>
+<i>* <s>Struck through</s> repros no longer work on HEAD.</i>
+
+
+</body>
+</html>

@@ -1,0 +1,1762 @@
+
+
+<!doctype html>
+<html>
+<head>
+	
+	<link rel="stylesheet" href="/static/style.css"/>
+	<script src="/static/common.js"></script>
+	
+		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-116117799-1"></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag() { dataLayer.push(arguments); }
+			gtag('js', new Date());
+			gtag('config', 'UA-116117799-1');
+		</script>
+	
+
+	<title>possible deadlock in ocfs2_page_mkwrite</title>
+</head>
+<body>
+	
+	<header id="topbar">
+		<table class="position_table">
+			<tr>
+				<td>
+					<h1><a href="/upstream">syzbot</a></h1>
+				</td>
+				<td class="namespace_td">
+					<select class="namespace" onchange="window.location.href = '/' + this.value + '';">
+						
+							<option value="android-5-10" >Android 5.10</option>
+							<option value="android-5-15" >Android 5.15</option>
+							<option value="android-54" >Android 5.4</option>
+							<option value="android-6-1" >Android 6.1</option>
+							<option value="freebsd" >FreeBSD</option>
+							<option value="upstream" selected="1">Linux</option>
+							<option value="linux-5.15" >Linux 5.15</option>
+							<option value="linux-6.1" >Linux 6.1</option>
+							<option value="netbsd" >NetBSD</option>
+							<option value="openbsd" >OpenBSD</option>
+							<option value="gvisor" >gVisor</option></select>
+				</td>
+				<td class="search">
+					
+					
+						<a href="https://syzkaller.appspot.com/_ah/conflogin?continue=https://syzkaller.appspot.com/bug%3Fextid%3D2e6495950edcf7fbfccf">sign-in</a> |
+					
+					<a href="https://groups.google.com/forum/#!forum/syzkaller" target="_blank">mailing list</a> |
+					<a href="https://github.com/google/syzkaller" target="_blank">source</a> |
+					<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md" target="_blank">docs</a>
+				</td>
+			</tr>
+		</table>
+		
+		<div class="navigation">
+			<div class="navigation_tab">
+				<a href='/upstream'><span style="color:DeepPink;">🐞</span> Open [1659]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/subsystems'><span style="color:DeepPink;">≡</span> Subsystems</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/fixed'><span style="color:ForestGreen;">🐞</span> Fixed [6081]</a>
+			</div>
+
+			<div class="navigation_tab" href='/upstream/invalid'>
+				<a href='/upstream/invalid'><span style="color:RoyalBlue;">🐞</span> Invalid [15101]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/backports'><span style="color:ForestGreen;">⬇</span> Missing Backports [157]</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/graph/crashes'><span style="color:ForestGreen;">≡</span> Crashes</a>
+			</div>
+
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Graphs</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href='/upstream/graph/bugs'>Kernel&nbsp;Health</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/found-bugs'>Bugs/Month</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/lifetimes'>Bug&nbsp;Lifetimes</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/fuzzing'>Fuzzing</a>
+				</div>
+			</div>
+
+			
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Coverage</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href="/upstream/graph/coverage?period=quarter">Total</a>
+					<a class="navigation_tab"
+						href="/upstream/coverage?period=month">Repo&nbsp;Heatmap</a>
+					
+						<a class="navigation_tab"
+							href="/upstream/coverage/subsystems?period=month">Subsystems&nbsp;Heatmap</a>
+					
+				</div>
+			</div>
+			
+			
+			<div class="navigation_tab navigation_right">
+				<a href='mailto:syzkaller@googlegroups.com'><span style="color:ForestGreen;">💬</span> Send us feedback</a>
+			</div>
+			
+		</div>
+		
+	</header>
+	<br>
+
+
+	<b>possible deadlock in ocfs2_page_mkwrite</b><br><br>
+	Status: <a href="https://groups.google.com/d/msgid/syzkaller-bugs/00000000000093a1ca0621e8d336%40google.com">upstream: reported C repro on 2024/09/12 09:35</a><br>
+	
+		
+			Subsystems: 
+				<span class="bug-label"><a href="/upstream/s/ocfs2">ocfs2</a></span>
+		<br>
+		
+	<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md#labels">[Documentation on labels]</a><br>
+	
+	
+	Reported-by: syzbot&#43;2e6495950edcf7fbfccf@syzkaller.appspotmail.com<br>
+	
+	First crash: 175d, last: 3h25m<br>
+	
+	<div>
+		<div class="bug-bisection-info">
+
+	
+	
+	
+		
+			<b>Cause bisection: introduced by</b>
+		
+		<b>(<a href="https://syzkaller.appspot.com/x/bisect.txt?x=10fff130580000">bisect log</a>)</b> <span class="bad"></span>:<br>
+		<span class="mono">
+		
+		commit a3c06ae158dd6fa8336157c31d9234689d068d02<br>
+		Author: Parav Pandit &lt;parav@nvidia.com&gt;<br>
+		Date:   Tue Jan 5 10:32:03 2021 &#43;0000<br>
+		<br>
+		&nbsp;&nbsp;<a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=a3c06ae158dd6fa8336157c31d9234689d068d02">vdpa_sim_net: Add support for user supported devices</a><br>
+		</span><br>
+	
+	
+		Crash: <a href="https://syzkaller.appspot.com/x/report.txt?x=12fff130580000">possible deadlock in ocfs2_get_system_file_inode</a> (<a href="https://syzkaller.appspot.com/x/log.txt?x=14fff130580000">log</a>)<br>
+		Repro: <a href="/text?tag=ReproC&x=12ecd2c0580000">C</a>
+		<a href="/text?tag=ReproSyz&x=17f252e8580000">syz</a>
+		<a href="/text?tag=KernelConfig&x=1503500c6f615d24">.config</a><br>
+	
+
+	
+	&nbsp;&nbsp;
+	
+
+</div>
+		
+		<div class="bug-bisection-stop"></div>
+	</div>
+
+	
+	<div class="collapsible collapsible-show">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Discussions (1)</span>
+		</div>
+		<div class="content">
+			
+			
+			
+
+<table class="list_table">
+	<thead>
+	<tr>
+		<th>Title</th>
+		<th>Replies (including bot)</th>
+		<th>Last reply</th>
+	</tr>
+	</thead>
+	<tbody>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/00000000000093a1ca0621e8d336@google.com/T/">[syzbot] [ocfs2?] possible deadlock in ocfs2_page_mkwrite</a></td>
+			<td class="stat">0 (3)</td>
+			<td class="stat">2024/11/17 17:49</td>
+		</tr>
+	
+	</tbody>
+</table>
+
+
+			
+			
+		</div>
+	</div>
+	
+	<div class="collapsible collapsible-hide">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Similar bugs (2)</span>
+		</div>
+		<div class="content">
+			
+
+
+<table class="list_table">
+	
+	<thead>
+	<tr>
+		
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+		
+		<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		<th><a onclick="return sortTable(this, 'Repro', reproSort)" href="#">Repro</a></th>
+		<th><a onclick="return sortTable(this, 'Cause bisect', textSort)" href="#">Cause bisect</a></th>
+		<th><a onclick="return sortTable(this, 'Fix bisect', textSort)" href="#">Fix bisect</a></th>
+		<th><a onclick="return sortTable(this, 'Count', numSort)" href="#">Count</a></th>
+		<th><a onclick="return sortTable(this, 'Last', timeSort)" href="#">Last</a></th>
+		<th><a onclick="return sortTable(this, 'Reported', timeSort)" href="#">Reported</a></th>
+		
+		
+		
+			<th><a onclick="return sortTable(this, 'Patched', patchedSort)" href="#">Patched</a></th>
+		
+		
+			<th><a onclick="return sortTable(this, 'Status', textSort)" href="#">Status</a></th>
+		
+		
+	</tr>
+	</thead>
+	<tbody>
+	
+		<tr>
+			<td>linux-6.1</td>
+			<td class="title">
+				<a href="/bug?extid=0525e622cd4d8cce5b87">possible deadlock in ocfs2_page_mkwrite</a>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">6</td>
+			<td class="stat">38d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/67287235.050a0220.35b515.01b2.GAE@google.com">121d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/3</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/67287235.050a0220.35b515.01b2.GAE@google.com">upstream: reported on 2024/11/04 07:05</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>linux-5.15</td>
+			<td class="title">
+				<a href="/bug?extid=5dbd91eea2d01f1bc318">possible deadlock in ocfs2_page_mkwrite</a>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">5</td>
+			<td class="stat">56d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/000000000000a43188062242d509%40google.com">170d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/3</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/000000000000a43188062242d509%40google.com">upstream: reported on 2024/09/16 20:58</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+	</tbody>
+</table>
+
+
+
+			
+			
+			
+			
+		</div>
+	</div>
+	
+
+	
+	<br><b>Sample crash report:</b><br>
+	<div id="crash_div"><pre>======================================================
+WARNING: possible circular locking dependency detected
+6.12.0-rc7-syzkaller-00192-gb5a24181e461 #0 Not tainted
+------------------------------------------------------
+syz-executor420/5970 is trying to acquire lock:
+ffff88807839b120 (&amp;ocfs2_file_ip_alloc_sem_key){++++}-{3:3}, at: ocfs2_page_mkwrite+0x346/0xed0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/ocfs2/mmap.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n142'>fs/ocfs2/mmap.c:142</a>
+
+but task is already holding lock:
+ffff88807c820518 (sb_pagefaults){.+.+}-{0:0}, at: do_page_mkwrite+0x198/0x480 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/memory.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n3162'>mm/memory.c:3162</a>
+
+which lock already depends on the new lock.
+
+
+the existing dependency chain (in reverse order) is:
+
+-&gt; #2 (sb_pagefaults){.+.+}-{0:0}:
+       lock_acquire+0x1ed/0x550 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/locking/lockdep.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n5825'>kernel/locking/lockdep.c:5825</a>
+       percpu_down_read <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/percpu-rwsem.h?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n51'>include/linux/percpu-rwsem.h:51</a> [inline]
+       __sb_start_write <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/fs.h?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n1716'>include/linux/fs.h:1716</a> [inline]
+       sb_start_pagefault <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/fs.h?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n1881'>include/linux/fs.h:1881</a> [inline]
+       ocfs2_page_mkwrite+0x222/0xed0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/ocfs2/mmap.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n122'>fs/ocfs2/mmap.c:122</a>
+       do_page_mkwrite+0x198/0x480 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/memory.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n3162'>mm/memory.c:3162</a>
+       do_shared_fault <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/memory.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n5373'>mm/memory.c:5373</a> [inline]
+       do_fault <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/memory.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n5435'>mm/memory.c:5435</a> [inline]
+       do_pte_missing <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/memory.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n3965'>mm/memory.c:3965</a> [inline]
+       handle_pte_fault+0x11fa/0x6820 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/memory.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n5766'>mm/memory.c:5766</a>
+       __handle_mm_fault <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/memory.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n5909'>mm/memory.c:5909</a> [inline]
+       handle_mm_fault+0x1053/0x1ad0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/memory.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n6077'>mm/memory.c:6077</a>
+       do_user_addr_fault <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/mm/fault.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n1389'>arch/x86/mm/fault.c:1389</a> [inline]
+       handle_page_fault <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/mm/fault.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n1481'>arch/x86/mm/fault.c:1481</a> [inline]
+       exc_page_fault+0x2b9/0x8c0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/mm/fault.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n1539'>arch/x86/mm/fault.c:1539</a>
+       asm_exc_page_fault+0x26/0x30 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/include/asm/idtentry.h?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n623'>arch/x86/include/asm/idtentry.h:623</a>
+
+-&gt; #1 (&amp;mm-&gt;mmap_lock){++++}-{3:3}:
+       lock_acquire+0x1ed/0x550 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/locking/lockdep.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n5825'>kernel/locking/lockdep.c:5825</a>
+       __might_fault+0xc6/0x120 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/memory.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n6716'>mm/memory.c:6716</a>
+       _inline_copy_to_user <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/uaccess.h?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n192'>include/linux/uaccess.h:192</a> [inline]
+       _copy_to_user+0x2c/0xb0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/lib/usercopy.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n26'>lib/usercopy.c:26</a>
+       copy_to_user <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/uaccess.h?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n225'>include/linux/uaccess.h:225</a> [inline]
+       fiemap_fill_next_extent+0x235/0x410 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/ioctl.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n145'>fs/ioctl.c:145</a>
+       ocfs2_fiemap_inline <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/ocfs2/extent_map.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n725'>fs/ocfs2/extent_map.c:725</a> [inline]
+       ocfs2_fiemap+0xc25/0xf80 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/ocfs2/extent_map.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n762'>fs/ocfs2/extent_map.c:762</a>
+       ioctl_fiemap <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/ioctl.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n220'>fs/ioctl.c:220</a> [inline]
+       do_vfs_ioctl+0x1bf8/0x2e40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/ioctl.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n841'>fs/ioctl.c:841</a>
+       __do_sys_ioctl <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/ioctl.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n905'>fs/ioctl.c:905</a> [inline]
+       __se_sys_ioctl+0x81/0x170 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/ioctl.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n893'>fs/ioctl.c:893</a>
+       do_syscall_x64 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n52'>arch/x86/entry/common.c:52</a> [inline]
+       do_syscall_64+0xf3/0x230 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n83'>arch/x86/entry/common.c:83</a>
+       entry_SYSCALL_64_after_hwframe+0x77/0x7f
+
+-&gt; #0 (&amp;ocfs2_file_ip_alloc_sem_key){++++}-{3:3}:
+       check_prev_add <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/locking/lockdep.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n3161'>kernel/locking/lockdep.c:3161</a> [inline]
+       check_prevs_add <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/locking/lockdep.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n3280'>kernel/locking/lockdep.c:3280</a> [inline]
+       validate_chain+0x18ef/0x5920 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/locking/lockdep.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n3904'>kernel/locking/lockdep.c:3904</a>
+       __lock_acquire+0x1384/0x2050 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/locking/lockdep.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n5202'>kernel/locking/lockdep.c:5202</a>
+       lock_acquire+0x1ed/0x550 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/locking/lockdep.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n5825'>kernel/locking/lockdep.c:5825</a>
+       down_write+0x99/0x220 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/locking/rwsem.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n1577'>kernel/locking/rwsem.c:1577</a>
+       ocfs2_page_mkwrite+0x346/0xed0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/ocfs2/mmap.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n142'>fs/ocfs2/mmap.c:142</a>
+       do_page_mkwrite+0x198/0x480 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/memory.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n3162'>mm/memory.c:3162</a>
+       do_shared_fault <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/memory.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n5373'>mm/memory.c:5373</a> [inline]
+       do_fault <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/memory.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n5435'>mm/memory.c:5435</a> [inline]
+       do_pte_missing <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/memory.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n3965'>mm/memory.c:3965</a> [inline]
+       handle_pte_fault+0x11fa/0x6820 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/memory.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n5766'>mm/memory.c:5766</a>
+       __handle_mm_fault <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/memory.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n5909'>mm/memory.c:5909</a> [inline]
+       handle_mm_fault+0x1053/0x1ad0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/memory.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n6077'>mm/memory.c:6077</a>
+       do_user_addr_fault <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/mm/fault.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n1389'>arch/x86/mm/fault.c:1389</a> [inline]
+       handle_page_fault <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/mm/fault.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n1481'>arch/x86/mm/fault.c:1481</a> [inline]
+       exc_page_fault+0x2b9/0x8c0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/mm/fault.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n1539'>arch/x86/mm/fault.c:1539</a>
+       asm_exc_page_fault+0x26/0x30 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/include/asm/idtentry.h?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n623'>arch/x86/include/asm/idtentry.h:623</a>
+
+other info that might help us debug this:
+
+Chain exists of:
+  &amp;ocfs2_file_ip_alloc_sem_key --&gt; &amp;mm-&gt;mmap_lock --&gt; sb_pagefaults
+
+ Possible unsafe locking scenario:
+
+       CPU0                    CPU1
+       ----                    ----
+  rlock(sb_pagefaults);
+                               lock(&amp;mm-&gt;mmap_lock);
+                               lock(sb_pagefaults);
+  lock(&amp;ocfs2_file_ip_alloc_sem_key);
+
+ *** DEADLOCK ***
+
+2 locks held by syz-executor420/5970:
+ #0: ffff8880303d8198 (&amp;mm-&gt;mmap_lock){++++}-{3:3}, at: mmap_read_trylock <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/mmap_lock.h?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n163'>include/linux/mmap_lock.h:163</a> [inline]
+ #0: ffff8880303d8198 (&amp;mm-&gt;mmap_lock){++++}-{3:3}, at: get_mmap_lock_carefully <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/memory.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n6114'>mm/memory.c:6114</a> [inline]
+ #0: ffff8880303d8198 (&amp;mm-&gt;mmap_lock){++++}-{3:3}, at: lock_mm_and_find_vma+0x32/0x2f0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/memory.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n6174'>mm/memory.c:6174</a>
+ #1: ffff88807c820518 (sb_pagefaults){.+.+}-{0:0}, at: do_page_mkwrite+0x198/0x480 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/memory.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n3162'>mm/memory.c:3162</a>
+
+stack backtrace:
+CPU: 1 UID: 0 PID: 5970 Comm: syz-executor420 Not tainted 6.12.0-rc7-syzkaller-00192-gb5a24181e461 #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 10/30/2024
+Call Trace:
+ &lt;TASK&gt;
+ __dump_stack <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/lib/dump_stack.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n94'>lib/dump_stack.c:94</a> [inline]
+ dump_stack_lvl+0x241/0x360 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/lib/dump_stack.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n120'>lib/dump_stack.c:120</a>
+ print_circular_bug+0x13a/0x1b0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/locking/lockdep.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n2074'>kernel/locking/lockdep.c:2074</a>
+ check_noncircular+0x36a/0x4a0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/locking/lockdep.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n2206'>kernel/locking/lockdep.c:2206</a>
+ check_prev_add <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/locking/lockdep.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n3161'>kernel/locking/lockdep.c:3161</a> [inline]
+ check_prevs_add <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/locking/lockdep.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n3280'>kernel/locking/lockdep.c:3280</a> [inline]
+ validate_chain+0x18ef/0x5920 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/locking/lockdep.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n3904'>kernel/locking/lockdep.c:3904</a>
+ __lock_acquire+0x1384/0x2050 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/locking/lockdep.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n5202'>kernel/locking/lockdep.c:5202</a>
+ lock_acquire+0x1ed/0x550 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/locking/lockdep.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n5825'>kernel/locking/lockdep.c:5825</a>
+ down_write+0x99/0x220 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/locking/rwsem.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n1577'>kernel/locking/rwsem.c:1577</a>
+ ocfs2_page_mkwrite+0x346/0xed0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/ocfs2/mmap.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n142'>fs/ocfs2/mmap.c:142</a>
+ do_page_mkwrite+0x198/0x480 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/memory.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n3162'>mm/memory.c:3162</a>
+ do_shared_fault <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/memory.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n5373'>mm/memory.c:5373</a> [inline]
+ do_fault <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/memory.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n5435'>mm/memory.c:5435</a> [inline]
+ do_pte_missing <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/memory.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n3965'>mm/memory.c:3965</a> [inline]
+ handle_pte_fault+0x11fa/0x6820 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/memory.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n5766'>mm/memory.c:5766</a>
+ __handle_mm_fault <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/memory.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n5909'>mm/memory.c:5909</a> [inline]
+ handle_mm_fault+0x1053/0x1ad0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/memory.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n6077'>mm/memory.c:6077</a>
+ do_user_addr_fault <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/mm/fault.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n1389'>arch/x86/mm/fault.c:1389</a> [inline]
+ handle_page_fault <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/mm/fault.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n1481'>arch/x86/mm/fault.c:1481</a> [inline]
+ exc_page_fault+0x2b9/0x8c0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/mm/fault.c?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n1539'>arch/x86/mm/fault.c:1539</a>
+ asm_exc_page_fault+0x26/0x30 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/include/asm/idtentry.h?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd#n623'>arch/x86/include/asm/idtentry.h:623</a>
+RIP: 0033:0x7f47ff734108
+Code: 48 8b 35 23 50 0b 00 ba 01 cf 20 00 31 c0 bf 4d 00 00 00 e8 5a 46 03 00 66 0f 6f 05 f2 66 08 00 48 b8 2e 2f 66 69 6c 65 31 00 &lt;c7&gt; 04 25 c0 01 00 20 74 72 65 65 48 89 04 25 00 00 00 20 ba 03 00
+RSP: 002b:00007ffdcacffc30 EFLAGS: 00010217
+RAX: 0031656c69662f2e RBX: 696c6e695f78616d RCX: 00007f47ff768769
+RDX: 00007f47ff768769 RSI: 000000000020cf01 RDI: 0000000000000006
+RBP: 6569727261626f6e R08: 0000000000000000 R09: 0000000000000000
+R10: 0000000000000006 R11: 0000000000000246 R12: 00007ffdcacffc5c
+R13: 000000000000002d R14: 431bde82d7b634db R15: 00007ffdcacffc90
+ &lt;/TASK&gt;
+</pre></div><br>
+	
+
+	
+
+<table class="list_table">
+	<caption>Crashes (611):</caption>
+		<thead>
+		<tr>
+			<th><a onclick="return sortTable(this, 'Time', textSort, true)" href="#">Time</a></th>
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+			<th><a onclick="return sortTable(this, 'Commit', textSort)" href="#">Commit</a></th>
+			<th><a onclick="return sortTable(this, 'Syzkaller', textSort)" href="#">Syzkaller</a></th>
+			<th><a onclick="return sortTable(this, 'Config', textSort)" href="#">Config</a></th>
+			<th><a onclick="return sortTable(this, 'Log', textSort)" href="#">Log</a></th>
+			<th><a onclick="return sortTable(this, 'Report', reproSort)" href="#">Report</a></th>
+			<th><a onclick="return sortTable(this, 'Syz repro', reproSort)" href="#">Syz repro</a></th>
+			<th><a onclick="return sortTable(this, 'C repro', textSort)" href="#">C repro</a></th>
+			<th><a onclick="return sortTable(this, 'VM info', textSort)" href="#">VM info</a></th>
+			<th><a onclick="return sortTable(this, 'Assets', textSort)" href="#">Assets</a> (<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot_assets.md">help?</a>)</th>
+			<th><a onclick="return sortTable(this, 'Manager', textSort)" href="#">Manager</a></th>
+			<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		</tr>
+		</thead>
+		<tbody>
+		
+		<tr>
+			<td class="time">2024/11/17 01:24</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="b5a24181e461e8bfa8cdf35e1804679dc1bebcdd
+	2024/11/16 16:12"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=b5a24181e461e8bfa8cdf35e1804679dc1bebcdd">b5a24181e461</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/cfe3a04a188eb9a2c407783d8d6e6f55a4b30886">cfe3a04a</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1503500c6f615d24">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14ecd2c0580000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10c05b5f980000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=17f252e8580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=14c05b5f980000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=12ecd2c0580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/048c0136cb21/disk-b5a24181.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5667b33e03d5/vmlinux-b5a24181.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1413f6952b55/bzImage-b5a24181.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2e0d55b52167/mount_0.gz">mounted in repro #1</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/82e694655642/mount_7.gz">mounted in repro #2</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/03/06 00:49</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="bb2281fb05e50108ce95c43ab7e701ee564565c8
+	2025/03/05 05:05"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=bb2281fb05e50108ce95c43ab7e701ee564565c8">bb2281fb05e5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/831e3629115be4f5e68e6e0df3a5b07eed26daa4">831e3629</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=523d3ff8e053340a">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1688b7a0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11b9b8b7980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=4eb3d26e3959557a">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7f163a5da7e8/disk-bb2281fb.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6841e1105518/vmlinux-bb2281fb.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3295ae6e86c0/bzImage-bb2281fb.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/03/05 20:39</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="bb2281fb05e50108ce95c43ab7e701ee564565c8
+	2025/03/05 05:05"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=bb2281fb05e50108ce95c43ab7e701ee564565c8">bb2281fb05e5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/60f5d8d97d382f0194c04552c3c2b5d5c1597548">60f5d8d9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=523d3ff8e053340a">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1398f5a8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1042b8b7980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=74784a1c3a28d698">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7f163a5da7e8/disk-bb2281fb.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6841e1105518/vmlinux-bb2281fb.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3295ae6e86c0/bzImage-bb2281fb.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/03/05 13:37</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="48a5eed9ad584315c30ed35204510536235ce402
+	2025/03/04 19:04"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=48a5eed9ad584315c30ed35204510536235ce402">48a5eed9ad58</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/60f5d8d97d382f0194c04552c3c2b5d5c1597548">60f5d8d9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=523d3ff8e053340a">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13c037a0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=125c8254580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b5945c558d281c5d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3d44bfc731cc/disk-48a5eed9.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eb1a187530c2/vmlinux-48a5eed9.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/58707d0a7c0e/bzImage-48a5eed9.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/03/04 15:14</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="99fa936e8e4f117d62f229003c9799686f74cebc
+	2025/03/03 17:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=99fa936e8e4f117d62f229003c9799686f74cebc">99fa936e8e4f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c3901742785ff25afdc6f470af7b25b69d7c4f2f">c3901742</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=523d3ff8e053340a">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=171758b7980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=178857a0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=e440c433b922f5b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b40ecb8ed597/disk-99fa936e.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/16348198506c/vmlinux-99fa936e.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/65fc34c1d4d6/bzImage-99fa936e.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/03/02 22:02</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="b91872c56940950a6a0852e499d249c3091d4284
+	2025/03/02 18:08"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=b91872c56940950a6a0852e499d249c3091d4284">b91872c56940</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c3901742785ff25afdc6f470af7b25b69d7c4f2f">c3901742</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=8de9cc84d5960254">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17b9cfb8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=162bba97980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=87d41d48072d2038">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4b855669df70/disk-b91872c5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e44f3c546271/vmlinux-b91872c5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b106e670346a/bzImage-b91872c5.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/28 12:51</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="1e15510b71c99c6e49134d756df91069f7d18141
+	2025/02/27 17:32"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=1e15510b71c99c6e49134d756df91069f7d18141">1e15510b71c9</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6a8fcbc4a6172c831c89c507007f59fba13408aa">6a8fcbc4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=8de9cc84d5960254">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1300dba0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14e7ca97980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=5a54e8c99573fa77">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ac4579f25f13/disk-1e15510b.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c342a1d6167e/vmlinux-1e15510b.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d985a65df547/bzImage-1e15510b.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/27 00:05</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="5394eea106517d5b0d4a372f00e63d5db8cb0370
+	2025/02/26 20:57"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=5394eea106517d5b0d4a372f00e63d5db8cb0370">5394eea10651</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6a8fcbc4a6172c831c89c507007f59fba13408aa">6a8fcbc4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=8de9cc84d5960254">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1314e6e4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14c0803f980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=1cd9dea229791ef1">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2fdd61a0c3b0/disk-5394eea1.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/47406ad0754b/vmlinux-5394eea1.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e8df9ac8e2cb/bzImage-5394eea1.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/25 07:57</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="d082ecbc71e9e0bf49883ee4afd435a77a5101b6
+	2025/02/23 20:32"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=d082ecbc71e9e0bf49883ee4afd435a77a5101b6">d082ecbc71e9</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=8de9cc84d5960254">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12076c98580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=172477f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ab51aab7bd70075d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5efd609bee65/disk-d082ecbc.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dfadbc41acd8/vmlinux-d082ecbc.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/50189caf8ad6/bzImage-d082ecbc.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/23 23:00</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="27102b38b8ca7ffb1622f27bcb41475d121fb67f
+	2025/02/23 01:32"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=27102b38b8ca7ffb1622f27bcb41475d121fb67f">27102b38b8ca</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=246f46d6db29b555">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13e6f498580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1361d7f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=78cfc6089dcbb4cf">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2324227e5d74/disk-27102b38.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/10e721e73827/vmlinux-27102b38.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4a3889279a6e/bzImage-27102b38.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/23 04:44</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="5cf80612d3f72c46ad53ef5042b4c609c393122f
+	2025/02/22 18:45"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=5cf80612d3f72c46ad53ef5042b4c609c393122f">5cf80612d3f7</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=246f46d6db29b555">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=140dfae4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1738c7a4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=74611a4b35843fa2">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c40bc1dde8a1/disk-5cf80612.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/bf0b00dcbd66/vmlinux-5cf80612.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/49df1aac6c88/bzImage-5cf80612.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/22 13:35</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ff202c5028a195c07b16e1a2fbb8ca6b7ba11a1c
+	2025/02/21 21:16"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ff202c5028a195c07b16e1a2fbb8ca6b7ba11a1c">ff202c5028a1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=246f46d6db29b555">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10019fdf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12d8b498580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=9a0fd48db8a32944">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8078c3cf0db2/disk-ff202c50.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7ad248c20c5d/vmlinux-ff202c50.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eb7d27420f4c/bzImage-ff202c50.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/18 01:03</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="2408a807bfc3f738850ef5ad5e3fd59d66168996
+	2025/02/17 18:38"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=2408a807bfc3f738850ef5ad5e3fd59d66168996">2408a807bfc3</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/429ea00719313e5b518a2093a9f48c79bb7b5f52">429ea007</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=6cc40dfe827ffb85">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17ee1898580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1646a5b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=1701ab55f0f89585">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3bbfce004a48/disk-2408a807.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0151460c5539/vmlinux-2408a807.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8dfe7f8b2862/bzImage-2408a807.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/16 23:28</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="224e74511041c2d33dcf24adf54d447eb72399c8
+	2025/02/16 20:58"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=224e74511041c2d33dcf24adf54d447eb72399c8">224e74511041</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/40a34ec944732a2502ee67d92cc8c023355dfad4">40a34ec9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e55cabe422b4fcaf">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15b2a898580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11195bf8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=24bccf2ac5b28ff9">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6b4272577622/disk-224e7451.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ec492843be2b/vmlinux-224e7451.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/013e7903deef/bzImage-224e7451.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/16 10:50</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ad1b832bf1cf2df9304f8eb72943111625c7e5a7
+	2025/02/16 01:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ad1b832bf1cf2df9304f8eb72943111625c7e5a7">ad1b832bf1cf</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/40a34ec944732a2502ee67d92cc8c023355dfad4">40a34ec9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e55cabe422b4fcaf">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13e302e4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11b48898580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=70af88b6419822aa">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/84651fa97ed7/disk-ad1b832b.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9eaee125043b/vmlinux-ad1b832b.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/db76f3a7fcd2/bzImage-ad1b832b.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/16 03:01</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="496659003dac5d08ea292c44fce9dfb36fa34691
+	2025/02/15 18:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=496659003dac5d08ea292c44fce9dfb36fa34691">496659003dac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/40a34ec944732a2502ee67d92cc8c023355dfad4">40a34ec9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e55cabe422b4fcaf">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13490898580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16f517df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=78e365b1952805b2">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7843433d9d2e/disk-49665900.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d1e76f88d422/vmlinux-49665900.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/441d415af0fb/bzImage-49665900.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/15 21:01</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="496659003dac5d08ea292c44fce9dfb36fa34691
+	2025/02/15 18:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=496659003dac5d08ea292c44fce9dfb36fa34691">496659003dac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/40a34ec944732a2502ee67d92cc8c023355dfad4">40a34ec9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e55cabe422b4fcaf">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14bff098580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13e817df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=18bb81f40bb3c587">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7843433d9d2e/disk-49665900.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d1e76f88d422/vmlinux-49665900.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/441d415af0fb/bzImage-49665900.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/15 17:17</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="78a632a2086c5d5468b0e088a97b26e47c569567
+	2025/02/15 00:49"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=78a632a2086c5d5468b0e088a97b26e47c569567">78a632a2086c</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/40a34ec944732a2502ee67d92cc8c023355dfad4">40a34ec9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e55cabe422b4fcaf">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1619f098580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=116159a4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=d932bf3769736a35">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/52ae0dfa867d/disk-78a632a2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/efdc46554640/vmlinux-78a632a2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f22540f779ec/bzImage-78a632a2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/15 12:52</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="78a632a2086c5d5468b0e088a97b26e47c569567
+	2025/02/15 00:49"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=78a632a2086c5d5468b0e088a97b26e47c569567">78a632a2086c</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/40a34ec944732a2502ee67d92cc8c023355dfad4">40a34ec9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e55cabe422b4fcaf">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13043ce4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17cce098580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=392a92c5be2a6ddd">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/52ae0dfa867d/disk-78a632a2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/efdc46554640/vmlinux-78a632a2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f22540f779ec/bzImage-78a632a2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/14 06:55</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="68763b29e0a6441f57f9ee652bbf8e7bc59183e5
+	2025/02/13 21:13"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=68763b29e0a6441f57f9ee652bbf8e7bc59183e5">68763b29e0a6</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d9a046cf66ed7650b10bc0e6a567e089644d9004">d9a046cf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e55cabe422b4fcaf">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15950f18580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13950f18580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=e12b7a82aa19efaf">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/94ef4ea40eee/disk-68763b29.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/bc32a3a85b6d/vmlinux-68763b29.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/bafeee88f9b3/bzImage-68763b29.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/13 17:38</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="4dc1d1bec89864d8076e5ab314f86f46442bfb02
+	2025/02/12 22:22"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=4dc1d1bec89864d8076e5ab314f86f46442bfb02">4dc1d1bec898</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a98a8417f2c0dfdab1e8d3d49e8a7605340ada89">a98a8417</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c516b1c112a81e77">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14daf718580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10d513f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=8a3acb452fc514e2">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/91386b69c114/disk-4dc1d1be.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/de933eabef50/vmlinux-4dc1d1be.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/50610018d804/bzImage-4dc1d1be.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/13 16:14</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="4dc1d1bec89864d8076e5ab314f86f46442bfb02
+	2025/02/12 22:22"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=4dc1d1bec89864d8076e5ab314f86f46442bfb02">4dc1d1bec898</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a98a8417f2c0dfdab1e8d3d49e8a7605340ada89">a98a8417</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c516b1c112a81e77">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1188fbdf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=109113f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b036b12858b58a64">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/91386b69c114/disk-4dc1d1be.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/de933eabef50/vmlinux-4dc1d1be.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/50610018d804/bzImage-4dc1d1be.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/13 11:53</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="4dc1d1bec89864d8076e5ab314f86f46442bfb02
+	2025/02/12 22:22"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=4dc1d1bec89864d8076e5ab314f86f46442bfb02">4dc1d1bec898</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/b27c24029033bbfb41289458ca671507a01cb784">b27c2402</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c516b1c112a81e77">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15a413f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15737718580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=321f0d94c1a0a2cd">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/91386b69c114/disk-4dc1d1be.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/de933eabef50/vmlinux-4dc1d1be.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/50610018d804/bzImage-4dc1d1be.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/13 06:14</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="4dc1d1bec89864d8076e5ab314f86f46442bfb02
+	2025/02/12 22:22"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=4dc1d1bec89864d8076e5ab314f86f46442bfb02">4dc1d1bec898</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/b27c24029033bbfb41289458ca671507a01cb784">b27c2402</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c516b1c112a81e77">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11647bdf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12ccc9b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=95b1db71f5a5e4a2">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/91386b69c114/disk-4dc1d1be.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/de933eabef50/vmlinux-4dc1d1be.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/50610018d804/bzImage-4dc1d1be.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/13 03:07</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="4dc1d1bec89864d8076e5ab314f86f46442bfb02
+	2025/02/12 22:22"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=4dc1d1bec89864d8076e5ab314f86f46442bfb02">4dc1d1bec898</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/b27c24029033bbfb41289458ca671507a01cb784">b27c2402</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c516b1c112a81e77">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1116e3f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=108bbbdf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=143aa9a18bdb8f1a">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/91386b69c114/disk-4dc1d1be.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/de933eabef50/vmlinux-4dc1d1be.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/50610018d804/bzImage-4dc1d1be.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/12 23:19</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="09fbf3d502050282bf47ab3babe1d4ed54dd1fd8
+	2025/02/11 18:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=09fbf3d502050282bf47ab3babe1d4ed54dd1fd8">09fbf3d50205</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/b27c24029033bbfb41289458ca671507a01cb784">b27c2402</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c516b1c112a81e77">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=101149b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17fe4aa4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=18210bc7a0d0adec">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f952dd0d3577/disk-09fbf3d5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/15b571b9069e/vmlinux-09fbf3d5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/299fb2913d4e/bzImage-09fbf3d5.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/12 14:01</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="09fbf3d502050282bf47ab3babe1d4ed54dd1fd8
+	2025/02/11 18:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=09fbf3d502050282bf47ab3babe1d4ed54dd1fd8">09fbf3d50205</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/b27c24029033bbfb41289458ca671507a01cb784">b27c2402</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c516b1c112a81e77">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15058aa4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17574718580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=98fbf4b1e35de2fe">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f952dd0d3577/disk-09fbf3d5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/15b571b9069e/vmlinux-09fbf3d5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/299fb2913d4e/bzImage-09fbf3d5.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/11 05:41</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="febbc555cf0fff895546ddb8ba2c9a523692fb55
+	2025/02/10 21:11"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=febbc555cf0fff895546ddb8ba2c9a523692fb55">febbc555cf0f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/43f51a00700e5960fc890e6c3d596846757bf29d">43f51a00</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c516b1c112a81e77">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=164ec3f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14e2b1b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=d65e3cc4be1df684">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2e9be2067689/disk-febbc555.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f63ae5d666ab/vmlinux-febbc555.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c48c74354513/bzImage-febbc555.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/10 20:37</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a64dcfb451e254085a7daee5fe51bf22959d52d3
+	2025/02/09 20:45"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a64dcfb451e254085a7daee5fe51bf22959d52d3">a64dcfb451e2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/43f51a00700e5960fc890e6c3d596846757bf29d">43f51a00</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4b1ef007dfb9422f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16a631b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=106c1bdf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=35c70c3887cc8a25">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4484b01134ef/disk-a64dcfb4.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2016d265787b/vmlinux-a64dcfb4.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6e64c9f2b522/bzImage-a64dcfb4.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/09 01:06</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="8f6629c004b193d23612641c3607e785819e97ab
+	2025/02/08 03:49"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=8f6629c004b193d23612641c3607e785819e97ab">8f6629c004b1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ef44b750e8fab8d6d5cb84920680581b13e0d470">ef44b750</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=147b7d49d83b8036">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=140a3df8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12af2b18580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=e98a3f4f1b6cacb6">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f60addb0f276/disk-8f6629c0.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/59d0658fa6fd/vmlinux-8f6629c0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/25afa4128fc2/bzImage-8f6629c0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/08 20:22</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="8f6629c004b193d23612641c3607e785819e97ab
+	2025/02/08 03:49"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=8f6629c004b193d23612641c3607e785819e97ab">8f6629c004b1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ef44b750e8fab8d6d5cb84920680581b13e0d470">ef44b750</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=147b7d49d83b8036">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=175402a4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10d402a4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b3dbb2d71dbd1302">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f60addb0f276/disk-8f6629c0.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/59d0658fa6fd/vmlinux-8f6629c0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/25afa4128fc2/bzImage-8f6629c0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/07 05:15</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="bb066fe812d6fb3a9d01c073d9f1e2fd5a63403b
+	2025/02/06 20:32"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=bb066fe812d6fb3a9d01c073d9f1e2fd5a63403b">bb066fe812d6</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/8002dd28a72e5a753c56cd580ac5ee3058eae726">8002dd28</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=147b7d49d83b8036">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=169173df980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=101364a4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ffa7c5fd62a5d77b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0dd155a02fc5/disk-bb066fe8.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3b03d08020cf/vmlinux-bb066fe8.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d9f5ae8609e1/bzImage-bb066fe8.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/07 03:46</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="bb066fe812d6fb3a9d01c073d9f1e2fd5a63403b
+	2025/02/06 20:32"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=bb066fe812d6fb3a9d01c073d9f1e2fd5a63403b">bb066fe812d6</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/8002dd28a72e5a753c56cd580ac5ee3058eae726">8002dd28</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=147b7d49d83b8036">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10410b18580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14410b18580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=3651c0a80ff10450">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0dd155a02fc5/disk-bb066fe8.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3b03d08020cf/vmlinux-bb066fe8.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d9f5ae8609e1/bzImage-bb066fe8.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/06 14:05</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="92514ef226f511f2ca1fb1b8752966097518edc0
+	2025/02/05 16:13"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=92514ef226f511f2ca1fb1b8752966097518edc0">92514ef226f5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/577d049b4ea56e459da6e49f4b92fc1981c92440">577d049b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1909f2f0d8e641ce">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=139933df980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14e641b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=bfaa6f0171855b71">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/21de52a3ad7b/disk-92514ef2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d9b2fb41323e/vmlinux-92514ef2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/30e8ac92af66/bzImage-92514ef2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/18 05:52</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9bffa1ad25b8b3b95d8f463e5c24dabe3c87d54d
+	2025/01/17 03:49"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9bffa1ad25b8b3b95d8f463e5c24dabe3c87d54d">9bffa1ad25b8</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2cb035c8f931efff4a020b164e657f16f51934b">f2cb035c</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ca46bfa06efdf147">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=140eba18580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12c322b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=414a9fa9eab410e1">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/00f46e936645/disk-9bffa1ad.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/832168c2dbe9/vmlinux-9bffa1ad.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8282f1508aac/bzImage-9bffa1ad.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-badwrites-root</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/22 01:50</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="8a61cb6e150ea907b580a1b5e705decb0a3ffc86
+	2025/02/21 17:36"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=8a61cb6e150ea907b580a1b5e705decb0a3ffc86">8a61cb6e150e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b7bde34acd8f53b1">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12ba3498580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14b70db0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-8a61cb6e.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/420db9e4c0d8/vmlinux-8a61cb6e.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6ce6feff857d/bzImage-8a61cb6e.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/07 09:52</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="bb066fe812d6fb3a9d01c073d9f1e2fd5a63403b
+	2025/02/06 20:32"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=bb066fe812d6fb3a9d01c073d9f1e2fd5a63403b">bb066fe812d6</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/53657d1b81777d8a70ed2f356ea6b185ee268555">53657d1b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1909f2f0d8e641ce">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13c48b18580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15c121b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-bb066fe8.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ac7155966351/vmlinux-bb066fe8.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/92d6cbf35949/bzImage-bb066fe8.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/11 11:59</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="8d8d276ba2fb5f9ac4984f5c10ae60858090babc
+	2024/09/10 16:05"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=8d8d276ba2fb5f9ac4984f5c10ae60858090babc">8d8d276ba2fb</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/8ab55d0eede313b6ecc94ec419a490bbe92d27de">8ab55d0e</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=61d235cb8d15001c">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=119fa477980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12051807980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7bc7510fe41f/non_bootable_disk-8d8d276b.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d23708af23a4/vmlinux-8d8d276b.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1aed2837c105/bzImage-8d8d276b.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/21 02:34</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="e5d3fd687aac5eceb1721fa92b9f49afcf4c3717
+	2025/02/18 05:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=e5d3fd687aac5eceb1721fa92b9f49afcf4c3717">e5d3fd687aac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0808a665bc75ab0845906bfeca0d12fb520ae6eb">0808a665</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4e945b2fe8e5992f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=160daba4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10975498580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=6ef5ee8b5b3fe47d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef079ccd2725/disk-e5d3fd68.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/99f2123d6831/vmlinux-e5d3fd68.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eadfc9520358/bzImage-e5d3fd68.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/11 15:19</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="df5d6180169ae06a2eac57e33b077ad6f6252440
+	2025/02/10 04:23"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=df5d6180169ae06a2eac57e33b077ad6f6252440">df5d6180169a</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2baddf5cfc118066483050e29627cea6b63bcfb">f2baddf5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=2cd616b6e736ca7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=113e0718580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16345bdf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ee6ff97d8cbe0e33">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/92495cf20271/disk-df5d6180.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4b3656161842/vmlinux-df5d6180.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7fbc4e7a0f5d/bzImage-df5d6180.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/10 06:40</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="df5d6180169ae06a2eac57e33b077ad6f6252440
+	2025/02/10 04:23"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=df5d6180169ae06a2eac57e33b077ad6f6252440">df5d6180169a</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ef44b750e8fab8d6d5cb84920680581b13e0d470">ef44b750</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=2cd616b6e736ca7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1644d1b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12b6c2a4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce063d950eec696d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/92495cf20271/disk-df5d6180.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4b3656161842/vmlinux-df5d6180.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7fbc4e7a0f5d/bzImage-df5d6180.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/03/05 03:40</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="e056da87c7802e077086bf74ac8957c68cdab23b
+	2025/03/01 11:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=e056da87c7802e077086bf74ac8957c68cdab23b">e056da87c780</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c3901742785ff25afdc6f470af7b25b69d7c4f2f">c3901742</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d6b7e15dc5b5e776">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=163fd8b7980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16690254580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=437669d37105a957">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3d8b1b7cc4c0/disk-e056da87.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b84c04cff235/vmlinux-e056da87.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2ae4d0525881/Image-e056da87.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/03/03 23:32</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="e056da87c7802e077086bf74ac8957c68cdab23b
+	2025/03/01 11:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=e056da87c7802e077086bf74ac8957c68cdab23b">e056da87c780</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c3901742785ff25afdc6f470af7b25b69d7c4f2f">c3901742</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d6b7e15dc5b5e776">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=158e98b7980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=106167a0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7d30798e4830e8ab">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3d8b1b7cc4c0/disk-e056da87.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b84c04cff235/vmlinux-e056da87.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2ae4d0525881/Image-e056da87.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/18 20:59</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="6d206d3a6f6ed4ec38e65a94b8d0f1e877a38e12
+	2025/02/17 18:18"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=6d206d3a6f6ed4ec38e65a94b8d0f1e877a38e12">6d206d3a6f6e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c37c724966f290881c3123580e5e708f620086bf">c37c7249</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=f6b108de97771157">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13097bf8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16fe77df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=31eb56999d28eaaa">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0e41c536193b/disk-6d206d3a.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/24059c5c1493/vmlinux-6d206d3a.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/436598e04455/Image-6d206d3a.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/18 09:04</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="a64dcfb451e254085a7daee5fe51bf22959d52d3
+	2025/02/09 20:45"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=a64dcfb451e254085a7daee5fe51bf22959d52d3">a64dcfb451e2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c37c724966f290881c3123580e5e708f620086bf">c37c7249</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c9c47badcd079906">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10e865b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1722c498580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=50321a792dc0a1e4">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c0a862fcec77/disk-a64dcfb4.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f03793fc001b/vmlinux-a64dcfb4.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ae71c33eae14/Image-a64dcfb4.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/18 05:03</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="a64dcfb451e254085a7daee5fe51bf22959d52d3
+	2025/02/09 20:45"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=a64dcfb451e254085a7daee5fe51bf22959d52d3">a64dcfb451e2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9be4ace34ffed29b36f379311c49249a457dabf3">9be4ace3</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c9c47badcd079906">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14209898580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12209898580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=32b87991e0d4d9bd">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c0a862fcec77/disk-a64dcfb4.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f03793fc001b/vmlinux-a64dcfb4.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ae71c33eae14/Image-a64dcfb4.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/17 18:33</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="a64dcfb451e254085a7daee5fe51bf22959d52d3
+	2025/02/09 20:45"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=a64dcfb451e254085a7daee5fe51bf22959d52d3">a64dcfb451e2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9be4ace34ffed29b36f379311c49249a457dabf3">9be4ace3</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c9c47badcd079906">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=125f75a4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12f9e898580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ee89d954ec215a9a">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c0a862fcec77/disk-a64dcfb4.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f03793fc001b/vmlinux-a64dcfb4.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ae71c33eae14/Image-a64dcfb4.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/15 18:47</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="a64dcfb451e254085a7daee5fe51bf22959d52d3
+	2025/02/09 20:45"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=a64dcfb451e254085a7daee5fe51bf22959d52d3">a64dcfb451e2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/40a34ec944732a2502ee67d92cc8c023355dfad4">40a34ec9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c9c47badcd079906">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=127be7df980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1783f098580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ff4a9d5fac397623">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c0a862fcec77/disk-a64dcfb4.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f03793fc001b/vmlinux-a64dcfb4.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ae71c33eae14/Image-a64dcfb4.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/08 17:02</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="2014c95afecee3e76ca4a56956a936e23283f05b
+	2025/02/02 23:39"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=2014c95afecee3e76ca4a56956a936e23283f05b">2014c95afece</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ef44b750e8fab8d6d5cb84920680581b13e0d470">ef44b750</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b8a65ac161350c5e">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=104eddf8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11ba4bdf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=91c97c1a6df6de36">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c767824b323f/disk-2014c95a.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/81289e194973/vmlinux-2014c95a.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4a33d49982f5/Image-2014c95a.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">possible deadlock in ocfs2_page_mkwrite</td>
+		</tr>
+		
+		</tbody>
+</table>
+<i>* <s>Struck through</s> repros no longer work on HEAD.</i>
+
+
+</body>
+</html>

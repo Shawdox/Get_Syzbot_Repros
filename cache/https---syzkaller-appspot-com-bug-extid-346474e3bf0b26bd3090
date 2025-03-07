@@ -1,0 +1,1306 @@
+
+
+<!doctype html>
+<html>
+<head>
+	
+	<link rel="stylesheet" href="/static/style.css"/>
+	<script src="/static/common.js"></script>
+	
+		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-116117799-1"></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag() { dataLayer.push(arguments); }
+			gtag('js', new Date());
+			gtag('config', 'UA-116117799-1');
+		</script>
+	
+
+	<title>KMSAN: kernel-infoleak in move_addr_to_user (7)</title>
+</head>
+<body>
+	
+	<header id="topbar">
+		<table class="position_table">
+			<tr>
+				<td>
+					<h1><a href="/upstream">syzbot</a></h1>
+				</td>
+				<td class="namespace_td">
+					<select class="namespace" onchange="window.location.href = '/' + this.value + '';">
+						
+							<option value="android-5-10" >Android 5.10</option>
+							<option value="android-5-15" >Android 5.15</option>
+							<option value="android-54" >Android 5.4</option>
+							<option value="android-6-1" >Android 6.1</option>
+							<option value="freebsd" >FreeBSD</option>
+							<option value="upstream" selected="1">Linux</option>
+							<option value="linux-5.15" >Linux 5.15</option>
+							<option value="linux-6.1" >Linux 6.1</option>
+							<option value="netbsd" >NetBSD</option>
+							<option value="openbsd" >OpenBSD</option>
+							<option value="gvisor" >gVisor</option></select>
+				</td>
+				<td class="search">
+					
+					
+						<a href="https://syzkaller.appspot.com/_ah/conflogin?continue=https://syzkaller.appspot.com/bug%3Fextid%3D346474e3bf0b26bd3090">sign-in</a> |
+					
+					<a href="https://groups.google.com/forum/#!forum/syzkaller" target="_blank">mailing list</a> |
+					<a href="https://github.com/google/syzkaller" target="_blank">source</a> |
+					<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md" target="_blank">docs</a>
+				</td>
+			</tr>
+		</table>
+		
+		<div class="navigation">
+			<div class="navigation_tab">
+				<a href='/upstream'><span style="color:DeepPink;">🐞</span> Open [1659]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/subsystems'><span style="color:DeepPink;">≡</span> Subsystems</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/fixed'><span style="color:ForestGreen;">🐞</span> Fixed [6081]</a>
+			</div>
+
+			<div class="navigation_tab" href='/upstream/invalid'>
+				<a href='/upstream/invalid'><span style="color:RoyalBlue;">🐞</span> Invalid [15101]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/backports'><span style="color:ForestGreen;">⬇</span> Missing Backports [157]</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/graph/crashes'><span style="color:ForestGreen;">≡</span> Crashes</a>
+			</div>
+
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Graphs</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href='/upstream/graph/bugs'>Kernel&nbsp;Health</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/found-bugs'>Bugs/Month</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/lifetimes'>Bug&nbsp;Lifetimes</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/fuzzing'>Fuzzing</a>
+				</div>
+			</div>
+
+			
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Coverage</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href="/upstream/graph/coverage?period=quarter">Total</a>
+					<a class="navigation_tab"
+						href="/upstream/coverage?period=month">Repo&nbsp;Heatmap</a>
+					
+						<a class="navigation_tab"
+							href="/upstream/coverage/subsystems?period=month">Subsystems&nbsp;Heatmap</a>
+					
+				</div>
+			</div>
+			
+			
+			<div class="navigation_tab navigation_right">
+				<a href='mailto:syzkaller@googlegroups.com'><span style="color:ForestGreen;">💬</span> Send us feedback</a>
+			</div>
+			
+		</div>
+		
+	</header>
+	<br>
+
+
+	<b>KMSAN: kernel-infoleak in move_addr_to_user (7)</b><br><br>
+	Status: <a href="https://groups.google.com/d/msgid/syzkaller-bugs/66f057eb.050a0220.a27de.0004.GAE%40google.com">upstream: reported C repro on 2024/09/22 17:46</a><br>
+	
+		
+			Subsystems: 
+				<span class="bug-label"><a href="/upstream/s/wpan">wpan</a></span>
+		<br>
+		
+	<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md#labels">[Documentation on labels]</a><br>
+	
+	
+	Reported-by: syzbot&#43;346474e3bf0b26bd3090@syzkaller.appspotmail.com<br>
+	
+	First crash: 165d, last: 10d<br>
+	
+	<div>
+		
+		
+		<div class="bug-bisection-stop"></div>
+	</div>
+
+	
+	<div class="collapsible collapsible-show">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Discussions (4)</span>
+		</div>
+		<div class="content">
+			
+			
+			
+
+<table class="list_table">
+	<thead>
+	<tr>
+		<th>Title</th>
+		<th>Replies (including bot)</th>
+		<th>Last reply</th>
+	</tr>
+	</thead>
+	<tbody>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/20241104040218.193632-1-danielyangkang@gmail.com/T/">[PATCH net] Drop packets with invalid headers to prevent KMSAN infoleak</a></td>
+			<td class="stat">2 (2)</td>
+			<td class="stat">2024/11/04 10:03</td>
+		</tr>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/66f057eb.050a0220.a27de.0004.GAE@google.com/T/">[syzbot] [net?] KMSAN: kernel-infoleak in move_addr_to_user (7)</a></td>
+			<td class="stat">0 (8)</td>
+			<td class="stat">2024/11/03 19:27</td>
+		</tr>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/20241019071149.81696-1-danielyangkang@gmail.com/T/">[PATCH net] Drop packets with invalid headers to prevent KMSAN infoleak</a></td>
+			<td class="stat">10 (10)</td>
+			<td class="stat">2024/10/29 21:34</td>
+		</tr>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/20241002053844.130553-1-danielyangkang@gmail.com/T/">[PATCH] Fix KMSAN infoleak, initialize unused data in pskb_expand_head</a></td>
+			<td class="stat">7 (7)</td>
+			<td class="stat">2024/10/05 04:59</td>
+		</tr>
+	
+	</tbody>
+</table>
+
+
+			
+			
+		</div>
+	</div>
+	
+	<div class="collapsible collapsible-hide">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Similar bugs (6)</span>
+		</div>
+		<div class="content">
+			
+
+
+<table class="list_table">
+	
+	<thead>
+	<tr>
+		
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+		
+		<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		<th><a onclick="return sortTable(this, 'Repro', reproSort)" href="#">Repro</a></th>
+		<th><a onclick="return sortTable(this, 'Cause bisect', textSort)" href="#">Cause bisect</a></th>
+		<th><a onclick="return sortTable(this, 'Fix bisect', textSort)" href="#">Fix bisect</a></th>
+		<th><a onclick="return sortTable(this, 'Count', numSort)" href="#">Count</a></th>
+		<th><a onclick="return sortTable(this, 'Last', timeSort)" href="#">Last</a></th>
+		<th><a onclick="return sortTable(this, 'Reported', timeSort)" href="#">Reported</a></th>
+		
+		
+		
+			<th><a onclick="return sortTable(this, 'Patched', patchedSort)" href="#">Patched</a></th>
+		
+		
+			<th><a onclick="return sortTable(this, 'Status', textSort)" href="#">Status</a></th>
+		
+		
+	</tr>
+	</thead>
+	<tbody>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=35c953d3a797dc11fd506fe9ed3e232c68decefb">KMSAN: kernel-infoleak in move_addr_to_user (3)</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">79</td>
+			<td class="stat">1631d</td>
+			<td class="stat">
+				
+					1665d
+				
+			</td>
+			
+			
+			
+				<td class="patched" title="can: j1939: fix kernel-infoleak in j1939_sk_sock2sockaddr_can()">15/28</td>
+			
+			
+				<td class="status">
+					
+						fixed on 2020/09/28 09:09
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=479b543c1a873d3fa289cf6ef6d2f1ebebe11fac">KMSAN: kernel-infoleak in move_addr_to_user (2)</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">8</td>
+			<td class="stat">2170d</td>
+			<td class="stat">
+				
+					2185d
+				
+			</td>
+			
+			
+			
+				<td class="patched" title="l2tp: fix infoleak in l2tp_ip6_recvmsg()">11/28</td>
+			
+			
+				<td class="status">
+					
+						fixed on 2019/03/28 12:00
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=057884e2f453e8afebc8">KMSAN: kernel-infoleak in move_addr_to_user (4)</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">59</td>
+			<td class="stat">1463d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/00000000000019908405b8891f9d%40google.com">1515d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" title="can: isotp: isotp_getname(): fix kernel information leak">19/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/00000000000019908405b8891f9d%40google.com">fixed on 2021/03/10 01:48</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=9c6d830e4c4346c31cdbf05c828792b5ff3a2528">KMSAN: kernel-infoleak in move_addr_to_user (5)</a>
+					<span class="bug-label"><a href="/upstream/s/tipc">tipc</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">3</td>
+			<td class="stat">1313d</td>
+			<td class="stat">
+				
+					1454d
+				
+			</td>
+			
+			
+			
+				<td class="patched" title="net: qrtr: fix a kernel-infoleak in qrtr_recvmsg()">20/28</td>
+			
+			
+				<td class="status">
+					
+						fixed on 2021/11/10 00:50
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=a906cb68f5358b08b58a69c96f8ba71edb6a2be5">KMSAN: kernel-infoleak in move_addr_to_user</a>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">5</td>
+			<td class="stat">2198d</td>
+			<td class="stat">
+				
+					2248d
+				
+			</td>
+			
+			
+			
+				<td class="patched" title="ipv6: fix kernel-infoleak in ipv6_local_error()">11/28</td>
+			
+			
+				<td class="status">
+					
+						fixed on 2019/03/06 07:43
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=cdbd40e0c3ca02cae3b7">KMSAN: kernel-infoleak in move_addr_to_user (6)</a>
+					<span class="bug-label"><a href="/upstream/s/tipc">tipc</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">4</td>
+			<td class="stat">1133d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/000000000000a8a64205d39672b8%40google.com">1171d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" title="net ticp:fix a kernel-infoleak in __tipc_sendmsg()">20/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/000000000000a8a64205d39672b8%40google.com">fixed on 2022/03/08 16:11</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+	</tbody>
+</table>
+
+
+
+			
+			
+			
+			
+		</div>
+	</div>
+	
+	<div class="collapsible collapsible-hide">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Last patch testing requests (14)</span>
+		</div>
+		<div class="content">
+			
+			
+
+	<table class="list_table">
+		<caption id="jobs"><a class="plain" href="#jobs"></a></caption>
+		<thead>
+		<tr>
+			
+			<th>Created</th>
+			<th>Duration</th>
+			<th>User</th>
+			<th>Patch</th>
+			<th>Repo</th>
+			
+			<th>Result</th>
+		</tr>
+		</thead>
+		<tbody>
+		
+			<tr>
+				
+				<td class="time">2025/02/23 20:57</td>
+				<td class="time" title="started: 2025/02/23 21:35&#013;finished: 2025/02/23 21:58">
+					23m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=d082ecbc71e9e0bf49883ee4afd435a77a5101b6">upstream</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=13cf06e4580000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=15cf06e4580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/02/23 20:57</td>
+				<td class="time" title="started: 2025/02/23 20:57&#013;finished: 2025/02/23 21:35">
+					38m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=d082ecbc71e9e0bf49883ee4afd435a77a5101b6">upstream</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=16b706e4580000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=12b706e4580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/12/15 18:40</td>
+				<td class="time" title="started: 2024/12/15 18:50&#013;finished: 2024/12/15 19:15">
+					25m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=dccbe2047a5b0859de24bf463dae9eeea8e01c1e">upstream</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=17ae54f8580000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=13ae54f8580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/12/15 18:40</td>
+				<td class="time" title="started: 2024/12/15 18:40&#013;finished: 2024/12/15 19:03">
+					22m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=2d8308bf5b67dff50262d8a9260a50113b3628c6">upstream</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=12ede730580000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=14ede730580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/12/15 18:14</td>
+				<td class="time" title="started: 2024/12/15 18:14&#013;finished: 2024/12/15 18:41">
+					26m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=2d8308bf5b67dff50262d8a9260a50113b3628c6">upstream</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=14b5e730580000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=10b5e730580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/11/03 19:27</td>
+				<td class="time" title="started: 2024/11/03 21:00&#013;finished: 2024/11/03 21:33">
+					32m
+				</td>
+				<td>
+					
+						danielyangkang@gmail.com
+					
+				</td>
+				<td><a href="/text?tag=Patch&x=16068740580000">patch</a></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=a8cc7432728d019a10cb412401ebc15ed7504289">upstream</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=1047b630580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/10/17 23:29</td>
+				<td class="time" title="started: 2024/10/17 23:42&#013;finished: 2024/10/18 00:32">
+					49m
+				</td>
+				<td>
+					
+						danielyangkang@gmail.com
+					
+				</td>
+				<td><a href="/text?tag=Patch&x=1332af27980000">patch</a></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=6efbea77b390604a7be7364583e19cd2d6a1291b">upstream</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=13e6af27980000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/10/17 23:09</td>
+				<td class="time" title="started: 2024/10/17 23:15&#013;finished: 2024/10/17 23:42">
+					27m
+				</td>
+				<td>
+					
+						danielyangkang@gmail.com
+					
+				</td>
+				<td><a href="/text?tag=Patch&x=14889830580000">patch</a></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=6efbea77b390604a7be7364583e19cd2d6a1291b">upstream</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=11c49830580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/10/17 22:14</td>
+				<td class="time" title="started: 2024/10/17 22:27&#013;finished: 2024/10/17 22:54">
+					27m
+				</td>
+				<td>
+					
+						danielyangkang@gmail.com
+					
+				</td>
+				<td><a href="/text?tag=Patch&x=16d4af27980000">patch</a></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=6efbea77b390604a7be7364583e19cd2d6a1291b">upstream</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=147caf27980000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/10/17 19:01</td>
+				<td class="time" title="started: 2024/10/17 19:01&#013;finished: 2024/10/17 21:31">
+					2h29m
+				</td>
+				<td>
+					
+						danielyangkang@gmail.com
+					
+				</td>
+				<td><a href="/text?tag=Patch&x=17bb2f27980000">patch</a></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=6efbea77b390604a7be7364583e19cd2d6a1291b">upstream</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=12dd8240580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/10/16 04:53</td>
+				<td class="time" title="started: 2024/10/16 04:54&#013;finished: 2024/10/16 05:33">
+					39m
+				</td>
+				<td>
+					
+						danielyangkang@gmail.com
+					
+				</td>
+				<td><a href="/text?tag=Patch&x=1229c45f980000">patch</a></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=2f87d0916ce0d2925cedbc9e8f5d6291ba2ac7b2">upstream</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=10252c40580000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=17c52c40580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/10/06 17:28</td>
+				<td class="time" title="started: 2024/10/06 17:57&#013;finished: 2024/10/06 18:21">
+					23m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=8f602276d3902642fdc3429b548d73c745446601">upstream</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=13029b80580000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=15029b80580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/10/06 17:28</td>
+				<td class="time" title="started: 2024/10/06 17:28&#013;finished: 2024/10/06 17:57">
+					29m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=8f602276d3902642fdc3429b548d73c745446601">upstream</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=17bec7d0580000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=13bec7d0580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/10/02 00:05</td>
+				<td class="time" title="started: 2024/10/02 00:07&#013;finished: 2024/10/02 00:43">
+					36m
+				</td>
+				<td>
+					
+						danielyangkang@gmail.com
+					
+				</td>
+				<td><a href="/text?tag=Patch&x=1516939f980000">patch</a></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=e32cde8d2bd7d251a8f9b434143977ddf13dcec6">upstream</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=145f2580580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+		</tbody>
+	</table>
+
+
+			
+			
+			
+		</div>
+	</div>
+	
+
+	
+	<br><b>Sample crash report:</b><br>
+	<div id="crash_div"><pre>=====================================================
+BUG: KMSAN: kernel-infoleak in instrument_copy_to_user <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/instrumented.h?id=88264981f2082248e892a706b2c5004650faac54#n114'>include/linux/instrumented.h:114</a> [inline]
+BUG: KMSAN: kernel-infoleak in _inline_copy_to_user <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/uaccess.h?id=88264981f2082248e892a706b2c5004650faac54#n180'>include/linux/uaccess.h:180</a> [inline]
+BUG: KMSAN: kernel-infoleak in _copy_to_user+0xbc/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/lib/usercopy.c?id=88264981f2082248e892a706b2c5004650faac54#n26'>lib/usercopy.c:26</a>
+ instrument_copy_to_user <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/instrumented.h?id=88264981f2082248e892a706b2c5004650faac54#n114'>include/linux/instrumented.h:114</a> [inline]
+ _inline_copy_to_user <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/uaccess.h?id=88264981f2082248e892a706b2c5004650faac54#n180'>include/linux/uaccess.h:180</a> [inline]
+ _copy_to_user+0xbc/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/lib/usercopy.c?id=88264981f2082248e892a706b2c5004650faac54#n26'>lib/usercopy.c:26</a>
+ copy_to_user <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/uaccess.h?id=88264981f2082248e892a706b2c5004650faac54#n209'>include/linux/uaccess.h:209</a> [inline]
+ move_addr_to_user+0x28b/0x400 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/socket.c?id=88264981f2082248e892a706b2c5004650faac54#n292'>net/socket.c:292</a>
+ ____sys_recvmsg+0x232/0x620 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/socket.c?id=88264981f2082248e892a706b2c5004650faac54#n2829'>net/socket.c:2829</a>
+ ___sys_recvmsg+0x223/0x840 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/socket.c?id=88264981f2082248e892a706b2c5004650faac54#n2864'>net/socket.c:2864</a>
+ do_recvmmsg+0x4f6/0xfd0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/socket.c?id=88264981f2082248e892a706b2c5004650faac54#n2958'>net/socket.c:2958</a>
+ __sys_recvmmsg <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/socket.c?id=88264981f2082248e892a706b2c5004650faac54#n3037'>net/socket.c:3037</a> [inline]
+ __do_sys_recvmmsg <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/socket.c?id=88264981f2082248e892a706b2c5004650faac54#n3060'>net/socket.c:3060</a> [inline]
+ __se_sys_recvmmsg <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/socket.c?id=88264981f2082248e892a706b2c5004650faac54#n3053'>net/socket.c:3053</a> [inline]
+ __x64_sys_recvmmsg+0x397/0x490 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/socket.c?id=88264981f2082248e892a706b2c5004650faac54#n3053'>net/socket.c:3053</a>
+ x64_sys_call+0x2e5d/0x3ba0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/include/generated/asm/syscalls_64.h?id=88264981f2082248e892a706b2c5004650faac54#n300'>arch/x86/include/generated/asm/syscalls_64.h:300</a>
+ do_syscall_x64 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=88264981f2082248e892a706b2c5004650faac54#n52'>arch/x86/entry/common.c:52</a> [inline]
+ do_syscall_64+0xcd/0x1e0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=88264981f2082248e892a706b2c5004650faac54#n83'>arch/x86/entry/common.c:83</a>
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+
+Uninit was stored to memory at:
+ packet_recvmsg+0x176a/0x2500 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/packet/af_packet.c?id=88264981f2082248e892a706b2c5004650faac54#n3585'>net/packet/af_packet.c:3585</a>
+ sock_recvmsg_nosec+0x22f/0x2b0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/socket.c?id=88264981f2082248e892a706b2c5004650faac54#n1052'>net/socket.c:1052</a>
+ ____sys_recvmsg+0x541/0x620 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/socket.c?id=88264981f2082248e892a706b2c5004650faac54#n2820'>net/socket.c:2820</a>
+ ___sys_recvmsg+0x223/0x840 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/socket.c?id=88264981f2082248e892a706b2c5004650faac54#n2864'>net/socket.c:2864</a>
+ do_recvmmsg+0x4f6/0xfd0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/socket.c?id=88264981f2082248e892a706b2c5004650faac54#n2958'>net/socket.c:2958</a>
+ __sys_recvmmsg <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/socket.c?id=88264981f2082248e892a706b2c5004650faac54#n3037'>net/socket.c:3037</a> [inline]
+ __do_sys_recvmmsg <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/socket.c?id=88264981f2082248e892a706b2c5004650faac54#n3060'>net/socket.c:3060</a> [inline]
+ __se_sys_recvmmsg <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/socket.c?id=88264981f2082248e892a706b2c5004650faac54#n3053'>net/socket.c:3053</a> [inline]
+ __x64_sys_recvmmsg+0x397/0x490 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/socket.c?id=88264981f2082248e892a706b2c5004650faac54#n3053'>net/socket.c:3053</a>
+ x64_sys_call+0x2e5d/0x3ba0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/include/generated/asm/syscalls_64.h?id=88264981f2082248e892a706b2c5004650faac54#n300'>arch/x86/include/generated/asm/syscalls_64.h:300</a>
+ do_syscall_x64 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=88264981f2082248e892a706b2c5004650faac54#n52'>arch/x86/entry/common.c:52</a> [inline]
+ do_syscall_64+0xcd/0x1e0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=88264981f2082248e892a706b2c5004650faac54#n83'>arch/x86/entry/common.c:83</a>
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+
+Uninit was stored to memory at:
+ eth_header_parse+0xb8/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/ethernet/eth.c?id=88264981f2082248e892a706b2c5004650faac54#n204'>net/ethernet/eth.c:204</a>
+ dev_parse_header <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/netdevice.h?id=88264981f2082248e892a706b2c5004650faac54#n3158'>include/linux/netdevice.h:3158</a> [inline]
+ packet_rcv+0xefc/0x2050 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/packet/af_packet.c?id=88264981f2082248e892a706b2c5004650faac54#n2253'>net/packet/af_packet.c:2253</a>
+ dev_queue_xmit_nit+0x114b/0x12a0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/core/dev.c?id=88264981f2082248e892a706b2c5004650faac54#n2347'>net/core/dev.c:2347</a>
+ xmit_one <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/core/dev.c?id=88264981f2082248e892a706b2c5004650faac54#n3584'>net/core/dev.c:3584</a> [inline]
+ dev_hard_start_xmit+0x17d/0xa20 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/core/dev.c?id=88264981f2082248e892a706b2c5004650faac54#n3604'>net/core/dev.c:3604</a>
+ __dev_queue_xmit+0x3576/0x55e0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/core/dev.c?id=88264981f2082248e892a706b2c5004650faac54#n4424'>net/core/dev.c:4424</a>
+ dev_queue_xmit <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/netdevice.h?id=88264981f2082248e892a706b2c5004650faac54#n3094'>include/linux/netdevice.h:3094</a> [inline]
+ __bpf_tx_skb <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/core/filter.c?id=88264981f2082248e892a706b2c5004650faac54#n2152'>net/core/filter.c:2152</a> [inline]
+ __bpf_redirect_common <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/core/filter.c?id=88264981f2082248e892a706b2c5004650faac54#n2196'>net/core/filter.c:2196</a> [inline]
+ __bpf_redirect+0x148c/0x1610 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/core/filter.c?id=88264981f2082248e892a706b2c5004650faac54#n2203'>net/core/filter.c:2203</a>
+ ____bpf_clone_redirect <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/core/filter.c?id=88264981f2082248e892a706b2c5004650faac54#n2475'>net/core/filter.c:2475</a> [inline]
+ bpf_clone_redirect+0x37e/0x500 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/core/filter.c?id=88264981f2082248e892a706b2c5004650faac54#n2447'>net/core/filter.c:2447</a>
+ ___bpf_prog_run+0x13fe/0xe0f0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/bpf/core.c?id=88264981f2082248e892a706b2c5004650faac54#n2010'>kernel/bpf/core.c:2010</a>
+ __bpf_prog_run512+0xc5/0xf0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/bpf/core.c?id=88264981f2082248e892a706b2c5004650faac54#n2253'>kernel/bpf/core.c:2253</a>
+ bpf_dispatcher_nop_func <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/bpf.h?id=88264981f2082248e892a706b2c5004650faac54#n1257'>include/linux/bpf.h:1257</a> [inline]
+ __bpf_prog_run <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/filter.h?id=88264981f2082248e892a706b2c5004650faac54#n701'>include/linux/filter.h:701</a> [inline]
+ bpf_prog_run <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/filter.h?id=88264981f2082248e892a706b2c5004650faac54#n708'>include/linux/filter.h:708</a> [inline]
+ bpf_test_run+0x546/0xd20 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/bpf/test_run.c?id=88264981f2082248e892a706b2c5004650faac54#n433'>net/bpf/test_run.c:433</a>
+ bpf_prog_test_run_skb+0x182f/0x24d0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/bpf/test_run.c?id=88264981f2082248e892a706b2c5004650faac54#n1094'>net/bpf/test_run.c:1094</a>
+ bpf_prog_test_run+0x6b1/0xac0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/bpf/syscall.c?id=88264981f2082248e892a706b2c5004650faac54#n4320'>kernel/bpf/syscall.c:4320</a>
+ __sys_bpf+0x6aa/0xd90 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/bpf/syscall.c?id=88264981f2082248e892a706b2c5004650faac54#n5735'>kernel/bpf/syscall.c:5735</a>
+ __do_sys_bpf <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/bpf/syscall.c?id=88264981f2082248e892a706b2c5004650faac54#n5824'>kernel/bpf/syscall.c:5824</a> [inline]
+ __se_sys_bpf <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/bpf/syscall.c?id=88264981f2082248e892a706b2c5004650faac54#n5822'>kernel/bpf/syscall.c:5822</a> [inline]
+ __x64_sys_bpf+0xa0/0xe0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/bpf/syscall.c?id=88264981f2082248e892a706b2c5004650faac54#n5822'>kernel/bpf/syscall.c:5822</a>
+ x64_sys_call+0x2cce/0x3ba0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/include/generated/asm/syscalls_64.h?id=88264981f2082248e892a706b2c5004650faac54#n322'>arch/x86/include/generated/asm/syscalls_64.h:322</a>
+ do_syscall_x64 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=88264981f2082248e892a706b2c5004650faac54#n52'>arch/x86/entry/common.c:52</a> [inline]
+ do_syscall_64+0xcd/0x1e0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=88264981f2082248e892a706b2c5004650faac54#n83'>arch/x86/entry/common.c:83</a>
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+
+Uninit was created at:
+ slab_post_alloc_hook <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=88264981f2082248e892a706b2c5004650faac54#n4092'>mm/slub.c:4092</a> [inline]
+ slab_alloc_node <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=88264981f2082248e892a706b2c5004650faac54#n4135'>mm/slub.c:4135</a> [inline]
+ kmem_cache_alloc_node_noprof+0x6bf/0xb80 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=88264981f2082248e892a706b2c5004650faac54#n4187'>mm/slub.c:4187</a>
+ kmalloc_reserve+0x13d/0x4a0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/core/skbuff.c?id=88264981f2082248e892a706b2c5004650faac54#n587'>net/core/skbuff.c:587</a>
+ pskb_expand_head+0x226/0x1a60 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/core/skbuff.c?id=88264981f2082248e892a706b2c5004650faac54#n2275'>net/core/skbuff.c:2275</a>
+ skb_ensure_writable+0x496/0x520 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/core/skbuff.c?id=88264981f2082248e892a706b2c5004650faac54#n6214'>net/core/skbuff.c:6214</a>
+ __bpf_try_make_writable <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/core/filter.c?id=88264981f2082248e892a706b2c5004650faac54#n1677'>net/core/filter.c:1677</a> [inline]
+ bpf_try_make_writable <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/core/filter.c?id=88264981f2082248e892a706b2c5004650faac54#n1683'>net/core/filter.c:1683</a> [inline]
+ bpf_try_make_head_writable <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/core/filter.c?id=88264981f2082248e892a706b2c5004650faac54#n1691'>net/core/filter.c:1691</a> [inline]
+ ____bpf_clone_redirect <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/core/filter.c?id=88264981f2082248e892a706b2c5004650faac54#n2469'>net/core/filter.c:2469</a> [inline]
+ bpf_clone_redirect+0x1c5/0x500 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/core/filter.c?id=88264981f2082248e892a706b2c5004650faac54#n2447'>net/core/filter.c:2447</a>
+ ___bpf_prog_run+0x13fe/0xe0f0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/bpf/core.c?id=88264981f2082248e892a706b2c5004650faac54#n2010'>kernel/bpf/core.c:2010</a>
+ __bpf_prog_run512+0xc5/0xf0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/bpf/core.c?id=88264981f2082248e892a706b2c5004650faac54#n2253'>kernel/bpf/core.c:2253</a>
+ bpf_dispatcher_nop_func <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/bpf.h?id=88264981f2082248e892a706b2c5004650faac54#n1257'>include/linux/bpf.h:1257</a> [inline]
+ __bpf_prog_run <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/filter.h?id=88264981f2082248e892a706b2c5004650faac54#n701'>include/linux/filter.h:701</a> [inline]
+ bpf_prog_run <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/filter.h?id=88264981f2082248e892a706b2c5004650faac54#n708'>include/linux/filter.h:708</a> [inline]
+ bpf_test_run+0x546/0xd20 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/bpf/test_run.c?id=88264981f2082248e892a706b2c5004650faac54#n433'>net/bpf/test_run.c:433</a>
+ bpf_prog_test_run_skb+0x182f/0x24d0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/bpf/test_run.c?id=88264981f2082248e892a706b2c5004650faac54#n1094'>net/bpf/test_run.c:1094</a>
+ bpf_prog_test_run+0x6b1/0xac0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/bpf/syscall.c?id=88264981f2082248e892a706b2c5004650faac54#n4320'>kernel/bpf/syscall.c:4320</a>
+ __sys_bpf+0x6aa/0xd90 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/bpf/syscall.c?id=88264981f2082248e892a706b2c5004650faac54#n5735'>kernel/bpf/syscall.c:5735</a>
+ __do_sys_bpf <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/bpf/syscall.c?id=88264981f2082248e892a706b2c5004650faac54#n5824'>kernel/bpf/syscall.c:5824</a> [inline]
+ __se_sys_bpf <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/bpf/syscall.c?id=88264981f2082248e892a706b2c5004650faac54#n5822'>kernel/bpf/syscall.c:5822</a> [inline]
+ __x64_sys_bpf+0xa0/0xe0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/bpf/syscall.c?id=88264981f2082248e892a706b2c5004650faac54#n5822'>kernel/bpf/syscall.c:5822</a>
+ x64_sys_call+0x2cce/0x3ba0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/include/generated/asm/syscalls_64.h?id=88264981f2082248e892a706b2c5004650faac54#n322'>arch/x86/include/generated/asm/syscalls_64.h:322</a>
+ do_syscall_x64 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=88264981f2082248e892a706b2c5004650faac54#n52'>arch/x86/entry/common.c:52</a> [inline]
+ do_syscall_64+0xcd/0x1e0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=88264981f2082248e892a706b2c5004650faac54#n83'>arch/x86/entry/common.c:83</a>
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+
+Bytes 12-17 of 20 are uninitialized
+Memory access of size 20 starts at ffff88812112fa48
+Data copied to user address 0000000020000ac0
+
+CPU: 0 UID: 0 PID: 5234 Comm: syz-executor312 Not tainted 6.11.0-syzkaller-08481-g88264981f208 #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 08/06/2024
+=====================================================
+</pre></div><br>
+	
+
+	
+
+<table class="list_table">
+	<caption>Crashes (12):</caption>
+		<thead>
+		<tr>
+			<th><a onclick="return sortTable(this, 'Time', textSort, true)" href="#">Time</a></th>
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+			<th><a onclick="return sortTable(this, 'Commit', textSort)" href="#">Commit</a></th>
+			<th><a onclick="return sortTable(this, 'Syzkaller', textSort)" href="#">Syzkaller</a></th>
+			<th><a onclick="return sortTable(this, 'Config', textSort)" href="#">Config</a></th>
+			<th><a onclick="return sortTable(this, 'Log', textSort)" href="#">Log</a></th>
+			<th><a onclick="return sortTable(this, 'Report', reproSort)" href="#">Report</a></th>
+			<th><a onclick="return sortTable(this, 'Syz repro', reproSort)" href="#">Syz repro</a></th>
+			<th><a onclick="return sortTable(this, 'C repro', textSort)" href="#">C repro</a></th>
+			<th><a onclick="return sortTable(this, 'VM info', textSort)" href="#">VM info</a></th>
+			<th><a onclick="return sortTable(this, 'Assets', textSort)" href="#">Assets</a> (<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot_assets.md">help?</a>)</th>
+			<th><a onclick="return sortTable(this, 'Manager', textSort)" href="#">Manager</a></th>
+			<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		</tr>
+		</thead>
+		<tbody>
+		
+		<tr>
+			<td class="time">2024/09/22 17:20</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="88264981f2082248e892a706b2c5004650faac54
+	2024/09/21 16:44"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=88264981f2082248e892a706b2c5004650faac54">88264981f208</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6f888b7530906167ecb1f5a35e060fec736d6d32">6f888b75</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=547de13ee0a4d284">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=172c4107980000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10ba3ca9980000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=12d7c19f980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=10ac4107980000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=14c81c27980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d83fc781c223/disk-88264981.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1ed4c5969fba/vmlinux-88264981.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/76a67bd894be/bzImage-88264981.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in move_addr_to_user</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/22 12:36</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="88264981f2082248e892a706b2c5004650faac54
+	2024/09/21 16:44"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=88264981f2082248e892a706b2c5004650faac54">88264981f208</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6f888b7530906167ecb1f5a35e060fec736d6d32">6f888b75</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=547de13ee0a4d284">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12094e07980000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12e86880580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=1789ec27980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=16094e07980000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=1547dca9980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d83fc781c223/disk-88264981.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1ed4c5969fba/vmlinux-88264981.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/76a67bd894be/bzImage-88264981.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in move_addr_to_user</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/06 09:49</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9244696b34f2a626d7468864420ab6a47289bf10
+	2025/01/05 18:52"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9244696b34f2a626d7468864420ab6a47289bf10">9244696b34f2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=31c2647cf06aa81e">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12ad3418580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1641b9c4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7e942beb81717672">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/76d89ae31402/disk-9244696b.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/94b1e844bc11/vmlinux-9244696b.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4beb6a46b894/bzImage-9244696b.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in move_addr_to_user</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/21 15:43</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="499551201b5f4fd3c0618a3e95e3d0d15ea18f31
+	2024/12/20 22:10"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=499551201b5f4fd3c0618a3e95e3d0d15ea18f31">499551201b5f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d7f584ee3c24504bb07d04526a23b7d8df38b8ed">d7f584ee</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=caeefc00e8b4dc9f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1435efe8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1235efe8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=de94fc4d93f77cd">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c03b7ad0bfae/disk-49955120.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/94110c7f9943/vmlinux-49955120.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eb7269d29724/bzImage-49955120.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in move_addr_to_user</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/29 14:27</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="7af08b57bcb9ebf78675c50069c54125c0a8b795
+	2024/11/28 19:46"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=7af08b57bcb9ebf78675c50069c54125c0a8b795">7af08b57bcb9</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/5df2386563cbffa1bbbb9d0b8ec1eebb98d051ae">5df23865</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d66c9f9a88c492bd">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=148d49e8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=128d49e8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=f74658792e7292ad">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9c3165413ea6/disk-7af08b57.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/bdc591e3d285/vmlinux-7af08b57.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/bef82d827bd2/bzImage-7af08b57.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in move_addr_to_user</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/24 18:53</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9f16d5e6f220661f73b36a4be1b21575651d8833
+	2024/11/24 00:00"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9f16d5e6f220661f73b36a4be1b21575651d8833">9f16d5e6f220</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/68da6d951a345757b69b764ceb8dda1e9d65b038">68da6d95</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=197de11c5dba9f21">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11fdf6e8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=162699c0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=32b6a24e3a192239">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d544df92b8b9/disk-9f16d5e6.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cfb277b7148a/vmlinux-9f16d5e6.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b9aeb9fe1f9d/bzImage-9f16d5e6.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in move_addr_to_user</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/18 06:46</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="f66d6acccbc08b4146f4c2cf9445241f70f5517d
+	2024/11/17 17:35"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=f66d6acccbc08b4146f4c2cf9445241f70f5517d">f66d6acccbc0</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/cfe3a04a188eb9a2c407783d8d6e6f55a4b30886">cfe3a04a</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=570f86970553dcd2">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11540ac0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=160f4bf7980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=5696524459dfa3ca">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/83bb4f67b45d/disk-f66d6acc.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cb0cedffb310/vmlinux-f66d6acc.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3af8c8949657/bzImage-f66d6acc.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in move_addr_to_user</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/12 01:27</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="2d5404caa8c7bb5c4e0435f94b28834ae5456623
+	2024/11/10 22:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=2d5404caa8c7bb5c4e0435f94b28834ae5456623">2d5404caa8c7</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/97fe551785f14d411943bf31c363c82a178cb7f0">97fe5517</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=dcca673786a14715">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1730fe30580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13767ea7980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=af30eb6d903d2555">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a2910755fac8/disk-2d5404ca.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a135257837ee/vmlinux-2d5404ca.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3f8930906164/bzImage-2d5404ca.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in move_addr_to_user</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/07 22:31</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2
+	2024/11/06 23:09"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2">ff7afaeca1a1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c069283c08fdf374781b75452d49c5a29e92a8c3">c069283c</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=6fdf74cce377223b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13d2fd5f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14bd8ea7980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=4d9b600979f5187f">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/27f7a9810108/disk-ff7afaec.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7c6b3a726a92/vmlinux-ff7afaec.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cfcbcd35fcca/bzImage-ff7afaec.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in move_addr_to_user</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/05 04:00</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="59b723cd2adbac2a34fc8e12c74ae26ae45bf230
+	2024/11/04 00:05"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=59b723cd2adbac2a34fc8e12c74ae26ae45bf230">59b723cd2adb</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/509da42949c4013fb236ebf6e25d3562d110198c">509da429</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=6fdf74cce377223b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1351a740580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10ffd587980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=4b46aefb427e7c81">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3ecbeff785fa/disk-59b723cd.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a55df3ae4137/vmlinux-59b723cd.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8e0f78368d29/bzImage-59b723cd.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in move_addr_to_user</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/29 21:46</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="e42b1a9a2557aa94fee47f078633677198386a52
+	2024/10/28 21:16"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=e42b1a9a2557aa94fee47f078633677198386a52">e42b1a9a2557</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/66aeb999f37ab41e95f08d1da821200313f71342">66aeb999</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4d4311df74eee96f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16431f57980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1187eebb980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=a3c5ecd9ab62cf0">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ed48a7b9b01f/disk-e42b1a9a.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a965dd5b8f96/vmlinux-e42b1a9a.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/67f2ec04b7a1/bzImage-e42b1a9a.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in move_addr_to_user</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/21 21:47</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="1868f9d0260e9afaf7c6436d14923ae12eaea465
+	2024/09/21 02:34"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=1868f9d0260e9afaf7c6436d14923ae12eaea465">1868f9d0260e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6f888b7530906167ecb1f5a35e060fec736d6d32">6f888b75</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=acaa65be5f19fc5a">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11546c27980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14be5ca9980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=3d6c40ee58e8b0b3">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/51af83d2907b/disk-1868f9d0.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4cd235c942a6/vmlinux-1868f9d0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a321106ef897/bzImage-1868f9d0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in move_addr_to_user</td>
+		</tr>
+		
+		</tbody>
+</table>
+<i>* <s>Struck through</s> repros no longer work on HEAD.</i>
+
+
+</body>
+</html>

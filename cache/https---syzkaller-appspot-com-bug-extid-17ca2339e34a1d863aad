@@ -1,0 +1,1508 @@
+
+
+<!doctype html>
+<html>
+<head>
+	
+	<link rel="stylesheet" href="/static/style.css"/>
+	<script src="/static/common.js"></script>
+	
+		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-116117799-1"></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag() { dataLayer.push(arguments); }
+			gtag('js', new Date());
+			gtag('config', 'UA-116117799-1');
+		</script>
+	
+
+	<title>KMSAN: kernel-infoleak in raw_ioctl (2)</title>
+</head>
+<body>
+	
+	<header id="topbar">
+		<table class="position_table">
+			<tr>
+				<td>
+					<h1><a href="/upstream">syzbot</a></h1>
+				</td>
+				<td class="namespace_td">
+					<select class="namespace" onchange="window.location.href = '/' + this.value + '';">
+						
+							<option value="android-5-10" >Android 5.10</option>
+							<option value="android-5-15" >Android 5.15</option>
+							<option value="android-54" >Android 5.4</option>
+							<option value="android-6-1" >Android 6.1</option>
+							<option value="freebsd" >FreeBSD</option>
+							<option value="upstream" selected="1">Linux</option>
+							<option value="linux-5.15" >Linux 5.15</option>
+							<option value="linux-6.1" >Linux 6.1</option>
+							<option value="netbsd" >NetBSD</option>
+							<option value="openbsd" >OpenBSD</option>
+							<option value="gvisor" >gVisor</option></select>
+				</td>
+				<td class="search">
+					
+					
+						<a href="https://syzkaller.appspot.com/_ah/conflogin?continue=https://syzkaller.appspot.com/bug%3Fextid%3D17ca2339e34a1d863aad">sign-in</a> |
+					
+					<a href="https://groups.google.com/forum/#!forum/syzkaller" target="_blank">mailing list</a> |
+					<a href="https://github.com/google/syzkaller" target="_blank">source</a> |
+					<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md" target="_blank">docs</a>
+				</td>
+			</tr>
+		</table>
+		
+		<div class="navigation">
+			<div class="navigation_tab">
+				<a href='/upstream'><span style="color:DeepPink;">🐞</span> Open [1657]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/subsystems'><span style="color:DeepPink;">≡</span> Subsystems</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/fixed'><span style="color:ForestGreen;">🐞</span> Fixed [6082]</a>
+			</div>
+
+			<div class="navigation_tab" href='/upstream/invalid'>
+				<a href='/upstream/invalid'><span style="color:RoyalBlue;">🐞</span> Invalid [15103]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/backports'><span style="color:ForestGreen;">⬇</span> Missing Backports [157]</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/graph/crashes'><span style="color:ForestGreen;">≡</span> Crashes</a>
+			</div>
+
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Graphs</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href='/upstream/graph/bugs'>Kernel&nbsp;Health</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/found-bugs'>Bugs/Month</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/lifetimes'>Bug&nbsp;Lifetimes</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/fuzzing'>Fuzzing</a>
+				</div>
+			</div>
+
+			
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Coverage</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href="/upstream/graph/coverage?period=quarter">Total</a>
+					<a class="navigation_tab"
+						href="/upstream/coverage?period=month">Repo&nbsp;Heatmap</a>
+					
+						<a class="navigation_tab"
+							href="/upstream/coverage/subsystems?period=month">Subsystems&nbsp;Heatmap</a>
+					
+				</div>
+			</div>
+			
+			
+			<div class="navigation_tab navigation_right">
+				<a href='mailto:syzkaller@googlegroups.com'><span style="color:ForestGreen;">💬</span> Send us feedback</a>
+			</div>
+			
+		</div>
+		
+	</header>
+	<br>
+
+
+	<b>KMSAN: kernel-infoleak in raw_ioctl (2)</b><br><br>
+	Status: <a href="https://groups.google.com/d/msgid/syzkaller-bugs/00000000000045457e061df061c3%40google.com">fixed on 2024/10/22 11:57</a><br>
+	
+		
+			Subsystems: 
+				<span class="bug-label"><a href="/upstream/s/usb">usb</a></span>
+		<br>
+		
+	<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md#labels">[Documentation on labels]</a><br>
+	
+	
+	Reported-by: syzbot&#43;17ca2339e34a1d863aad@syzkaller.appspotmail.com<br>
+	
+		<b>Fix commit:</b> 
+
+	<span class="mono">
+		
+			9313d139aa25
+		
+		<a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=9313d139aa25e572d860f6f673b73a20f32d7f93">usb: gadget: dummy_hcd: execute hrtimer callback in softirq context</a>
+	</span>
+
+<br>
+		
+	
+	First crash: 229d, last: 160d<br>
+	
+	<div>
+		
+		
+		<div class="bug-bisection-stop"></div>
+	</div>
+
+	
+	<div class="collapsible collapsible-show">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Discussions (3)</span>
+		</div>
+		<div class="content">
+			
+			
+			
+
+<table class="list_table">
+	<thead>
+	<tr>
+		<th>Title</th>
+		<th>Replies (including bot)</th>
+		<th>Last reply</th>
+	</tr>
+	</thead>
+	<tbody>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/20240729022316.92219-1-andrey.konovalov@linux.dev/T/">[PATCH] usb: gadget: dummy_hcd: execute hrtimer callback in softirq context</a></td>
+			<td class="stat">9 (9)</td>
+			<td class="stat">2024/09/04 01:34</td>
+		</tr>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/20240904013051.4409-1-andrey.konovalov@linux.dev/T/">[PATCH RESEND] usb: gadget: dummy_hcd: execute hrtimer callback in softirq context</a></td>
+			<td class="stat">1 (1)</td>
+			<td class="stat">2024/09/04 01:30</td>
+		</tr>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/00000000000045457e061df061c3@google.com/T/">[syzbot] [usb?] KMSAN: kernel-infoleak in raw_ioctl (2)</a></td>
+			<td class="stat">1 (2)</td>
+			<td class="stat">2024/07/24 16:58</td>
+		</tr>
+	
+	</tbody>
+</table>
+
+
+			
+			
+		</div>
+	</div>
+	
+	<div class="collapsible collapsible-hide">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Similar bugs (1)</span>
+		</div>
+		<div class="content">
+			
+
+
+<table class="list_table">
+	
+	<thead>
+	<tr>
+		
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+		
+		<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		<th><a onclick="return sortTable(this, 'Repro', reproSort)" href="#">Repro</a></th>
+		<th><a onclick="return sortTable(this, 'Cause bisect', textSort)" href="#">Cause bisect</a></th>
+		<th><a onclick="return sortTable(this, 'Fix bisect', textSort)" href="#">Fix bisect</a></th>
+		<th><a onclick="return sortTable(this, 'Count', numSort)" href="#">Count</a></th>
+		<th><a onclick="return sortTable(this, 'Last', timeSort)" href="#">Last</a></th>
+		<th><a onclick="return sortTable(this, 'Reported', timeSort)" href="#">Reported</a></th>
+		
+		
+		
+			<th><a onclick="return sortTable(this, 'Patched', patchedSort)" href="#">Patched</a></th>
+		
+		
+			<th><a onclick="return sortTable(this, 'Status', textSort)" href="#">Status</a></th>
+		
+		
+	</tr>
+	</thead>
+	<tbody>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=a7e220df5a81d1ab400e">KMSAN: kernel-infoleak in raw_ioctl</a>
+					<span class="bug-label"><a href="/upstream/s/usb">usb</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">22</td>
+			<td class="stat">1645d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/000000000000ce85c405ac744ff6%40google.com">1669d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" title="net: usb: Fix uninit-was-stored issue in asix_read_phy_addr()">15/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/000000000000ce85c405ac744ff6%40google.com">fixed on 2020/09/25 01:17</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+	</tbody>
+</table>
+
+
+
+			
+			
+			
+			
+		</div>
+	</div>
+	
+
+	
+	<br><b>Sample crash report:</b><br>
+	<div id="crash_div"><pre>=====================================================
+BUG: KMSAN: kernel-infoleak in instrument_copy_to_user <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/instrumented.h?id=2c9b3512402ed192d1f43f4531fb5da947e72bd0#n114'>include/linux/instrumented.h:114</a> [inline]
+BUG: KMSAN: kernel-infoleak in _copy_to_user+0xbc/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/lib/usercopy.c?id=2c9b3512402ed192d1f43f4531fb5da947e72bd0#n45'>lib/usercopy.c:45</a>
+ instrument_copy_to_user <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/instrumented.h?id=2c9b3512402ed192d1f43f4531fb5da947e72bd0#n114'>include/linux/instrumented.h:114</a> [inline]
+ _copy_to_user+0xbc/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/lib/usercopy.c?id=2c9b3512402ed192d1f43f4531fb5da947e72bd0#n45'>lib/usercopy.c:45</a>
+ copy_to_user <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/uaccess.h?id=2c9b3512402ed192d1f43f4531fb5da947e72bd0#n191'>include/linux/uaccess.h:191</a> [inline]
+ raw_ioctl_ep0_read <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/usb/gadget/legacy/raw_gadget.c?id=2c9b3512402ed192d1f43f4531fb5da947e72bd0#n786'>drivers/usb/gadget/legacy/raw_gadget.c:786</a> [inline]
+ raw_ioctl+0x3d2e/0x5440 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/usb/gadget/legacy/raw_gadget.c?id=2c9b3512402ed192d1f43f4531fb5da947e72bd0#n1315'>drivers/usb/gadget/legacy/raw_gadget.c:1315</a>
+ vfs_ioctl <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/ioctl.c?id=2c9b3512402ed192d1f43f4531fb5da947e72bd0#n51'>fs/ioctl.c:51</a> [inline]
+ __do_sys_ioctl <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/ioctl.c?id=2c9b3512402ed192d1f43f4531fb5da947e72bd0#n907'>fs/ioctl.c:907</a> [inline]
+ __se_sys_ioctl+0x261/0x450 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/ioctl.c?id=2c9b3512402ed192d1f43f4531fb5da947e72bd0#n893'>fs/ioctl.c:893</a>
+ __x64_sys_ioctl+0x96/0xe0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/ioctl.c?id=2c9b3512402ed192d1f43f4531fb5da947e72bd0#n893'>fs/ioctl.c:893</a>
+ x64_sys_call+0x1a06/0x3c10 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/include/generated/asm/syscalls_64.h?id=2c9b3512402ed192d1f43f4531fb5da947e72bd0#n17'>arch/x86/include/generated/asm/syscalls_64.h:17</a>
+ do_syscall_x64 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=2c9b3512402ed192d1f43f4531fb5da947e72bd0#n52'>arch/x86/entry/common.c:52</a> [inline]
+ do_syscall_64+0xcd/0x1e0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=2c9b3512402ed192d1f43f4531fb5da947e72bd0#n83'>arch/x86/entry/common.c:83</a>
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+
+Uninit was created at:
+ slab_post_alloc_hook <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=2c9b3512402ed192d1f43f4531fb5da947e72bd0#n3985'>mm/slub.c:3985</a> [inline]
+ slab_alloc_node <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=2c9b3512402ed192d1f43f4531fb5da947e72bd0#n4028'>mm/slub.c:4028</a> [inline]
+ __do_kmalloc_node <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=2c9b3512402ed192d1f43f4531fb5da947e72bd0#n4148'>mm/slub.c:4148</a> [inline]
+ __kmalloc_noprof+0x661/0xf30 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=2c9b3512402ed192d1f43f4531fb5da947e72bd0#n4161'>mm/slub.c:4161</a>
+ kmalloc_noprof <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/slab.h?id=2c9b3512402ed192d1f43f4531fb5da947e72bd0#n685'>include/linux/slab.h:685</a> [inline]
+ raw_alloc_io_data <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/usb/gadget/legacy/raw_gadget.c?id=2c9b3512402ed192d1f43f4531fb5da947e72bd0#n675'>drivers/usb/gadget/legacy/raw_gadget.c:675</a> [inline]
+ raw_ioctl_ep0_read <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/usb/gadget/legacy/raw_gadget.c?id=2c9b3512402ed192d1f43f4531fb5da947e72bd0#n778'>drivers/usb/gadget/legacy/raw_gadget.c:778</a> [inline]
+ raw_ioctl+0x3bcb/0x5440 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/usb/gadget/legacy/raw_gadget.c?id=2c9b3512402ed192d1f43f4531fb5da947e72bd0#n1315'>drivers/usb/gadget/legacy/raw_gadget.c:1315</a>
+ vfs_ioctl <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/ioctl.c?id=2c9b3512402ed192d1f43f4531fb5da947e72bd0#n51'>fs/ioctl.c:51</a> [inline]
+ __do_sys_ioctl <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/ioctl.c?id=2c9b3512402ed192d1f43f4531fb5da947e72bd0#n907'>fs/ioctl.c:907</a> [inline]
+ __se_sys_ioctl+0x261/0x450 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/ioctl.c?id=2c9b3512402ed192d1f43f4531fb5da947e72bd0#n893'>fs/ioctl.c:893</a>
+ __x64_sys_ioctl+0x96/0xe0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/ioctl.c?id=2c9b3512402ed192d1f43f4531fb5da947e72bd0#n893'>fs/ioctl.c:893</a>
+ x64_sys_call+0x1a06/0x3c10 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/include/generated/asm/syscalls_64.h?id=2c9b3512402ed192d1f43f4531fb5da947e72bd0#n17'>arch/x86/include/generated/asm/syscalls_64.h:17</a>
+ do_syscall_x64 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=2c9b3512402ed192d1f43f4531fb5da947e72bd0#n52'>arch/x86/entry/common.c:52</a> [inline]
+ do_syscall_64+0xcd/0x1e0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=2c9b3512402ed192d1f43f4531fb5da947e72bd0#n83'>arch/x86/entry/common.c:83</a>
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+
+Bytes 0-4095 of 4096 are uninitialized
+Memory access of size 4096 starts at ffff888116edb000
+Data copied to user address 00007ffefdca74d8
+
+CPU: 0 PID: 5057 Comm: syz-executor289 Not tainted 6.10.0-syzkaller-11185-g2c9b3512402e #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 06/27/2024
+=====================================================
+</pre></div><br>
+	
+
+	
+
+<table class="list_table">
+	<caption>Crashes (18201):</caption>
+		<thead>
+		<tr>
+			<th><a onclick="return sortTable(this, 'Time', textSort, true)" href="#">Time</a></th>
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+			<th><a onclick="return sortTable(this, 'Commit', textSort)" href="#">Commit</a></th>
+			<th><a onclick="return sortTable(this, 'Syzkaller', textSort)" href="#">Syzkaller</a></th>
+			<th><a onclick="return sortTable(this, 'Config', textSort)" href="#">Config</a></th>
+			<th><a onclick="return sortTable(this, 'Log', textSort)" href="#">Log</a></th>
+			<th><a onclick="return sortTable(this, 'Report', reproSort)" href="#">Report</a></th>
+			<th><a onclick="return sortTable(this, 'Syz repro', reproSort)" href="#">Syz repro</a></th>
+			<th><a onclick="return sortTable(this, 'C repro', textSort)" href="#">C repro</a></th>
+			<th><a onclick="return sortTable(this, 'VM info', textSort)" href="#">VM info</a></th>
+			<th><a onclick="return sortTable(this, 'Assets', textSort)" href="#">Assets</a> (<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot_assets.md">help?</a>)</th>
+			<th><a onclick="return sortTable(this, 'Manager', textSort)" href="#">Manager</a></th>
+			<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		</tr>
+		</thead>
+		<tbody>
+		
+		<tr>
+			<td class="time">2024/07/21 15:08</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="2c9b3512402ed192d1f43f4531fb5da947e72bd0
+	2024/07/20 19:41"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=2c9b3512402ed192d1f43f4531fb5da947e72bd0">2c9b3512402e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/b88348e926b1f214763f45a5457bd91aafd36fab">b88348e9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=6bfb33a8ad10458f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1197b6b5980000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=176942f1980000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=1626b995980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=13cde11d980000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=1572eb21980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f8543636ba6c/disk-2c9b3512.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/403c612b7ac5/vmlinux-2c9b3512.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/88dc686d170a/bzImage-2c9b3512.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/27 00:25</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="11a299a7933e03c83818b431e6a1c53ad387423d
+	2024/09/25 21:56"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=11a299a7933e03c83818b431e6a1c53ad387423d">11a299a7933e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0d19f2475359ad6005faff69273679daedb26a7b">0d19f247</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9a61880f883bab84">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1562f627980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11a04507980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=a2f60bc6b5faeeb8">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a6ccd915a685/disk-11a299a7.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/203549ce7a08/vmlinux-11a299a7.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e8fec3d10be9/bzImage-11a299a7.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/26 23:28</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="11a299a7933e03c83818b431e6a1c53ad387423d
+	2024/09/25 21:56"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=11a299a7933e03c83818b431e6a1c53ad387423d">11a299a7933e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0d19f2475359ad6005faff69273679daedb26a7b">0d19f247</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9a61880f883bab84">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16d78507980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1254f627980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=c074fa8b209a75e0">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a6ccd915a685/disk-11a299a7.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/203549ce7a08/vmlinux-11a299a7.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e8fec3d10be9/bzImage-11a299a7.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/26 20:44</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="11a299a7933e03c83818b431e6a1c53ad387423d
+	2024/09/25 21:56"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=11a299a7933e03c83818b431e6a1c53ad387423d">11a299a7933e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0d19f2475359ad6005faff69273679daedb26a7b">0d19f247</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9a61880f883bab84">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15df2aa9980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17fce59f980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=d4d3cef584e44540">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a6ccd915a685/disk-11a299a7.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/203549ce7a08/vmlinux-11a299a7.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e8fec3d10be9/bzImage-11a299a7.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/26 20:27</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="11a299a7933e03c83818b431e6a1c53ad387423d
+	2024/09/25 21:56"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=11a299a7933e03c83818b431e6a1c53ad387423d">11a299a7933e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0d19f2475359ad6005faff69273679daedb26a7b">0d19f247</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9a61880f883bab84">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10043a80580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12a18507980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=1d9d7a3a90bf2f20">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a6ccd915a685/disk-11a299a7.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/203549ce7a08/vmlinux-11a299a7.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e8fec3d10be9/bzImage-11a299a7.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/26 19:20</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="11a299a7933e03c83818b431e6a1c53ad387423d
+	2024/09/25 21:56"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=11a299a7933e03c83818b431e6a1c53ad387423d">11a299a7933e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0d19f2475359ad6005faff69273679daedb26a7b">0d19f247</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9a61880f883bab84">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14f32aa9980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13ffda80580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=6fde80789489319">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a6ccd915a685/disk-11a299a7.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/203549ce7a08/vmlinux-11a299a7.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e8fec3d10be9/bzImage-11a299a7.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/26 17:56</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="11a299a7933e03c83818b431e6a1c53ad387423d
+	2024/09/25 21:56"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=11a299a7933e03c83818b431e6a1c53ad387423d">11a299a7933e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0d19f2475359ad6005faff69273679daedb26a7b">0d19f247</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9a61880f883bab84">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15392aa9980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16ebda80580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=366151d76685f132">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a6ccd915a685/disk-11a299a7.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/203549ce7a08/vmlinux-11a299a7.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e8fec3d10be9/bzImage-11a299a7.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/26 16:38</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="aa486552a110fd6e625bb66b7edf0e0df7389a1a
+	2024/09/25 18:35"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=aa486552a110fd6e625bb66b7edf0e0df7389a1a">aa486552a110</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0d19f2475359ad6005faff69273679daedb26a7b">0d19f247</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7d3c705540e0568b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10ac7627980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=149f0507980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=5680f3c29ea7f788">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4291d05d02ee/disk-aa486552.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f296dd10be62/vmlinux-aa486552.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ddba69f925c1/bzImage-aa486552.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/26 13:32</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="aa486552a110fd6e625bb66b7edf0e0df7389a1a
+	2024/09/25 18:35"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=aa486552a110fd6e625bb66b7edf0e0df7389a1a">aa486552a110</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0d19f2475359ad6005faff69273679daedb26a7b">0d19f247</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7d3c705540e0568b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=116ada80580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16b02aa9980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=1167ee47db179b8d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4291d05d02ee/disk-aa486552.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f296dd10be62/vmlinux-aa486552.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ddba69f925c1/bzImage-aa486552.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/26 13:12</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="aa486552a110fd6e625bb66b7edf0e0df7389a1a
+	2024/09/25 18:35"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=aa486552a110fd6e625bb66b7edf0e0df7389a1a">aa486552a110</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0d19f2475359ad6005faff69273679daedb26a7b">0d19f247</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7d3c705540e0568b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12202aa9980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1413b627980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=857cd52300e7eb59">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4291d05d02ee/disk-aa486552.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f296dd10be62/vmlinux-aa486552.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ddba69f925c1/bzImage-aa486552.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/26 12:08</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="aa486552a110fd6e625bb66b7edf0e0df7389a1a
+	2024/09/25 18:35"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=aa486552a110fd6e625bb66b7edf0e0df7389a1a">aa486552a110</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0d19f2475359ad6005faff69273679daedb26a7b">0d19f247</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7d3c705540e0568b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=152cda80580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=102c659f980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=9cd6920a5082fd85">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4291d05d02ee/disk-aa486552.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f296dd10be62/vmlinux-aa486552.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ddba69f925c1/bzImage-aa486552.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/26 11:31</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="aa486552a110fd6e625bb66b7edf0e0df7389a1a
+	2024/09/25 18:35"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=aa486552a110fd6e625bb66b7edf0e0df7389a1a">aa486552a110</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0d19f2475359ad6005faff69273679daedb26a7b">0d19f247</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7d3c705540e0568b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17e60507980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11e4da80580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=22b0286221dc5ec8">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4291d05d02ee/disk-aa486552.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f296dd10be62/vmlinux-aa486552.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ddba69f925c1/bzImage-aa486552.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/26 11:26</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="aa486552a110fd6e625bb66b7edf0e0df7389a1a
+	2024/09/25 18:35"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=aa486552a110fd6e625bb66b7edf0e0df7389a1a">aa486552a110</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0d19f2475359ad6005faff69273679daedb26a7b">0d19f247</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7d3c705540e0568b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1604659f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=172bcaa9980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7fa54af53398eb2f">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4291d05d02ee/disk-aa486552.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f296dd10be62/vmlinux-aa486552.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ddba69f925c1/bzImage-aa486552.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/26 09:21</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="aa486552a110fd6e625bb66b7edf0e0df7389a1a
+	2024/09/25 18:35"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=aa486552a110fd6e625bb66b7edf0e0df7389a1a">aa486552a110</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0d19f2475359ad6005faff69273679daedb26a7b">0d19f247</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7d3c705540e0568b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13dab627980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11f40507980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=e01175cb761d7ab0">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4291d05d02ee/disk-aa486552.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f296dd10be62/vmlinux-aa486552.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ddba69f925c1/bzImage-aa486552.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/26 09:03</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="aa486552a110fd6e625bb66b7edf0e0df7389a1a
+	2024/09/25 18:35"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=aa486552a110fd6e625bb66b7edf0e0df7389a1a">aa486552a110</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0d19f2475359ad6005faff69273679daedb26a7b">0d19f247</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7d3c705540e0568b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16640507980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=140ab627980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=1fec24622c937df6">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4291d05d02ee/disk-aa486552.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f296dd10be62/vmlinux-aa486552.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ddba69f925c1/bzImage-aa486552.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/26 07:35</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="aa486552a110fd6e625bb66b7edf0e0df7389a1a
+	2024/09/25 18:35"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=aa486552a110fd6e625bb66b7edf0e0df7389a1a">aa486552a110</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0d19f2475359ad6005faff69273679daedb26a7b">0d19f247</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7d3c705540e0568b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=129da59f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17f8b627980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=a96b5d12cba26fc">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4291d05d02ee/disk-aa486552.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f296dd10be62/vmlinux-aa486552.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ddba69f925c1/bzImage-aa486552.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/26 06:58</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="aa486552a110fd6e625bb66b7edf0e0df7389a1a
+	2024/09/25 18:35"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=aa486552a110fd6e625bb66b7edf0e0df7389a1a">aa486552a110</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0d19f2475359ad6005faff69273679daedb26a7b">0d19f247</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7d3c705540e0568b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1716caa9980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1657f907980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=2a49f75e50bb1686">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4291d05d02ee/disk-aa486552.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f296dd10be62/vmlinux-aa486552.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ddba69f925c1/bzImage-aa486552.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/26 05:55</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="aa486552a110fd6e625bb66b7edf0e0df7389a1a
+	2024/09/25 18:35"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=aa486552a110fd6e625bb66b7edf0e0df7389a1a">aa486552a110</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0d19f2475359ad6005faff69273679daedb26a7b">0d19f247</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7d3c705540e0568b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=108f3627980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17b3f907980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7f29da8d4efc41e7">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4291d05d02ee/disk-aa486552.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f296dd10be62/vmlinux-aa486552.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ddba69f925c1/bzImage-aa486552.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/26 05:48</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="aa486552a110fd6e625bb66b7edf0e0df7389a1a
+	2024/09/25 18:35"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=aa486552a110fd6e625bb66b7edf0e0df7389a1a">aa486552a110</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0d19f2475359ad6005faff69273679daedb26a7b">0d19f247</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7d3c705540e0568b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1092caa9980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1492caa9980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=642bfa8f4b7b5f2c">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4291d05d02ee/disk-aa486552.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f296dd10be62/vmlinux-aa486552.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ddba69f925c1/bzImage-aa486552.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/26 04:46</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="aa486552a110fd6e625bb66b7edf0e0df7389a1a
+	2024/09/25 18:35"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=aa486552a110fd6e625bb66b7edf0e0df7389a1a">aa486552a110</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0d19f2475359ad6005faff69273679daedb26a7b">0d19f247</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7d3c705540e0568b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11153d77980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13d3699f980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=5a099ebc8c6bf93d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4291d05d02ee/disk-aa486552.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f296dd10be62/vmlinux-aa486552.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ddba69f925c1/bzImage-aa486552.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/26 03:20</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="aa486552a110fd6e625bb66b7edf0e0df7389a1a
+	2024/09/25 18:35"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=aa486552a110fd6e625bb66b7edf0e0df7389a1a">aa486552a110</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0d19f2475359ad6005faff69273679daedb26a7b">0d19f247</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7d3c705540e0568b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15a53627980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1201f907980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ae6bf9c5eeace15f">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4291d05d02ee/disk-aa486552.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f296dd10be62/vmlinux-aa486552.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ddba69f925c1/bzImage-aa486552.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/26 01:20</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="aa486552a110fd6e625bb66b7edf0e0df7389a1a
+	2024/09/25 18:35"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=aa486552a110fd6e625bb66b7edf0e0df7389a1a">aa486552a110</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/349a68c4b056a06438a1e75e9b8a3a583b06d511">349a68c4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7d3c705540e0568b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=108b4aa9980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13c0d907980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=9946ab068a958350">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4291d05d02ee/disk-aa486552.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f296dd10be62/vmlinux-aa486552.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ddba69f925c1/bzImage-aa486552.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/26 01:20</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="aa486552a110fd6e625bb66b7edf0e0df7389a1a
+	2024/09/25 18:35"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=aa486552a110fd6e625bb66b7edf0e0df7389a1a">aa486552a110</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/349a68c4b056a06438a1e75e9b8a3a583b06d511">349a68c4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7d3c705540e0568b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=140b4aa9980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12922a80580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=d60af3f9a661b1ab">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4291d05d02ee/disk-aa486552.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f296dd10be62/vmlinux-aa486552.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ddba69f925c1/bzImage-aa486552.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/26 00:14</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="aa486552a110fd6e625bb66b7edf0e0df7389a1a
+	2024/09/25 18:35"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=aa486552a110fd6e625bb66b7edf0e0df7389a1a">aa486552a110</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/349a68c4b056a06438a1e75e9b8a3a583b06d511">349a68c4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7d3c705540e0568b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=112d4aa9980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13142a80580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=96307c3a2bcb484b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4291d05d02ee/disk-aa486552.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f296dd10be62/vmlinux-aa486552.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ddba69f925c1/bzImage-aa486552.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/25 23:35</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="aa486552a110fd6e625bb66b7edf0e0df7389a1a
+	2024/09/25 18:35"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=aa486552a110fd6e625bb66b7edf0e0df7389a1a">aa486552a110</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/349a68c4b056a06438a1e75e9b8a3a583b06d511">349a68c4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7d3c705540e0568b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1154699f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15235907980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=9e2abb0c8478f159">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4291d05d02ee/disk-aa486552.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f296dd10be62/vmlinux-aa486552.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ddba69f925c1/bzImage-aa486552.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/27 13:50</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="13882369ceb9b0953f9f5ff8563bbccfd80d0ffd
+	2024/09/26 16:25"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=13882369ceb9b0953f9f5ff8563bbccfd80d0ffd">13882369ceb9</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9314348adf7605682d49192fa6487aac93f5782b">9314348a</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9a61880f883bab84">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16887a80580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1204959f980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=bd65ad10b09d9ecb">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/37b9a68fed4d/disk-13882369.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0b109d50da21/vmlinux-13882369.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cd9eb961eb15/bzImage-13882369.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-386-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/27 12:56</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="13882369ceb9b0953f9f5ff8563bbccfd80d0ffd
+	2024/09/26 16:25"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=13882369ceb9b0953f9f5ff8563bbccfd80d0ffd">13882369ceb9</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9314348adf7605682d49192fa6487aac93f5782b">9314348a</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9a61880f883bab84">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=129e5e27980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12eb6aa9980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=39384a2e8295bd68">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/37b9a68fed4d/disk-13882369.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0b109d50da21/vmlinux-13882369.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cd9eb961eb15/bzImage-13882369.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-386-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/27 11:29</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="13882369ceb9b0953f9f5ff8563bbccfd80d0ffd
+	2024/09/26 16:25"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=13882369ceb9b0953f9f5ff8563bbccfd80d0ffd">13882369ceb9</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9314348adf7605682d49192fa6487aac93f5782b">9314348a</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9a61880f883bab84">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15db159f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16525e27980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=43f29cb4c3a5177a">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/37b9a68fed4d/disk-13882369.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0b109d50da21/vmlinux-13882369.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cd9eb961eb15/bzImage-13882369.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-386-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/27 10:27</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="13882369ceb9b0953f9f5ff8563bbccfd80d0ffd
+	2024/09/26 16:25"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=13882369ceb9b0953f9f5ff8563bbccfd80d0ffd">13882369ceb9</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9314348adf7605682d49192fa6487aac93f5782b">9314348a</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9a61880f883bab84">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14c2c507980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17e45e27980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b8558ee5397c203e">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/37b9a68fed4d/disk-13882369.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0b109d50da21/vmlinux-13882369.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cd9eb961eb15/bzImage-13882369.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-386-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/27 08:02</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="13882369ceb9b0953f9f5ff8563bbccfd80d0ffd
+	2024/09/26 16:25"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=13882369ceb9b0953f9f5ff8563bbccfd80d0ffd">13882369ceb9</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9314348adf7605682d49192fa6487aac93f5782b">9314348a</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9a61880f883bab84">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1181159f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=166f4507980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=d82083fa5cec694b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/37b9a68fed4d/disk-13882369.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0b109d50da21/vmlinux-13882369.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cd9eb961eb15/bzImage-13882369.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-386-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/27 07:02</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="13882369ceb9b0953f9f5ff8563bbccfd80d0ffd
+	2024/09/26 16:25"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=13882369ceb9b0953f9f5ff8563bbccfd80d0ffd">13882369ceb9</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9314348adf7605682d49192fa6487aac93f5782b">9314348a</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9a61880f883bab84">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14f12480580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15b6bb3b980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=5233da617610ca6b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/37b9a68fed4d/disk-13882369.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0b109d50da21/vmlinux-13882369.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cd9eb961eb15/bzImage-13882369.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-386-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/27 06:01</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="13882369ceb9b0953f9f5ff8563bbccfd80d0ffd
+	2024/09/26 16:25"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=13882369ceb9b0953f9f5ff8563bbccfd80d0ffd">13882369ceb9</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9314348adf7605682d49192fa6487aac93f5782b">9314348a</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9a61880f883bab84">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11c86aa9980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=161d4507980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=931e05f7183b743">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/37b9a68fed4d/disk-13882369.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0b109d50da21/vmlinux-13882369.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cd9eb961eb15/bzImage-13882369.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-386-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/27 05:09</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="13882369ceb9b0953f9f5ff8563bbccfd80d0ffd
+	2024/09/26 16:25"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=13882369ceb9b0953f9f5ff8563bbccfd80d0ffd">13882369ceb9</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9314348adf7605682d49192fa6487aac93f5782b">9314348a</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9a61880f883bab84">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14d94507980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12d3f627980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=8dc488cccad80ade">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/37b9a68fed4d/disk-13882369.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0b109d50da21/vmlinux-13882369.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cd9eb961eb15/bzImage-13882369.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-386-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/27 04:01</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="13882369ceb9b0953f9f5ff8563bbccfd80d0ffd
+	2024/09/26 16:25"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=13882369ceb9b0953f9f5ff8563bbccfd80d0ffd">13882369ceb9</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9314348adf7605682d49192fa6487aac93f5782b">9314348a</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9a61880f883bab84">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1268159f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=101e4507980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=c732fd57ce3613c4">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/37b9a68fed4d/disk-13882369.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0b109d50da21/vmlinux-13882369.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cd9eb961eb15/bzImage-13882369.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-386-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/27 01:30</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="13882369ceb9b0953f9f5ff8563bbccfd80d0ffd
+	2024/09/26 16:25"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=13882369ceb9b0953f9f5ff8563bbccfd80d0ffd">13882369ceb9</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9314348adf7605682d49192fa6487aac93f5782b">9314348a</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9a61880f883bab84">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=172d3a80580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11f1aaa9980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ae7b588559569b65">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/37b9a68fed4d/disk-13882369.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0b109d50da21/vmlinux-13882369.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cd9eb961eb15/bzImage-13882369.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-386-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/26 22:27</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="13882369ceb9b0953f9f5ff8563bbccfd80d0ffd
+	2024/09/26 16:25"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=13882369ceb9b0953f9f5ff8563bbccfd80d0ffd">13882369ceb9</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0d19f2475359ad6005faff69273679daedb26a7b">0d19f247</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9a61880f883bab84">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16da3a80580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1150f627980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=191ba82b2927cc29">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/37b9a68fed4d/disk-13882369.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0b109d50da21/vmlinux-13882369.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cd9eb961eb15/bzImage-13882369.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-386-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/26 21:52</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="13882369ceb9b0953f9f5ff8563bbccfd80d0ffd
+	2024/09/26 16:25"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=13882369ceb9b0953f9f5ff8563bbccfd80d0ffd">13882369ceb9</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0d19f2475359ad6005faff69273679daedb26a7b">0d19f247</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9a61880f883bab84">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=126f7627980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13ed8507980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=469321267d736a0e">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/37b9a68fed4d/disk-13882369.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0b109d50da21/vmlinux-13882369.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cd9eb961eb15/bzImage-13882369.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-386-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/26 15:59</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="11a299a7933e03c83818b431e6a1c53ad387423d
+	2024/09/25 21:56"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=11a299a7933e03c83818b431e6a1c53ad387423d">11a299a7933e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0d19f2475359ad6005faff69273679daedb26a7b">0d19f247</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9a61880f883bab84">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14b22aa9980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1189da80580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=9ea11b883961ede5">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0deb92f78b44/disk-11a299a7.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f0915ade87a7/vmlinux-11a299a7.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2e482c81041b/bzImage-11a299a7.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-386-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/26 15:06</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="11a299a7933e03c83818b431e6a1c53ad387423d
+	2024/09/25 21:56"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=11a299a7933e03c83818b431e6a1c53ad387423d">11a299a7933e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0d19f2475359ad6005faff69273679daedb26a7b">0d19f247</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9a61880f883bab84">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10130507980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13cc2aa9980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b4fe9d1b7bca391f">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0deb92f78b44/disk-11a299a7.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f0915ade87a7/vmlinux-11a299a7.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2e482c81041b/bzImage-11a299a7.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-386-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/26 14:37</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="11a299a7933e03c83818b431e6a1c53ad387423d
+	2024/09/25 21:56"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=11a299a7933e03c83818b431e6a1c53ad387423d">11a299a7933e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0d19f2475359ad6005faff69273679daedb26a7b">0d19f247</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9a61880f883bab84">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=130e659f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=142fb627980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=6fc2cf9343a43c69">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0deb92f78b44/disk-11a299a7.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f0915ade87a7/vmlinux-11a299a7.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2e482c81041b/bzImage-11a299a7.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-386-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/26 10:24</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="11a299a7933e03c83818b431e6a1c53ad387423d
+	2024/09/25 21:56"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=11a299a7933e03c83818b431e6a1c53ad387423d">11a299a7933e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0d19f2475359ad6005faff69273679daedb26a7b">0d19f247</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9a61880f883bab84">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11f0da80580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1150659f980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=c67365092fb3ba64">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0deb92f78b44/disk-11a299a7.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f0915ade87a7/vmlinux-11a299a7.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2e482c81041b/bzImage-11a299a7.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-386-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/26 08:44</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="11a299a7933e03c83818b431e6a1c53ad387423d
+	2024/09/25 21:56"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=11a299a7933e03c83818b431e6a1c53ad387423d">11a299a7933e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0d19f2475359ad6005faff69273679daedb26a7b">0d19f247</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9a61880f883bab84">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1012b627980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10780507980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=6d62d9a519125b34">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0deb92f78b44/disk-11a299a7.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f0915ade87a7/vmlinux-11a299a7.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2e482c81041b/bzImage-11a299a7.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-386-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/26 04:21</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="11a299a7933e03c83818b431e6a1c53ad387423d
+	2024/09/25 21:56"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=11a299a7933e03c83818b431e6a1c53ad387423d">11a299a7933e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0d19f2475359ad6005faff69273679daedb26a7b">0d19f247</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9a61880f883bab84">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10bd699f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1784caa9980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=612471da27a8bf96">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0deb92f78b44/disk-11a299a7.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f0915ade87a7/vmlinux-11a299a7.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2e482c81041b/bzImage-11a299a7.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-386-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/26 02:20</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="eb5b0f9812fff72f82e6ecc9ad4dafaf4971a16a
+	2024/09/25 18:21"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=eb5b0f9812fff72f82e6ecc9ad4dafaf4971a16a">eb5b0f9812ff</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/349a68c4b056a06438a1e75e9b8a3a583b06d511">349a68c4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7d3c705540e0568b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14213627980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1446f907980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=86032e3701bd7f99">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b9ac614cbef8/disk-eb5b0f98.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9a2d32b5021b/vmlinux-eb5b0f98.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/beb66504ed27/bzImage-eb5b0f98.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kmsan-gce-386-root</td>
+			<td class="manager">KMSAN: kernel-infoleak in raw_ioctl</td>
+		</tr>
+		
+		</tbody>
+</table>
+<i>* <s>Struck through</s> repros no longer work on HEAD.</i>
+
+
+</body>
+</html>

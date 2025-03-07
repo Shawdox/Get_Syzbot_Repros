@@ -1,0 +1,2598 @@
+
+
+<!doctype html>
+<html>
+<head>
+	
+	<link rel="stylesheet" href="/static/style.css"/>
+	<script src="/static/common.js"></script>
+	
+		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-116117799-1"></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag() { dataLayer.push(arguments); }
+			gtag('js', new Date());
+			gtag('config', 'UA-116117799-1');
+		</script>
+	
+
+	<title>BUG: spinlock bad magic in release_metapage</title>
+</head>
+<body>
+	
+	<header id="topbar">
+		<table class="position_table">
+			<tr>
+				<td>
+					<h1><a href="/upstream">syzbot</a></h1>
+				</td>
+				<td class="namespace_td">
+					<select class="namespace" onchange="window.location.href = '/' + this.value + '';">
+						
+							<option value="android-5-10" >Android 5.10</option>
+							<option value="android-5-15" >Android 5.15</option>
+							<option value="android-54" >Android 5.4</option>
+							<option value="android-6-1" >Android 6.1</option>
+							<option value="freebsd" >FreeBSD</option>
+							<option value="upstream" selected="1">Linux</option>
+							<option value="linux-5.15" >Linux 5.15</option>
+							<option value="linux-6.1" >Linux 6.1</option>
+							<option value="netbsd" >NetBSD</option>
+							<option value="openbsd" >OpenBSD</option>
+							<option value="gvisor" >gVisor</option></select>
+				</td>
+				<td class="search">
+					
+					
+						<a href="https://syzkaller.appspot.com/_ah/conflogin?continue=https://syzkaller.appspot.com/bug%3Fextid%3De380443eaa59bfb75a84">sign-in</a> |
+					
+					<a href="https://groups.google.com/forum/#!forum/syzkaller" target="_blank">mailing list</a> |
+					<a href="https://github.com/google/syzkaller" target="_blank">source</a> |
+					<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md" target="_blank">docs</a>
+				</td>
+			</tr>
+		</table>
+		
+		<div class="navigation">
+			<div class="navigation_tab">
+				<a href='/upstream'><span style="color:DeepPink;">🐞</span> Open [1659]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/subsystems'><span style="color:DeepPink;">≡</span> Subsystems</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/fixed'><span style="color:ForestGreen;">🐞</span> Fixed [6081]</a>
+			</div>
+
+			<div class="navigation_tab" href='/upstream/invalid'>
+				<a href='/upstream/invalid'><span style="color:RoyalBlue;">🐞</span> Invalid [15101]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/backports'><span style="color:ForestGreen;">⬇</span> Missing Backports [157]</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/graph/crashes'><span style="color:ForestGreen;">≡</span> Crashes</a>
+			</div>
+
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Graphs</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href='/upstream/graph/bugs'>Kernel&nbsp;Health</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/found-bugs'>Bugs/Month</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/lifetimes'>Bug&nbsp;Lifetimes</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/fuzzing'>Fuzzing</a>
+				</div>
+			</div>
+
+			
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Coverage</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href="/upstream/graph/coverage?period=quarter">Total</a>
+					<a class="navigation_tab"
+						href="/upstream/coverage?period=month">Repo&nbsp;Heatmap</a>
+					
+						<a class="navigation_tab"
+							href="/upstream/coverage/subsystems?period=month">Subsystems&nbsp;Heatmap</a>
+					
+				</div>
+			</div>
+			
+			
+			<div class="navigation_tab navigation_right">
+				<a href='mailto:syzkaller@googlegroups.com'><span style="color:ForestGreen;">💬</span> Send us feedback</a>
+			</div>
+			
+		</div>
+		
+	</header>
+	<br>
+
+
+	<b>BUG: spinlock bad magic in release_metapage</b><br><br>
+	Status: <a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000009f43cd0621bf7de4%40google.com">upstream: reported C repro on 2024/09/10 08:16</a><br>
+	
+		
+			Subsystems: 
+				<span class="bug-label"><a href="/upstream/s/jfs">jfs</a></span>
+		<br>
+		
+	<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md#labels">[Documentation on labels]</a><br>
+	
+	
+	Reported-by: syzbot&#43;e380443eaa59bfb75a84@syzkaller.appspotmail.com<br>
+	
+	First crash: 177d, last: 16h31m<br>
+	
+	<div>
+		<div class="bug-bisection-info">
+
+	
+	
+	
+		
+			<b>Cause bisection: the issue happens on the oldest tested release</b>
+		
+		<b>(<a href="https://syzkaller.appspot.com/x/bisect.txt?x=1044da07980000">bisect log</a>)</b><br>
+	
+	
+		Crash: <a href="https://syzkaller.appspot.com/x/report.txt?x=1244da07980000">general protection fault in release_metapage</a> (<a href="https://syzkaller.appspot.com/x/log.txt?x=1444da07980000">log</a>)<br>
+		Repro: <a href="/text?tag=ReproC&x=138a5207980000">C</a>
+		<a href="/text?tag=ReproSyz&x=16bbc69f980000">syz</a>
+		<a href="/text?tag=KernelConfig&x=4540f5bcdd31e3de">.config</a><br>
+	
+
+	
+	&nbsp;&nbsp;
+	
+
+</div>
+		
+		<div class="bug-bisection-stop"></div>
+	</div>
+
+	
+	<div class="collapsible collapsible-show">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Discussions (1)</span>
+		</div>
+		<div class="content">
+			
+			
+			
+
+<table class="list_table">
+	<thead>
+	<tr>
+		<th>Title</th>
+		<th>Replies (including bot)</th>
+		<th>Last reply</th>
+	</tr>
+	</thead>
+	<tbody>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/0000000000009f43cd0621bf7de4@google.com/T/">[syzbot] [jfs?] BUG: spinlock bad magic in release_metapage</a></td>
+			<td class="stat">0 (1)</td>
+			<td class="stat">2024/09/10 08:16</td>
+		</tr>
+	
+	</tbody>
+</table>
+
+
+			
+			
+		</div>
+	</div>
+	
+	<div class="collapsible collapsible-hide">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Similar bugs (14)</span>
+		</div>
+		<div class="content">
+			
+
+
+<table class="list_table">
+	
+	<thead>
+	<tr>
+		
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+		
+		<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		<th><a onclick="return sortTable(this, 'Repro', reproSort)" href="#">Repro</a></th>
+		<th><a onclick="return sortTable(this, 'Cause bisect', textSort)" href="#">Cause bisect</a></th>
+		<th><a onclick="return sortTable(this, 'Fix bisect', textSort)" href="#">Fix bisect</a></th>
+		<th><a onclick="return sortTable(this, 'Count', numSort)" href="#">Count</a></th>
+		<th><a onclick="return sortTable(this, 'Last', timeSort)" href="#">Last</a></th>
+		<th><a onclick="return sortTable(this, 'Reported', timeSort)" href="#">Reported</a></th>
+		
+		
+		
+			<th><a onclick="return sortTable(this, 'Patched', patchedSort)" href="#">Patched</a></th>
+		
+		
+			<th><a onclick="return sortTable(this, 'Status', textSort)" href="#">Status</a></th>
+		
+		
+	</tr>
+	</thead>
+	<tbody>
+	
+		<tr>
+			<td>linux-5.15</td>
+			<td class="title">
+				<a href="/bug?extid=588ebcf20255ad4c86ca">BUG: spinlock bad magic in release_metapage</a>
+					<span class="bug-label"><a href="/linux-5.15?label=origin%3Aupstream">origin:upstream</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">58</td>
+			<td class="stat">3d06h</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/000000000000babf43062226f683%40google.com">171d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/3</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/000000000000babf43062226f683%40google.com">upstream: reported C repro on 2024/09/15 11:43</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=90392eaed540afcc8fc3">BUG: unable to handle kernel paging request in take_dentry_name_snapshot</a>
+					<span class="bug-label"><a href="/upstream/s/reiserfs">reiserfs</a></span>
+					<span class="bug-label"><a href="/upstream/s/overlayfs">overlayfs</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status">error</td>
+			<td class="bisect_status">done</td>
+			<td class="stat ">30</td>
+			<td class="stat">333d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000003b7fee05eec392a8%40google.com">825d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000003b7fee05eec392a8%40google.com">closed as dup on 2023/10/04 08:35</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>linux-6.1</td>
+			<td class="title">
+				<a href="/bug?extid=42b62cb4213b47f5b75d">BUG: spinlock bad magic in release_metapage</a>
+					<span class="bug-label"><a href="/linux-6.1?label=origin%3Aupstream">origin:upstream</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">31</td>
+			<td class="stat">8d23h</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/66ff6892.050a0220.49194.042f.GAE%40google.com">153d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/3</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/66ff6892.050a0220.49194.042f.GAE%40google.com">upstream: reported C repro on 2024/10/04 04:01</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=00c629f5bf36cb365f096efe82f0ef9fa6338f40">BUG: spinlock bad magic in lock_sock_nested (2)</a>
+					<span class="bug-label"><a href="/upstream/s/bluetooth">bluetooth</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">1</td>
+			<td class="stat">1143d</td>
+			<td class="stat">
+				
+					1143d
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						auto-closed as invalid on 2022/04/18 01:34
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=34d3dc97e5602ccaffeac639c3f645daa9b95337">BUG: spinlock bad magic in lock_sock_nested</a>
+					<span class="bug-label"><a href="/upstream/s/bluetooth">bluetooth</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">26</td>
+			<td class="stat">1284d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/00000000000063dca305aec85988%40google.com">1639d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/00000000000063dca305aec85988%40google.com">auto-closed as invalid on 2021/12/27 15:41</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=9bf5c83263a4d4387899">BUG: spinlock bad magic in btrfs_stop_all_workers</a>
+					<span class="bug-label"><a href="/upstream/s/btrfs">btrfs</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">5</td>
+			<td class="stat">260d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/00000000000077990d061b30f83c%40google.com">260d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" title="btrfs: protect folio::private when attaching extent buffer folios">26/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/00000000000077990d061b30f83c%40google.com">fixed on 2024/07/31 03:12</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=f2a8b36958428c857ebb">BUG: spinlock bad magic in skb_queue_tail</a>
+					<span class="bug-label"><a href="/upstream/s/afs">afs</a></span>
+					<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">1</td>
+			<td class="stat">807d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-upstream-moderation/000000000000f3560a05f0826f6b%40google.com">803d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-upstream-moderation/000000000000f3560a05f0826f6b%40google.com">auto-obsoleted due to no activity on 2023/03/19 17:50</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>linux-5.15</td>
+			<td class="title">
+				<a href="/bug?extid=4b6494f0e706e8a1fe4d">KASAN: use-after-free Read in release_metapage (2)</a>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">3</td>
+			<td class="stat">43d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/673346a2.050a0220.5d845.0003.GAE@google.com">113d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/3</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/673346a2.050a0220.5d845.0003.GAE@google.com">upstream: reported on 2024/11/12 12:14</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=f1521383cec5f7baaa94">KASAN: use-after-free Read in release_metapage</a>
+					<span class="bug-label"><a href="/upstream/s/jfs">jfs</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status">error</td>
+			<td class="bisect_status">done</td>
+			<td class="stat ">1190</td>
+			<td class="stat">14h04m</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/000000000000d74cac05f1450646%40google.com">793d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/000000000000d74cac05f1450646%40google.com">upstream: reported C repro on 2023/01/02 10:00</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>linux-6.1</td>
+			<td class="title">
+				<a href="/bug?id=3a53c2180503b8359214c9ce3d63d92cb40a865b">KASAN: use-after-free Read in release_metapage</a>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">1</td>
+			<td class="stat">532d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/0000000000003779b30605c9e51b%40google.com">532d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/3</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/0000000000003779b30605c9e51b%40google.com">auto-obsoleted due to no activity on 2023/12/29 12:55</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>linux-4.14</td>
+			<td class="title">
+				<a href="/bug?id=4c071e742dcb6fde80c25b3a4afcdbe7f4dda017">KASAN: use-after-free Read in release_metapage</a>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">1</td>
+			<td class="stat">848d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/00000000000045ad8505ecff166e%40google.com">848d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/1</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/00000000000045ad8505ecff166e%40google.com">auto-obsoleted due to no activity on 2023/03/09 00:53</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>linux-6.1</td>
+			<td class="title">
+				<a href="/bug?id=76deebdce449378df194420807478994a9ad156e">KASAN: use-after-free Read in release_metapage (2)</a>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">1</td>
+			<td class="stat">307d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/000000000000ba00c206177218f4%40google.com">307d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/3</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/000000000000ba00c206177218f4%40google.com">auto-obsoleted due to no activity on 2024/08/10 05:44</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>linux-5.15</td>
+			<td class="title">
+				<a href="/bug?id=91c3c1f0d0a26125bc5da27c6cd0f9b115ade7c8">KASAN: use-after-free Read in release_metapage</a>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">1</td>
+			<td class="stat">510d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/000000000000191961060781b5f2%40google.com">510d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/3</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/000000000000191961060781b5f2%40google.com">auto-obsoleted due to no activity on 2024/01/20 09:39</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>linux-6.1</td>
+			<td class="title">
+				<a href="/bug?id=95f09193d89e21e80e04fd7f9b20fc19c1b7246b">KASAN: use-after-free Read in release_metapage (3)</a>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">1</td>
+			<td class="stat">113d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/673348fa.050a0220.a0661.0419.GAE@google.com">113d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/3</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/673348fa.050a0220.a0661.0419.GAE@google.com">auto-obsoleted due to no activity on 2025/02/20 12:24</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+	</tbody>
+</table>
+
+
+
+			
+			
+			
+			
+		</div>
+	</div>
+	
+
+	
+	<br><b>Sample crash report:</b><br>
+	<div id="crash_div"><pre>BUG: spinlock bad magic on CPU#1, jfsCommit/113
+==================================================================
+BUG: KASAN: slab-out-of-bounds in string_nocheck <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/lib/vsprintf.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n646'>lib/vsprintf.c:646</a> [inline]
+BUG: KASAN: slab-out-of-bounds in string+0x218/0x2b0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/lib/vsprintf.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n728'>lib/vsprintf.c:728</a>
+Read of size 1 at addr ffff88807658c9f0 by task jfsCommit/113
+
+CPU: 1 UID: 0 PID: 113 Comm: jfsCommit Not tainted 6.12.0-rc6-syzkaller-00110-gff7afaeca1a1 #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 09/13/2024
+Call Trace:
+ &lt;TASK&gt;
+ __dump_stack <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/lib/dump_stack.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n94'>lib/dump_stack.c:94</a> [inline]
+ dump_stack_lvl+0x241/0x360 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/lib/dump_stack.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n120'>lib/dump_stack.c:120</a>
+ print_address_description <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/kasan/report.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n377'>mm/kasan/report.c:377</a> [inline]
+ print_report+0x169/0x550 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/kasan/report.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n488'>mm/kasan/report.c:488</a>
+ kasan_report+0x143/0x180 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/kasan/report.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n601'>mm/kasan/report.c:601</a>
+ string_nocheck <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/lib/vsprintf.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n646'>lib/vsprintf.c:646</a> [inline]
+ string+0x218/0x2b0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/lib/vsprintf.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n728'>lib/vsprintf.c:728</a>
+ vsnprintf+0x1101/0x1da0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/lib/vsprintf.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n2803'>lib/vsprintf.c:2803</a>
+ vprintk_store+0x480/0x1160 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/printk/printk.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n2260'>kernel/printk/printk.c:2260</a>
+ vprintk_emit+0x271/0xa10 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/printk/printk.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n2383'>kernel/printk/printk.c:2383</a>
+ _printk+0xd5/0x120 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/printk/printk.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n2432'>kernel/printk/printk.c:2432</a>
+ spin_dump <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/locking/spinlock_debug.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n64'>kernel/locking/spinlock_debug.c:64</a> [inline]
+ spin_bug+0x13b/0x1d0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/locking/spinlock_debug.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n78'>kernel/locking/spinlock_debug.c:78</a>
+ debug_spin_lock_before <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/locking/spinlock_debug.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n86'>kernel/locking/spinlock_debug.c:86</a> [inline]
+ do_raw_spin_lock+0x209/0x370 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/locking/spinlock_debug.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n115'>kernel/locking/spinlock_debug.c:115</a>
+ __raw_spin_lock_irqsave <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/spinlock_api_smp.h?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n111'>include/linux/spinlock_api_smp.h:111</a> [inline]
+ _raw_spin_lock_irqsave+0xe1/0x120 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/locking/spinlock.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n162'>kernel/locking/spinlock.c:162</a>
+ __wake_up_common_lock+0x25/0x1e0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/sched/wait.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n105'>kernel/sched/wait.c:105</a>
+ unlock_metapage <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/jfs/jfs_metapage.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n39'>fs/jfs/jfs_metapage.c:39</a> [inline]
+ release_metapage+0xb2/0x960 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/jfs/jfs_metapage.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n763'>fs/jfs/jfs_metapage.c:763</a>
+ xtTruncate+0x1006/0x3270
+ jfs_free_zero_link+0x46e/0x6e0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/jfs/namei.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n759'>fs/jfs/namei.c:759</a>
+ jfs_evict_inode+0x35f/0x440 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/jfs/inode.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n153'>fs/jfs/inode.c:153</a>
+ evict+0x4e8/0x9b0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/inode.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n725'>fs/inode.c:725</a>
+ txUpdateMap+0x931/0xb10 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/jfs/jfs_txnmgr.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n2367'>fs/jfs/jfs_txnmgr.c:2367</a>
+ txLazyCommit <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/jfs/jfs_txnmgr.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n2664'>fs/jfs/jfs_txnmgr.c:2664</a> [inline]
+ jfs_lazycommit+0x49a/0xb80 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/jfs/jfs_txnmgr.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n2733'>fs/jfs/jfs_txnmgr.c:2733</a>
+ kthread+0x2f0/0x390 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/kthread.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n389'>kernel/kthread.c:389</a>
+ ret_from_fork+0x4b/0x80 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/kernel/process.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n147'>arch/x86/kernel/process.c:147</a>
+ ret_from_fork_asm+0x1a/0x30 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/entry_64.S?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n244'>arch/x86/entry/entry_64.S:244</a>
+ &lt;/TASK&gt;
+
+The buggy address belongs to the object at ffff88807658c9c0
+ which belongs to the cache jfs_ip of size 2232
+The buggy address is located 48 bytes inside of
+ allocated 2232-byte region [ffff88807658c9c0, ffff88807658d278)
+
+The buggy address belongs to the physical page:
+page: refcount:1 mapcount:0 mapping:0000000000000000 index:0x0 pfn:0x76588
+head: order:3 mapcount:0 entire_mapcount:0 nr_pages_mapped:0 pincount:0
+flags: 0xfff00000000040(head|node=0|zone=1|lastcpupid=0x7ff)
+page_type: f5(slab)
+raw: 00fff00000000040 ffff88801db27780 dead000000000122 0000000000000000
+raw: 0000000000000000 00000000800d000d 00000001f5000000 0000000000000000
+head: 00fff00000000040 ffff88801db27780 dead000000000122 0000000000000000
+head: 0000000000000000 00000000800d000d 00000001f5000000 0000000000000000
+head: 00fff00000000003 ffffea0001d96201 ffffffffffffffff 0000000000000000
+head: 0000000000000008 0000000000000000 00000000ffffffff 0000000000000000
+page dumped because: kasan: bad access detected
+page_owner tracks the page as allocated
+page last allocated via order 3, migratetype Reclaimable, gfp_mask 0xd2050(__GFP_IO|__GFP_NOWARN|__GFP_NORETRY|__GFP_COMP|__GFP_NOMEMALLOC|__GFP_RECLAIMABLE), pid 5833, tgid 5833 (syz-executor280), ts 78527233732, free_ts 25457634676
+ set_page_owner <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/page_owner.h?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n32'>include/linux/page_owner.h:32</a> [inline]
+ post_alloc_hook+0x1f3/0x230 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/page_alloc.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n1537'>mm/page_alloc.c:1537</a>
+ prep_new_page <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/page_alloc.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n1545'>mm/page_alloc.c:1545</a> [inline]
+ get_page_from_freelist+0x3033/0x3180 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/page_alloc.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n3457'>mm/page_alloc.c:3457</a>
+ __alloc_pages_noprof+0x292/0x710 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/page_alloc.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n4733'>mm/page_alloc.c:4733</a>
+ alloc_pages_mpol_noprof+0x3e8/0x680 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/mempolicy.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n2265'>mm/mempolicy.c:2265</a>
+ alloc_slab_page+0x6a/0x140 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n2412'>mm/slub.c:2412</a>
+ allocate_slab+0x5a/0x2f0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n2578'>mm/slub.c:2578</a>
+ new_slab <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n2631'>mm/slub.c:2631</a> [inline]
+ ___slab_alloc+0xcd1/0x14b0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n3818'>mm/slub.c:3818</a>
+ __slab_alloc+0x58/0xa0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n3908'>mm/slub.c:3908</a>
+ __slab_alloc_node <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n3961'>mm/slub.c:3961</a> [inline]
+ slab_alloc_node <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n4122'>mm/slub.c:4122</a> [inline]
+ kmem_cache_alloc_lru_noprof+0x1c5/0x2b0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n4153'>mm/slub.c:4153</a>
+ jfs_alloc_inode+0x28/0x70 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/jfs/super.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n105'>fs/jfs/super.c:105</a>
+ alloc_inode+0x65/0x1a0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/inode.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n265'>fs/inode.c:265</a>
+ new_inode_pseudo <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/inode.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n1104'>fs/inode.c:1104</a> [inline]
+ new_inode+0x22/0x1d0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/inode.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n1123'>fs/inode.c:1123</a>
+ jfs_fill_super+0x408/0xc50 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/jfs/super.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n544'>fs/jfs/super.c:544</a>
+ mount_bdev+0x20a/0x2d0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/super.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n1693'>fs/super.c:1693</a>
+ legacy_get_tree+0xee/0x190 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/fs_context.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n662'>fs/fs_context.c:662</a>
+ vfs_get_tree+0x90/0x2b0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/super.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n1814'>fs/super.c:1814</a>
+page last free pid 1 tgid 1 stack trace:
+ reset_page_owner <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/page_owner.h?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n25'>include/linux/page_owner.h:25</a> [inline]
+ free_pages_prepare <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/page_alloc.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n1108'>mm/page_alloc.c:1108</a> [inline]
+ free_unref_page+0xcd0/0xf00 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/page_alloc.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n2638'>mm/page_alloc.c:2638</a>
+ free_contig_range+0x152/0x550 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/page_alloc.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n6748'>mm/page_alloc.c:6748</a>
+ destroy_args+0x92/0x910 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/debug_vm_pgtable.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n1017'>mm/debug_vm_pgtable.c:1017</a>
+ debug_vm_pgtable+0x4be/0x550 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/debug_vm_pgtable.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n1397'>mm/debug_vm_pgtable.c:1397</a>
+ do_one_initcall+0x248/0x880 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/init/main.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n1269'>init/main.c:1269</a>
+ do_initcall_level+0x157/0x210 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/init/main.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n1331'>init/main.c:1331</a>
+ do_initcalls+0x3f/0x80 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/init/main.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n1347'>init/main.c:1347</a>
+ kernel_init_freeable+0x435/0x5d0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/init/main.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n1580'>init/main.c:1580</a>
+ kernel_init+0x1d/0x2b0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/init/main.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n1469'>init/main.c:1469</a>
+ ret_from_fork+0x4b/0x80 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/kernel/process.c?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n147'>arch/x86/kernel/process.c:147</a>
+ ret_from_fork_asm+0x1a/0x30 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/entry_64.S?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2#n244'>arch/x86/entry/entry_64.S:244</a>
+
+Memory state around the buggy address:
+ ffff88807658c880: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+ ffff88807658c900: 00 00 00 00 00 00 00 00 fc fc fc fc fc fc fc fc
+&gt;ffff88807658c980: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+                                                             ^
+ ffff88807658ca00: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+ ffff88807658ca80: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+==================================================================
+</pre></div><br>
+	
+
+	
+
+<table class="list_table">
+	<caption>Crashes (285):</caption>
+		<thead>
+		<tr>
+			<th><a onclick="return sortTable(this, 'Time', textSort, true)" href="#">Time</a></th>
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+			<th><a onclick="return sortTable(this, 'Commit', textSort)" href="#">Commit</a></th>
+			<th><a onclick="return sortTable(this, 'Syzkaller', textSort)" href="#">Syzkaller</a></th>
+			<th><a onclick="return sortTable(this, 'Config', textSort)" href="#">Config</a></th>
+			<th><a onclick="return sortTable(this, 'Log', textSort)" href="#">Log</a></th>
+			<th><a onclick="return sortTable(this, 'Report', reproSort)" href="#">Report</a></th>
+			<th><a onclick="return sortTable(this, 'Syz repro', reproSort)" href="#">Syz repro</a></th>
+			<th><a onclick="return sortTable(this, 'C repro', textSort)" href="#">C repro</a></th>
+			<th><a onclick="return sortTable(this, 'VM info', textSort)" href="#">VM info</a></th>
+			<th><a onclick="return sortTable(this, 'Assets', textSort)" href="#">Assets</a> (<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot_assets.md">help?</a>)</th>
+			<th><a onclick="return sortTable(this, 'Manager', textSort)" href="#">Manager</a></th>
+			<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		</tr>
+		</thead>
+		<tbody>
+		
+		<tr>
+			<td class="time">2024/11/07 18:11</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2
+	2024/11/06 23:09"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2">ff7afaeca1a1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/867e44df36d93e8127938eca6f6a5c339a2ba0b8">867e44df</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=921b01cbfd887a9b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14d13f40580000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14357d5f980000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=13788ea7980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=12d13f40580000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=11efae30580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0cb48f1b423a/disk-ff7afaec.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5375f589d366/vmlinux-ff7afaec.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4b88e34f3e91/bzImage-ff7afaec.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c25add62cc02/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/30 15:38</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="c1e939a21eb111a6d6067b38e8e04b8809b64c4e
+	2024/10/30 02:41"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=c1e939a21eb111a6d6067b38e8e04b8809b64c4e">c1e939a21eb1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/fb888278a6b21eda7fa63551c83fd17b90305ba1">fb888278</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=13742ac59dd3e298">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=166412a7980000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10f9e540580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=155f8630580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=14f9e540580000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=1335255f980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4cb7c5a78157/disk-c1e939a2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/44e018e0dea3/vmlinux-c1e939a2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/83de12d33ced/bzImage-c1e939a2.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d53aeecfd630/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/10 14:17</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="d3d1556696c1a993eec54ac585fe5bf677e07474
+	2024/10/09 23:01"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=d3d1556696c1a993eec54ac585fe5bf677e07474">d3d1556696c1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0278d00484bfe8f49aa9a7ae5ef4c3bc5cc40cd4">0278d004</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7a3fccdd0bb995">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13ff005f980000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1336cf07980000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=14eecb27980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=143d6fd0580000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=17345040580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ea459972f07f/disk-d3d15566.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b8dcb9ab73d3/vmlinux-d3d15566.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/686f1b595c23/bzImage-d3d15566.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e5e2aca5ec41/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/03 23:52</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="7ec462100ef9142344ddbf86f2c3008b97acddbe
+	2024/10/02 23:42"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=7ec462100ef9142344ddbf86f2c3008b97acddbe">7ec462100ef9</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d7906effc263366a8b067258cec67072b29aa5e0">d7906eff</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=f8af0b3195caed62">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=122ef580580000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12b4e307980000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=1683d527980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=12aa2b9f980000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=14e9d3d0580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a86fac80eb1e/disk-7ec46210.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0166dc055df6/vmlinux-7ec46210.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8601fab0f89e/bzImage-7ec46210.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0ebbcabdd068/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/01 22:04</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="e32cde8d2bd7d251a8f9b434143977ddf13dcec6
+	2024/09/30 19:58"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=e32cde8d2bd7d251a8f9b434143977ddf13dcec6">e32cde8d2bd7</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ea2b66a65b01cd61336424457391310e8dd8b62b">ea2b66a6</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1f009dd80b3799c2">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16c52580580000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1264939f980000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=11c52580580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=1389bdd0580000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=103f0307980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/08f3ba449e03/disk-e32cde8d.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/17bcace1ab90/vmlinux-e32cde8d.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/da9183ac0145/bzImage-e32cde8d.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c1b901ca6fa0/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/19 16:40</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="839c4f596f898edc424070dc8b517381572f8502
+	2024/09/19 09:35"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=839c4f596f898edc424070dc8b517381572f8502">839c4f596f89</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c673ca06b23cea94091ab496ef62c3513e434585">c673ca06</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=38d475ce6711b8b4">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=158b3b00580000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15b7369f980000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=13074427980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=147c6607980000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=10cf0ca9980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7258b1803d38/disk-839c4f59.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1c09fe5d18c1/vmlinux-839c4f59.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/212c4102856c/bzImage-839c4f59.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/aeed846e9334/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/18 13:59</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="bdf56c7580d267a123cc71ca0f2459c797b76fde
+	2024/09/18 06:53"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=bdf56c7580d267a123cc71ca0f2459c797b76fde">bdf56c7580d2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c673ca06b23cea94091ab496ef62c3513e434585">c673ca06</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4540f5bcdd31e3de">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=100a7fc7980000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=158a5207980000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=16bbc69f980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=1100f500580000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=138a5207980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/84a9aefa23fb/disk-bdf56c75.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cf54045e74b4/vmlinux-bdf56c75.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e17eeb4c4c31/bzImage-bdf56c75.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/442d13811df7/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/19 16:01</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="6537cfb395f352782918d8ee7b7f10ba2cc3cbf2
+	2025/02/18 17:00"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=6537cfb395f352782918d8ee7b7f10ba2cc3cbf2">6537cfb395f3</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/cbd8edabd77d676c77120894f85f37dbf22d32a1">cbd8edab</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b7bde34acd8f53b1">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15191498580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10b0afdf980000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=1704b5b0580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=13191498580000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=154c27f8580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-6537cfb3.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1f0fee59b531/vmlinux-6537cfb3.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ebf361d1fa57/bzImage-6537cfb3.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/27df57664a44/mount_0.gz">mounted in repro</a> (<a href="https://syzkaller.appspot.com/x/fsck.log?x=1304b5b0580000">corrupt fs</a>)]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/23 11:40</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="c2ee9f594da826bea183ed14f2cc029c719bf4da
+	2024/10/21 22:49"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=c2ee9f594da826bea183ed14f2cc029c719bf4da">c2ee9f594da8</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/15fa29791c1707abd7faed4110e284d0ccb72fae">15fa2979</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=fc6f8ce8c5369043">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16b84c30580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=137dd640580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=132a88a7980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=16272a5f980000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=172a88a7980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-c2ee9f59.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8a3541902b13/vmlinux-c2ee9f59.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a00efacc2604/bzImage-c2ee9f59.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/54bf5167737a/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/02 04:45</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="e32cde8d2bd7d251a8f9b434143977ddf13dcec6
+	2024/09/30 19:58"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=e32cde8d2bd7d251a8f9b434143977ddf13dcec6">e32cde8d2bd7</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ea2b66a65b01cd61336424457391310e8dd8b62b">ea2b66a6</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=286b31f2cf1c36b5">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11e38307980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1259e927980000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=16d0539f980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=1659e927980000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=11d0539f980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-e32cde8d.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9c681f5609bc/vmlinux-e32cde8d.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/00b4d54de1d9/bzImage-e32cde8d.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ce00ac5d0312/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/21 21:02</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="1ec6d097897a35dfb55c4c31fc8633cf5be46497
+	2024/09/21 16:02"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=1ec6d097897a35dfb55c4c31fc8633cf5be46497">1ec6d097897a</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6f888b7530906167ecb1f5a35e060fec736d6d32">6f888b75</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=6265dd30e362bb47">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13b65ca9980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10ef8080580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=16e86c27980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=15c59e9f980000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=17b65ca9980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7bc7510fe41f/non_bootable_disk-1ec6d097.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0b74fa2b2b4e/vmlinux-1ec6d097.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1ed852a3c5d1/bzImage-1ec6d097.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d4d743e6778b/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/20 16:23</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="baeb9a7d8b60b021d907127509c44507539c15e5
+	2024/09/20 04:04"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=baeb9a7d8b60b021d907127509c44507539c15e5">baeb9a7d8b60</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6f888b7530906167ecb1f5a35e060fec736d6d32">6f888b75</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d0b35925215243c6">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1764cca9980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=102f2427980000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=153b1607980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=10e4cca9980000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=1281ae9f980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7bc7510fe41f/non_bootable_disk-baeb9a7d.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/aba7cfdedff1/vmlinux-baeb9a7d.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/395e87189c3f/bzImage-baeb9a7d.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/36d6dfa9aa9a/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/19 13:36</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="932d2d1fcb2bbbc3cb30a762302a5d2eac7720bb
+	2024/09/19 05:09"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=932d2d1fcb2bbbc3cb30a762302a5d2eac7720bb">932d2d1fcb2b</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6f888b7530906167ecb1f5a35e060fec736d6d32">6f888b75</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c208b3605ba9ec44">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14e7a607980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13363b00580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=1766369f980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=17363b00580000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=162a3177980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7bc7510fe41f/non_bootable_disk-932d2d1f.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fbcb7198214b/vmlinux-932d2d1f.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/418eaebf4817/bzImage-932d2d1f.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/773ed5c691ab/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/19 13:06</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="932d2d1fcb2bbbc3cb30a762302a5d2eac7720bb
+	2024/09/19 05:09"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=932d2d1fcb2bbbc3cb30a762302a5d2eac7720bb">932d2d1fcb2b</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6f888b7530906167ecb1f5a35e060fec736d6d32">6f888b75</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c208b3605ba9ec44">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13390ca9980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=146a369f980000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=13923177980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=15ba3b00580000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=103ba607980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7bc7510fe41f/non_bootable_disk-932d2d1f.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fbcb7198214b/vmlinux-932d2d1f.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/418eaebf4817/bzImage-932d2d1f.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/77388c3cc1b8/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/19 12:31</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="932d2d1fcb2bbbc3cb30a762302a5d2eac7720bb
+	2024/09/19 05:09"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=932d2d1fcb2bbbc3cb30a762302a5d2eac7720bb">932d2d1fcb2b</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6f888b7530906167ecb1f5a35e060fec736d6d32">6f888b75</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c208b3605ba9ec44">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1182369f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15914427980000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=13f10ca9980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=1582369f980000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=11b23b00580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7bc7510fe41f/non_bootable_disk-932d2d1f.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fbcb7198214b/vmlinux-932d2d1f.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/418eaebf4817/bzImage-932d2d1f.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8aa64186392c/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/09 19:28</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="da3ea35007d0af457a0afc87e84fddaebc4e0b63
+	2024/09/08 21:50"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=da3ea35007d0af457a0afc87e84fddaebc4e0b63">da3ea35007d0</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/8f722c94b453f0a125c7ffa9fe2234e0ed90a77e">8f722c94</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=61d235cb8d15001c">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14e3e877980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12e3e877980000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=17681420580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=1339a797980000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=16e3e877980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7bc7510fe41f/non_bootable_disk-da3ea350.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1ab780d224f6/vmlinux-da3ea350.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/834dde85c1c2/bzImage-da3ea350.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8ca1335c6a53/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/02 09:42</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="69b8923f5003664e3ffef102e73333edfa2abdcf
+	2025/01/31 17:40"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=69b8923f5003664e3ffef102e73333edfa2abdcf">69b8923f5003</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/568559e4e604140cecd9fc4835eaa0298a1cadcc">568559e4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=57ab43c279fa614d">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13a2ad18580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=109c1724580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=6bd3018ac915dc0a">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ea84ac864e92/disk-69b8923f.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6a465997b4e0/vmlinux-69b8923f.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d72b67b2bd15/bzImage-69b8923f.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/29 23:45</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="805ba04cb7ccfc7d72e834ebd796e043142156ba
+	2025/01/27 17:00"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=805ba04cb7ccfc7d72e834ebd796e043142156ba">805ba04cb7cc</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/136953f126961dd23d155ae33078a9cab1e8a2d0">136953f1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=adf78662d9a5b572">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=104ae924580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15f17918580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=3d7b60b974d52c1e">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e5d9b71075b8/disk-805ba04c.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/293bdd905859/vmlinux-805ba04c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/179abf406290/bzImage-805ba04c.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/29 23:40</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="805ba04cb7ccfc7d72e834ebd796e043142156ba
+	2025/01/27 17:00"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=805ba04cb7ccfc7d72e834ebd796e043142156ba">805ba04cb7cc</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/136953f126961dd23d155ae33078a9cab1e8a2d0">136953f1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=adf78662d9a5b572">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=148f6ddf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=134b25f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ad66e0bb95acce4d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e5d9b71075b8/disk-805ba04c.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/293bdd905859/vmlinux-805ba04c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/179abf406290/bzImage-805ba04c.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/22 06:51</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="b9d8a295ed6bc3cee846f8e3f27c9c6e9ebe43f2
+	2025/01/21 17:38"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=b9d8a295ed6bc3cee846f8e3f27c9c6e9ebe43f2">b9d8a295ed6b</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/da72ac06e38cf1dd2ecbddd5502225ff7589542d">da72ac06</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b34d979b03d5656f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=114549f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17883618580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7e487a6b51e3c92d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/35aa37daff5e/disk-b9d8a295.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/52d6ed4768df/vmlinux-b9d8a295.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0fb5adee8d9f/bzImage-b9d8a295.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/10 15:40</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="de2f378f2b771b39594c04695feee86476743a69
+	2024/11/09 21:18"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=de2f378f2b771b39594c04695feee86476743a69">de2f378f2b77</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6b856513c13bbdf86191190923fb64438219ea68">6b856513</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=64aa0d9945bd5c1">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14483e30580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10a79ea7980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=4fd382929c70dcb9">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/920add399f37/disk-de2f378f.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7482e7ce4c08/vmlinux-de2f378f.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/01d9e4df9af7/bzImage-de2f378f.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/03/05 11:44</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="48a5eed9ad584315c30ed35204510536235ce402
+	2025/03/04 19:04"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=48a5eed9ad584315c30ed35204510536235ce402">48a5eed9ad58</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/60f5d8d97d382f0194c04552c3c2b5d5c1597548">60f5d8d9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=2040405600e83619">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=113bd7a0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11ecfc64580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-48a5eed9.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1568dffa363d/vmlinux-48a5eed9.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2db830734b45/bzImage-48a5eed9.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/03/05 03:33</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="48a5eed9ad584315c30ed35204510536235ce402
+	2025/03/04 19:04"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=48a5eed9ad584315c30ed35204510536235ce402">48a5eed9ad58</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c3901742785ff25afdc6f470af7b25b69d7c4f2f">c3901742</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=2040405600e83619">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=166c9c64580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=177cd7a0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-48a5eed9.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1568dffa363d/vmlinux-48a5eed9.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2db830734b45/bzImage-48a5eed9.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/03/04 13:13</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="99fa936e8e4f117d62f229003c9799686f74cebc
+	2025/03/03 17:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=99fa936e8e4f117d62f229003c9799686f74cebc">99fa936e8e4f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c3901742785ff25afdc6f470af7b25b69d7c4f2f">c3901742</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=2040405600e83619">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=146d58b7980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17331464580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-99fa936e.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef04f83d96f6/vmlinux-99fa936e.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/583a7eea5c8e/bzImage-99fa936e.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/26 05:01</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="2a1944bff54907a4e68f167dcdf772b1e4c3ce6d
+	2025/02/25 00:40"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=2a1944bff54907a4e68f167dcdf772b1e4c3ce6d">2a1944bff549</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=5b4c41bdaeea1964">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=144c77a4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13901db0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-2a1944bf.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/55cab1eab779/vmlinux-2a1944bf.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/54e689976766/bzImage-2a1944bf.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/26 03:10</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="2a1944bff54907a4e68f167dcdf772b1e4c3ce6d
+	2025/02/25 00:40"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=2a1944bff54907a4e68f167dcdf772b1e4c3ce6d">2a1944bff549</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=5b4c41bdaeea1964">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=168077a4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16bdf7f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-2a1944bf.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/55cab1eab779/vmlinux-2a1944bf.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/54e689976766/bzImage-2a1944bf.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/19 14:50</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="6537cfb395f352782918d8ee7b7f10ba2cc3cbf2
+	2025/02/18 17:00"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=6537cfb395f352782918d8ee7b7f10ba2cc3cbf2">6537cfb395f3</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/cbd8edabd77d676c77120894f85f37dbf22d32a1">cbd8edab</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b7bde34acd8f53b1">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14ab4ba4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12629ae4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-6537cfb3.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1f0fee59b531/vmlinux-6537cfb3.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ebf361d1fa57/bzImage-6537cfb3.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/13 14:06</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="4dc1d1bec89864d8076e5ab314f86f46442bfb02
+	2025/02/12 22:22"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=4dc1d1bec89864d8076e5ab314f86f46442bfb02">4dc1d1bec898</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/7320a65fa13ffdebd45bb5eb12aee17ca9753f94">7320a65f</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=3c2347dd6174fbe2">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1133c9b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17de21a4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-4dc1d1be.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/69a70e883a61/vmlinux-4dc1d1be.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e5f11135c484/bzImage-4dc1d1be.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/11 22:32</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="09fbf3d502050282bf47ab3babe1d4ed54dd1fd8
+	2025/02/11 18:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=09fbf3d502050282bf47ab3babe1d4ed54dd1fd8">09fbf3d50205</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2baddf5cfc118066483050e29627cea6b63bcfb">f2baddf5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=3c2347dd6174fbe2">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15b60aa4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=104723f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-09fbf3d5.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/835b3d29c46c/vmlinux-09fbf3d5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ff4bfd8a5d42/bzImage-09fbf3d5.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/06 03:14</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="92514ef226f511f2ca1fb1b8752966097518edc0
+	2025/02/05 16:13"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=92514ef226f511f2ca1fb1b8752966097518edc0">92514ef226f5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/577d049b4ea56e459da6e49f4b92fc1981c92440">577d049b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1909f2f0d8e641ce">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14bc81b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12a0d3df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-92514ef2.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c4d8b91f8769/vmlinux-92514ef2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c24ec4365966/bzImage-92514ef2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/02 17:40</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="69e858e0b8b2ea07759e995aa383e8780d9d140c
+	2025/01/31 02:29"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=69e858e0b8b2ea07759e995aa383e8780d9d140c">69e858e0b8b2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/568559e4e604140cecd9fc4835eaa0298a1cadcc">568559e4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d033b14aeef39158">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=139bceb0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13571724580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-69e858e0.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a53b888c1f3f/vmlinux-69e858e0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6b5e17edafc0/bzImage-69e858e0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/30 04:47</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="805ba04cb7ccfc7d72e834ebd796e043142156ba
+	2025/01/27 17:00"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=805ba04cb7ccfc7d72e834ebd796e043142156ba">805ba04cb7cc</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/afe4eff51a06f6aa1ebb3d457836a3adec5ee82f">afe4eff5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7d796da73b2f708c">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1598f918580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15baa5f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-805ba04c.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/85ee30d862e7/vmlinux-805ba04c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0fcbe505a48e/bzImage-805ba04c.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/29 17:56</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="805ba04cb7ccfc7d72e834ebd796e043142156ba
+	2025/01/27 17:00"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=805ba04cb7ccfc7d72e834ebd796e043142156ba">805ba04cb7cc</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d03b0c97faf4610981228dd69f6f9a94ab9f693b">d03b0c97</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7d796da73b2f708c">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16f26ddf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17eb56b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-805ba04c.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/85ee30d862e7/vmlinux-805ba04c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0fcbe505a48e/bzImage-805ba04c.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/27 15:50</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="d6ef8b40d075c425f548002d2f35ae3f06e9cf96
+	2024/12/26 18:49"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=d6ef8b40d075c425f548002d2f35ae3f06e9cf96">d6ef8b40d075</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d269ef41b9262400">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=115b52f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1524d018580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-d6ef8b40.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/38a9784dd46d/vmlinux-d6ef8b40.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8d1728b3051d/bzImage-d6ef8b40.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/26 18:46</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9b2ffa6148b1e4468d08f7e0e7e371c43cac9ffe
+	2024/12/24 17:08"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9b2ffa6148b1e4468d08f7e0e7e371c43cac9ffe">9b2ffa6148b1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d269ef41b9262400">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15f35adf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13cb20b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-9b2ffa61.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ddc85002bb5c/vmlinux-9b2ffa61.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dd33dcda671f/bzImage-9b2ffa61.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/25 10:49</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9b2ffa6148b1e4468d08f7e0e7e371c43cac9ffe
+	2024/12/24 17:08"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9b2ffa6148b1e4468d08f7e0e7e371c43cac9ffe">9b2ffa6148b1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/444551c40edde85b5e4900ae27d432bd1da7079c">444551c4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d269ef41b9262400">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=162d890f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1394eadf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-9b2ffa61.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ddc85002bb5c/vmlinux-9b2ffa61.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dd33dcda671f/bzImage-9b2ffa61.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/24 13:38</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="f07044dd0df0c9d0ad177c3098b62ccddb735a2d
+	2024/12/23 20:16"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=f07044dd0df0c9d0ad177c3098b62ccddb735a2d">f07044dd0df0</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/444551c40edde85b5e4900ae27d432bd1da7079c">444551c4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d269ef41b9262400">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=110b2adf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=152b34c4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-f07044dd.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c96129e7b4bc/vmlinux-f07044dd.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f4bcd98eacc8/bzImage-f07044dd.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/22 00:17</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="499551201b5f4fd3c0618a3e95e3d0d15ea18f31
+	2024/12/20 22:10"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=499551201b5f4fd3c0618a3e95e3d0d15ea18f31">499551201b5f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d7f584ee3c24504bb07d04526a23b7d8df38b8ed">d7f584ee</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=6a2b862bf4a5409f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=149b3cf8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13911fe8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-49955120.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ae7137d7c0e9/vmlinux-49955120.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9c277f399207/bzImage-49955120.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/18 03:11</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="59dbb9d81adfe07a6f8483269146b407cf9d44d7
+	2024/12/17 16:29"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=59dbb9d81adfe07a6f8483269146b407cf9d44d7">59dbb9d81adf</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a0626d3a05d5e31af100787b6749f0b89416c171">a0626d3a</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=6a2b862bf4a5409f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17734b44580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11fa42df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-59dbb9d8.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e0cc89779297/vmlinux-59dbb9d8.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5e6c895062cb/bzImage-59dbb9d8.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/03 07:45</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="8155b4ef3466f0e289e8fcc9e6e62f3f4dceeac2
+	2024/12/20 05:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=8155b4ef3466f0e289e8fcc9e6e62f3f4dceeac2">8155b4ef3466</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9c90bb7161a56c88">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1326bd0f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15c658b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=81902a71f0ac013e">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/98a974fc662d/disk-8155b4ef.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2dea9b72f624/vmlinux-8155b4ef.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/593a42b9eb34/bzImage-8155b4ef.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/31 08:04</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="8155b4ef3466f0e289e8fcc9e6e62f3f4dceeac2
+	2024/12/20 05:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=8155b4ef3466f0e289e8fcc9e6e62f3f4dceeac2">8155b4ef3466</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9c90bb7161a56c88">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1286e6df980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16213ac4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=72f6aeb4f01cd745">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/98a974fc662d/disk-8155b4ef.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2dea9b72f624/vmlinux-8155b4ef.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/593a42b9eb34/bzImage-8155b4ef.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/03/01 09:30</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="017f704fbfb18532e7e9f482090cf636d7113c7f
+	2025/02/27 20:18"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=017f704fbfb18532e7e9f482090cf636d7113c7f">017f704fbfb1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/1e7a43e1953cb209e1a0ae4cf74256c17fbdedbd">1e7a43e1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d6b7e15dc5b5e776">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13c2c8b7980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1594c864580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7579e5c7cdb12fa5">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d34fb306468f/disk-017f704f.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6f1126558a26/vmlinux-017f704f.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6d9d912bee27/Image-017f704f.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/24 16:54</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="a1c24ab822793eb513351686f631bd18952b7870
+	2025/02/21 09:38"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=a1c24ab822793eb513351686f631bd18952b7870">a1c24ab82279</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=f6b108de97771157">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=150f37f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=163fe7a4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=d798d06224db2501">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9581dbc26f55/disk-a1c24ab8.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/50aec9ab8b8b/vmlinux-a1c24ab8.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3a018984f8f5/Image-a1c24ab8.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/12 21:13</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="2014c95afecee3e76ca4a56956a936e23283f05b
+	2025/02/02 23:39"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=2014c95afecee3e76ca4a56956a936e23283f05b">2014c95afece</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/b27c24029033bbfb41289458ca671507a01cb784">b27c2402</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b8a65ac161350c5e">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=148a4aa4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=127b63f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=945ac8c7c9ff4295">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c767824b323f/disk-2014c95a.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/81289e194973/vmlinux-2014c95a.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4a33d49982f5/Image-2014c95a.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/04 23:19</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="2014c95afecee3e76ca4a56956a936e23283f05b
+	2025/02/02 23:39"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=2014c95afecee3e76ca4a56956a936e23283f05b">2014c95afece</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/4baca3d60668ee7d9867320db39d2db9c6d2724d">4baca3d6</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b8a65ac161350c5e">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=162378a4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1511dd18580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ee89d954ec215a9a">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c767824b323f/disk-2014c95a.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/81289e194973/vmlinux-2014c95a.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4a33d49982f5/Image-2014c95a.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/20 03:15</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="1950a0af2d55e0ecbcc574927bad495bfaddcec0
+	2025/01/17 14:10"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=1950a0af2d55e0ecbcc574927bad495bfaddcec0">1950a0af2d55</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2cb035c8f931efff4a020b164e657f16f51934b">f2cb035c</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=cd5bb525e2b2bae">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15bd92b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=120c31f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=2e6f1c0442aaa83">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1ebe061fa55c/disk-1950a0af.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/943902875907/vmlinux-1950a0af.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9b5110e82096/Image-1950a0af.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/13 15:54</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="6251d1776bc54fe0f16c44ff9a0a51f3eab8b695
+	2025/01/10 15:16"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=6251d1776bc54fe0f16c44ff9a0a51f3eab8b695">6251d1776bc5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6dbc6a9bc76e06852841ed5c5bdbb78409b17f53">6dbc6a9b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=5408fc4cf982e2c4">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17869cb0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16567ef8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=437669d37105a957">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/50b69fc9b7af/disk-6251d177.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/685bf0a83938/vmlinux-6251d177.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/195cb7e053b8/Image-6251d177.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/11 13:08</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="6251d1776bc54fe0f16c44ff9a0a51f3eab8b695
+	2025/01/10 15:16"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=6251d1776bc54fe0f16c44ff9a0a51f3eab8b695">6251d1776bc5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6dbc6a9bc76e06852841ed5c5bdbb78409b17f53">6dbc6a9b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=5408fc4cf982e2c4">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16959ef8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11959ef8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=32b87991e0d4d9bd">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/50b69fc9b7af/disk-6251d177.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/685bf0a83938/vmlinux-6251d177.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/195cb7e053b8/Image-6251d177.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/08 01:12</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="573067a5a685c238d90270ffb6efae6b26c72fed
+	2024/12/20 13:37"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=573067a5a685c238d90270ffb6efae6b26c72fed">573067a5a685</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=cd7202b56d469648">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13f60dc4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10dae4b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=a93fd0c97f36b36">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9d3b5c855aa0/disk-573067a5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0c06fc1ead83/vmlinux-573067a5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3390e59b9e4b/Image-573067a5.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/07 10:19</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="573067a5a685c238d90270ffb6efae6b26c72fed
+	2024/12/20 13:37"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=573067a5a685c238d90270ffb6efae6b26c72fed">573067a5a685</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=cd7202b56d469648">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=171f76f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1793ffd8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=18e12f8b6750533b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9d3b5c855aa0/disk-573067a5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0c06fc1ead83/vmlinux-573067a5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3390e59b9e4b/Image-573067a5.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/05 05:36</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="573067a5a685c238d90270ffb6efae6b26c72fed
+	2024/12/20 13:37"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=573067a5a685c238d90270ffb6efae6b26c72fed">573067a5a685</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=cd7202b56d469648">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=148e96f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1123f8b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ad497545b27a2dd3">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9d3b5c855aa0/disk-573067a5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0c06fc1ead83/vmlinux-573067a5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3390e59b9e4b/Image-573067a5.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/05 00:50</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="573067a5a685c238d90270ffb6efae6b26c72fed
+	2024/12/20 13:37"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=573067a5a685c238d90270ffb6efae6b26c72fed">573067a5a685</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=cd7202b56d469648">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12392edf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=161409c4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=cec097189ee35b63">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9d3b5c855aa0/disk-573067a5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0c06fc1ead83/vmlinux-573067a5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3390e59b9e4b/Image-573067a5.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/03 09:55</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="573067a5a685c238d90270ffb6efae6b26c72fed
+	2024/12/20 13:37"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=573067a5a685c238d90270ffb6efae6b26c72fed">573067a5a685</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=cd7202b56d469648">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14c1a418580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=115596c4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=401a6c0a31461766">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9d3b5c855aa0/disk-573067a5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0c06fc1ead83/vmlinux-573067a5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3390e59b9e4b/Image-573067a5.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/01 16:09</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="573067a5a685c238d90270ffb6efae6b26c72fed
+	2024/12/20 13:37"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=573067a5a685c238d90270ffb6efae6b26c72fed">573067a5a685</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=cd7202b56d469648">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1283a8b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13b4d6df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=50321a792dc0a1e4">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9d3b5c855aa0/disk-573067a5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0c06fc1ead83/vmlinux-573067a5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3390e59b9e4b/Image-573067a5.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/01 04:26</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="573067a5a685c238d90270ffb6efae6b26c72fed
+	2024/12/20 13:37"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=573067a5a685c238d90270ffb6efae6b26c72fed">573067a5a685</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=cd7202b56d469648">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17aa5af8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12677ac4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7579e5c7cdb12fa5">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9d3b5c855aa0/disk-573067a5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0c06fc1ead83/vmlinux-573067a5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3390e59b9e4b/Image-573067a5.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/01 02:12</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="573067a5a685c238d90270ffb6efae6b26c72fed
+	2024/12/20 13:37"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=573067a5a685c238d90270ffb6efae6b26c72fed">573067a5a685</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=cd7202b56d469648">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14457ac4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13c196df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=bd2e4101de9c2ec3">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9d3b5c855aa0/disk-573067a5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0c06fc1ead83/vmlinux-573067a5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3390e59b9e4b/Image-573067a5.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/31 03:21</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="573067a5a685c238d90270ffb6efae6b26c72fed
+	2024/12/20 13:37"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=573067a5a685c238d90270ffb6efae6b26c72fed">573067a5a685</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=cd7202b56d469648">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1653eaf8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15aa88b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=1f659ce252100244">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9d3b5c855aa0/disk-573067a5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0c06fc1ead83/vmlinux-573067a5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3390e59b9e4b/Image-573067a5.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/29 05:08</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="573067a5a685c238d90270ffb6efae6b26c72fed
+	2024/12/20 13:37"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=573067a5a685c238d90270ffb6efae6b26c72fed">573067a5a685</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=cd7202b56d469648">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10e7c818580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11ef86df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=d1da33edd2c0fb6e">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9d3b5c855aa0/disk-573067a5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0c06fc1ead83/vmlinux-573067a5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3390e59b9e4b/Image-573067a5.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/27 11:30</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="573067a5a685c238d90270ffb6efae6b26c72fed
+	2024/12/20 13:37"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=573067a5a685c238d90270ffb6efae6b26c72fed">573067a5a685</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=cd7202b56d469648">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16ece0b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1298badf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=957870b35069dbc3">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9d3b5c855aa0/disk-573067a5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0c06fc1ead83/vmlinux-573067a5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3390e59b9e4b/Image-573067a5.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/27 03:35</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="573067a5a685c238d90270ffb6efae6b26c72fed
+	2024/12/20 13:37"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=573067a5a685c238d90270ffb6efae6b26c72fed">573067a5a685</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=cd7202b56d469648">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13f060b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10699018580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ee89d954ec215a9a">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9d3b5c855aa0/disk-573067a5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0c06fc1ead83/vmlinux-573067a5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3390e59b9e4b/Image-573067a5.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/25 19:12</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="573067a5a685c238d90270ffb6efae6b26c72fed
+	2024/12/20 13:37"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=573067a5a685c238d90270ffb6efae6b26c72fed">573067a5a685</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/444551c40edde85b5e4900ae27d432bd1da7079c">444551c4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=cd7202b56d469648">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14ff80b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1433a2f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=31eb56999d28eaaa">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9d3b5c855aa0/disk-573067a5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0c06fc1ead83/vmlinux-573067a5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3390e59b9e4b/Image-573067a5.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/25 18:11</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="573067a5a685c238d90270ffb6efae6b26c72fed
+	2024/12/20 13:37"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=573067a5a685c238d90270ffb6efae6b26c72fed">573067a5a685</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/444551c40edde85b5e4900ae27d432bd1da7079c">444551c4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=cd7202b56d469648">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=157b80b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1107f4c4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=71a98df843d76a8">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9d3b5c855aa0/disk-573067a5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0c06fc1ead83/vmlinux-573067a5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3390e59b9e4b/Image-573067a5.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/25 12:43</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="573067a5a685c238d90270ffb6efae6b26c72fed
+	2024/12/20 13:37"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=573067a5a685c238d90270ffb6efae6b26c72fed">573067a5a685</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/444551c40edde85b5e4900ae27d432bd1da7079c">444551c4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=cd7202b56d469648">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10cc80b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1767890f980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=8743abde5df1b68d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9d3b5c855aa0/disk-573067a5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0c06fc1ead83/vmlinux-573067a5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3390e59b9e4b/Image-573067a5.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/25 07:40</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="573067a5a685c238d90270ffb6efae6b26c72fed
+	2024/12/20 13:37"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=573067a5a685c238d90270ffb6efae6b26c72fed">573067a5a685</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/444551c40edde85b5e4900ae27d432bd1da7079c">444551c4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=cd7202b56d469648">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=160d00b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=121374c4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=a4d7a6507a49871c">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9d3b5c855aa0/disk-573067a5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0c06fc1ead83/vmlinux-573067a5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3390e59b9e4b/Image-573067a5.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/19 11:20</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="2e7aff49b5dadb8c72ed9eece88994e3a7618a2f
+	2024/12/11 23:27"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=2e7aff49b5dadb8c72ed9eece88994e3a7618a2f">2e7aff49b5da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/1432fc84530255f6208c5719be796918244fa9d3">1432fc84</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=696fb014d05da3a3">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11b177e8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12074cf8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=11ce201399dfbf30">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef408f67fde3/disk-2e7aff49.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/414ac17a20dc/vmlinux-2e7aff49.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a93415d2a7e7/Image-2e7aff49.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: spinlock bad magic in release_metapage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/14 06:48</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="f1b785f4c7870c42330b35522c2514e39a1e28e7
+	2024/11/13 00:39"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=f1b785f4c7870c42330b35522c2514e39a1e28e7">f1b785f4c787</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a8c9939451aee6b1bb2809bdd4edf640b2da431f">a8c99394</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c3a3896a92fb300b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=159ac130580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12bface8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=56cd230bca6ff1e4">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3cdfef160cc2/disk-f1b785f4.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f0f0ec3434aa/vmlinux-f1b785f4.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6a901270f54d/bzImage-f1b785f4.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-badwrites-root</td>
+			<td class="manager">BUG: spinlock bad magic in btrfs_stop_all_workers</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/19 20:08</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="2e7aff49b5dadb8c72ed9eece88994e3a7618a2f
+	2024/12/11 23:27"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=2e7aff49b5dadb8c72ed9eece88994e3a7618a2f">2e7aff49b5da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/1d58202cd938cd702f9fddff39f2be5d9490988c">1d58202c</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=696fb014d05da3a3">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1700f730580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1080f730580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=4f019e79cc02505c">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef408f67fde3/disk-2e7aff49.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/414ac17a20dc/vmlinux-2e7aff49.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a93415d2a7e7/Image-2e7aff49.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: spinlock bad magic in btrfs_stop_all_workers</td>
+		</tr>
+		
+		</tbody>
+</table>
+<i>* <s>Struck through</s> repros no longer work on HEAD.</i>
+
+
+</body>
+</html>

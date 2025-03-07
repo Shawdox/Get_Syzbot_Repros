@@ -1,0 +1,2225 @@
+
+
+<!doctype html>
+<html>
+<head>
+	
+	<link rel="stylesheet" href="/static/style.css"/>
+	<script src="/static/common.js"></script>
+	
+		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-116117799-1"></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag() { dataLayer.push(arguments); }
+			gtag('js', new Date());
+			gtag('config', 'UA-116117799-1');
+		</script>
+	
+
+	<title>kernel BUG in validate_mm (2)</title>
+</head>
+<body>
+	
+	<header id="topbar">
+		<table class="position_table">
+			<tr>
+				<td>
+					<h1><a href="/upstream">syzbot</a></h1>
+				</td>
+				<td class="namespace_td">
+					<select class="namespace" onchange="window.location.href = '/' + this.value + '';">
+						
+							<option value="android-5-10" >Android 5.10</option>
+							<option value="android-5-15" >Android 5.15</option>
+							<option value="android-54" >Android 5.4</option>
+							<option value="android-6-1" >Android 6.1</option>
+							<option value="freebsd" >FreeBSD</option>
+							<option value="upstream" selected="1">Linux</option>
+							<option value="linux-5.15" >Linux 5.15</option>
+							<option value="linux-6.1" >Linux 6.1</option>
+							<option value="netbsd" >NetBSD</option>
+							<option value="openbsd" >OpenBSD</option>
+							<option value="gvisor" >gVisor</option></select>
+				</td>
+				<td class="search">
+					
+					
+						<a href="https://syzkaller.appspot.com/_ah/conflogin?continue=https://syzkaller.appspot.com/bug%3Fextid%3D70b97abe3e253d1c3f8e">sign-in</a> |
+					
+					<a href="https://groups.google.com/forum/#!forum/syzkaller" target="_blank">mailing list</a> |
+					<a href="https://github.com/google/syzkaller" target="_blank">source</a> |
+					<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md" target="_blank">docs</a>
+				</td>
+			</tr>
+		</table>
+		
+		<div class="navigation">
+			<div class="navigation_tab">
+				<a href='/upstream'><span style="color:DeepPink;">🐞</span> Open [1656]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/subsystems'><span style="color:DeepPink;">≡</span> Subsystems</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/fixed'><span style="color:ForestGreen;">🐞</span> Fixed [6082]</a>
+			</div>
+
+			<div class="navigation_tab" href='/upstream/invalid'>
+				<a href='/upstream/invalid'><span style="color:RoyalBlue;">🐞</span> Invalid [15105]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/backports'><span style="color:ForestGreen;">⬇</span> Missing Backports [157]</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/graph/crashes'><span style="color:ForestGreen;">≡</span> Crashes</a>
+			</div>
+
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Graphs</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href='/upstream/graph/bugs'>Kernel&nbsp;Health</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/found-bugs'>Bugs/Month</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/lifetimes'>Bug&nbsp;Lifetimes</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/fuzzing'>Fuzzing</a>
+				</div>
+			</div>
+
+			
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Coverage</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href="/upstream/graph/coverage?period=quarter">Total</a>
+					<a class="navigation_tab"
+						href="/upstream/coverage?period=month">Repo&nbsp;Heatmap</a>
+					
+						<a class="navigation_tab"
+							href="/upstream/coverage/subsystems?period=month">Subsystems&nbsp;Heatmap</a>
+					
+				</div>
+			</div>
+			
+			
+			<div class="navigation_tab navigation_right">
+				<a href='mailto:syzkaller@googlegroups.com'><span style="color:ForestGreen;">💬</span> Send us feedback</a>
+			</div>
+			
+		</div>
+		
+	</header>
+	<br>
+
+
+	<b>kernel BUG in validate_mm (2)</b><br><br>
+	Status: <a href="https://groups.google.com/d/msgid/syzkaller-bugs/000000000000b35ea205ffc35fe1%40google.com">fixed on 2023/10/12 12:47</a><br>
+	
+		
+			Subsystems: 
+				<span class="bug-label"><a href="/upstream/s/mm">mm</a></span>
+		<br>
+		
+	<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md#labels">[Documentation on labels]</a><br>
+	
+	
+	Reported-by: syzbot&#43;70b97abe3e253d1c3f8e@syzkaller.appspotmail.com<br>
+	
+		<b>Fix commit:</b> 
+
+	<span class="mono">
+		
+			ae80b4041984
+		
+		<a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=ae80b404198434e49e903dc3b1ba83e2c7bb3ee2">mm: validate the mm before dropping the mmap lock</a>
+	</span>
+
+<br>
+		
+	
+	First crash: 613d, last: 611d<br>
+	
+	<div>
+		<div class="bug-bisection-info">
+
+	
+	
+	
+		
+			<b>Cause bisection: introduced by</b>
+		
+		<b>(<a href="https://syzkaller.appspot.com/x/bisect.txt?x=1065fa43a80000">bisect log</a>)</b> <span class="bad">[release commit]</span>:<br>
+		<span class="mono">
+		
+		commit 6995e2de6891c724bfeb2db33d7b87775f913ad1<br>
+		Author: Linus Torvalds &lt;torvalds@linux-foundation.org&gt;<br>
+		Date:   Sun Jun 25 23:29:58 2023 &#43;0000<br>
+		<br>
+		&nbsp;&nbsp;<a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=6995e2de6891c724bfeb2db33d7b87775f913ad1">Linux 6.4</a><br>
+		</span><br>
+	
+	
+		Crash: <a href="https://syzkaller.appspot.com/x/report.txt?x=1265fa43a80000">WARNING in kthread_bind_mask</a> (<a href="https://syzkaller.appspot.com/x/log.txt?x=1465fa43a80000">log</a>)<br>
+		Repro: <a href="/text?tag=ReproC&x=16fcef14a80000">C</a>
+		<a href="/text?tag=ReproSyz&x=1115c348a80000">syz</a>
+		<a href="/text?tag=KernelConfig&x=7406f415f386e786">.config</a><br>
+	
+
+	
+	&nbsp;&nbsp;
+	
+
+</div>
+		<div class="bug-bisection-info">
+
+	
+	
+	
+		
+			
+				<b>Fix bisection: fixed by</b>
+			
+		
+		<b>(<a href="https://syzkaller.appspot.com/x/bisect.txt?x=11aeb085a80000">bisect log</a>)</b> <span class="bad"></span>:<br>
+		<span class="mono">
+		
+		commit ef513aa7aa5038d2f53e9f2932af5006f37ed0b6<br>
+		Author: Luca Weiss &lt;luca@z3ntu.xyz&gt;<br>
+		Date:   Thu Apr 13 23:17:49 2023 &#43;0000<br>
+		<br>
+		&nbsp;&nbsp;<a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=ef513aa7aa5038d2f53e9f2932af5006f37ed0b6">dt-bindings: iio: adc: qcom,spmi-vadc: Allow 1/16 for pre-scaling</a><br>
+		</span><br>
+	
+	
+
+	
+	&nbsp;&nbsp;
+	
+
+</div>
+		<div class="bug-bisection-stop"></div>
+	</div>
+
+	
+	<div class="collapsible collapsible-show">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Discussions (2)</span>
+		</div>
+		<div class="content">
+			
+			
+			
+
+<table class="list_table">
+	<thead>
+	<tr>
+		<th>Title</th>
+		<th>Replies (including bot)</th>
+		<th>Last reply</th>
+	</tr>
+	</thead>
+	<tbody>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/000000000000b35ea205ffc35fe1@google.com/T/">[syzbot] [mm?] kernel BUG in validate_mm (2)</a></td>
+			<td class="stat">2 (4)</td>
+			<td class="stat">2023/08/11 12:10</td>
+		</tr>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/000000000000c3f89306002158b3@google.com/T/">[syzbot] Monthly mm report (Jul 2023)</a></td>
+			<td class="stat">0 (1)</td>
+			<td class="stat">2023/07/10 12:44</td>
+		</tr>
+	
+	</tbody>
+</table>
+
+
+			
+			
+		</div>
+	</div>
+	
+	<div class="collapsible collapsible-hide">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Similar bugs (3)</span>
+		</div>
+		<div class="content">
+			
+
+
+<table class="list_table">
+	
+	<thead>
+	<tr>
+		
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+		
+		<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		<th><a onclick="return sortTable(this, 'Repro', reproSort)" href="#">Repro</a></th>
+		<th><a onclick="return sortTable(this, 'Cause bisect', textSort)" href="#">Cause bisect</a></th>
+		<th><a onclick="return sortTable(this, 'Fix bisect', textSort)" href="#">Fix bisect</a></th>
+		<th><a onclick="return sortTable(this, 'Count', numSort)" href="#">Count</a></th>
+		<th><a onclick="return sortTable(this, 'Last', timeSort)" href="#">Last</a></th>
+		<th><a onclick="return sortTable(this, 'Reported', timeSort)" href="#">Reported</a></th>
+		
+		
+		
+			<th><a onclick="return sortTable(this, 'Patched', patchedSort)" href="#">Patched</a></th>
+		
+		
+			<th><a onclick="return sortTable(this, 'Status', textSort)" href="#">Status</a></th>
+		
+		
+	</tr>
+	</thead>
+	<tbody>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=a9aec6a20fde11efa55f571a13d01143205fc049">kernel BUG in validate_mm (3)</a>
+					<span class="bug-label"><a href="/upstream/s/mm">mm</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status">error</td>
+			<td class="bisect_status"></td>
+			<td class="stat ">3</td>
+			<td class="stat">402d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/000000000000f9f23d061013c383%40google.com">402d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/000000000000f9f23d061013c383%40google.com">auto-obsoleted due to no activity on 2024/07/08 21:41</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=55735c29365f63842ac5">kernel BUG in validate_mm_rb</a>
+					<span class="bug-label"><a href="/upstream/s/mm">mm</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">3</td>
+			<td class="stat">1405d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-upstream-moderation/00000000000070ddeb05c2838c23%40google.com">1389d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-upstream-moderation/00000000000070ddeb05c2838c23%40google.com">auto-closed as invalid on 2021/06/30 15:02</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=2df71be4fd85f5da9f1e">kernel BUG in validate_mm</a>
+					<span class="bug-label"><a href="/upstream/s/mm">mm</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">1</td>
+			<td class="stat">1318d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-upstream-moderation/0000000000000365d805cb10991b%40google.com">1280d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-upstream-moderation/0000000000000365d805cb10991b%40google.com">auto-closed as invalid on 2021/10/25 07:00</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+	</tbody>
+</table>
+
+
+
+			
+			
+			
+			
+		</div>
+	</div>
+	
+	<div class="collapsible collapsible-hide">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Last patch testing requests (1)</span>
+		</div>
+		<div class="content">
+			
+			
+
+	<table class="list_table">
+		<caption id="jobs"><a class="plain" href="#jobs"></a></caption>
+		<thead>
+		<tr>
+			
+			<th>Created</th>
+			<th>Duration</th>
+			<th>User</th>
+			<th>Patch</th>
+			<th>Repo</th>
+			
+			<th>Result</th>
+		</tr>
+		</thead>
+		<tbody>
+		
+			<tr>
+				
+				<td class="time">2023/08/07 10:37</td>
+				<td class="time" title="started: 2023/08/07 10:37&#013;finished: 2023/08/07 11:22">
+					44m
+				</td>
+				<td>
+					
+						hdanton@sina.com
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git master"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/commit/?id=f7dc24b3413851109c4047b22997bd0d95ed52a2">https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git master</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=123794dda80000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+		</tbody>
+	</table>
+
+
+			
+			
+			
+		</div>
+	</div>
+	
+	<div class="collapsible collapsible-hide">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Cause bisection attempts (2)</span>
+		</div>
+		<div class="content">
+			
+			
+
+	<table class="list_table">
+		<caption id="jobs"><a class="plain" href="#jobs"></a></caption>
+		<thead>
+		<tr>
+			
+			<th>Created</th>
+			<th>Duration</th>
+			<th>User</th>
+			<th>Patch</th>
+			<th>Repo</th>
+			
+			<th>Result</th>
+		</tr>
+		</thead>
+		<tbody>
+		
+			<tr>
+				
+				<td class="time">2023/08/08 14:02</td>
+				<td class="time" title="started: 2023/08/08 14:02&#013;finished: 2023/08/08 22:27">
+					8h25m
+				</td>
+				<td>
+					
+						bisect
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451">upstream</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+							(1)
+						
+					
+					
+						<a href="https://syzkaller.appspot.com/x/bisect.txt?x=1065fa43a80000">job log</a>
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=1465fa43a80000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2023/07/02 14:48</td>
+				<td class="time" title="started: 2023/07/02 14:48&#013;finished: 2023/07/03 02:50">
+					12h02m
+				</td>
+				<td>
+					
+						bisect
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=f8566aa4f1766bb0267b7a0ed89c1d2c4a82ee1a">upstream</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/error.txt?x=1130e66f280000">error</a>
+					
+					
+						<a href="https://syzkaller.appspot.com/x/bisect.txt?x=1630e66f280000">job log</a>
+					
+					
+					
+						<br>marked invalid by nogikh@google.com
+					
+					
+				</td>
+			</tr>
+		
+		</tbody>
+	</table>
+
+
+			
+			
+			
+		</div>
+	</div>
+	
+
+	
+	<br><b>Sample crash report:</b><br>
+	<div id="crash_div"><pre>tlb_flush_pending 0
+def_flags: 0x0()
+------------[ cut here ]------------
+kernel BUG at <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/mmap.c?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451#n340'>mm/mmap.c:340</a>!
+invalid opcode: 0000 [#1] PREEMPT SMP KASAN
+CPU: 0 PID: 9657 Comm: syz-executor248 Not tainted 6.4.0-syzkaller-10173-ga901a3568fd2 #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 05/27/2023
+RIP: 0010:validate_mm+0x4ee/0x500 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/mmap.c?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451#n340'>mm/mmap.c:340</a>
+Code: 48 89 df e8 74 90 12 00 eb 93 e8 bd e0 b9 ff 48 c7 c7 a0 80 14 8b 89 de 44 89 f2 e8 3c bf e5 08 48 8b 7c 24 28 e8 72 97 fa ff &lt;0f&gt; 0b e8 7b fe e7 08 66 2e 0f 1f 84 00 00 00 00 00 90 f3 0f 1e fa
+RSP: 0018:ffffc900059979a0 EFLAGS: 00010282
+RAX: 0000000000000333 RBX: 0000000000000015 RCX: 05509ca8c7ddb600
+RDX: 0000000000000000 RSI: 0000000080000000 RDI: 0000000000000000
+RBP: ffffc90005997ad0 R08: ffffffff816f481c R09: 1ffff92000b32e98
+R10: dffffc0000000000 R11: fffff52000b32e99 R12: dffffc0000000000
+R13: ffffc90005997a20 R14: 0000000000000014 R15: 00007ffe309a8000
+FS:  00007f8388039700(0000) GS:ffff8880b9800000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 0000000000000000 CR3: 000000007c42b000 CR4: 00000000003506f0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+Call Trace:
+ &lt;TASK&gt;
+ do_vmi_align_munmap+0x13b1/0x15c0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/mmap.c?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451#n2561'>mm/mmap.c:2561</a>
+ do_vmi_munmap+0x24d/0x2d0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/mmap.c?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451#n2619'>mm/mmap.c:2619</a>
+ __vm_munmap+0x230/0x450 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/mmap.c?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451#n2899'>mm/mmap.c:2899</a>
+ __do_sys_munmap <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/mmap.c?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451#n2916'>mm/mmap.c:2916</a> [inline]
+ __se_sys_munmap <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/mmap.c?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451#n2913'>mm/mmap.c:2913</a> [inline]
+ __x64_sys_munmap+0x69/0x80 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/mmap.c?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451#n2913'>mm/mmap.c:2913</a>
+ do_syscall_x64 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451#n50'>arch/x86/entry/common.c:50</a> [inline]
+ do_syscall_64+0x41/0xc0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451#n80'>arch/x86/entry/common.c:80</a>
+ entry_SYSCALL_64_after_hwframe+0x63/0xcd
+RIP: 0033:0x7f8388894eb7
+Code: 00 00 00 48 c7 c2 b8 ff ff ff f7 d8 64 89 02 48 c7 c0 ff ff ff ff eb 85 66 2e 0f 1f 84 00 00 00 00 00 90 b8 0b 00 00 00 0f 05 &lt;48&gt; 3d 01 f0 ff ff 73 01 c3 48 c7 c1 b8 ff ff ff f7 d8 64 89 01 48
+RSP: 002b:00007f8388039078 EFLAGS: 00000246 ORIG_RAX: 000000000000000b
+RAX: ffffffffffffffda RBX: 0000000000000003 RCX: 00007f8388894eb7
+RDX: 0000000000040000 RSI: 0000000000040000 RDI: 00007f837fbf8000
+RBP: 00007f837fbf8000 R08: 0000000000000000 R09: 00000000000004a0
+R10: 0000000000040000 R11: 0000000000000246 R12: 00007f83880396b8
+R13: 00007f8388039090 R14: 00007f83880390d0 R15: 0000000000022000
+ &lt;/TASK&gt;
+Modules linked in:
+---[ end trace 0000000000000000 ]---
+RIP: 0010:validate_mm+0x4ee/0x500 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/mmap.c?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451#n340'>mm/mmap.c:340</a>
+Code: 48 89 df e8 74 90 12 00 eb 93 e8 bd e0 b9 ff 48 c7 c7 a0 80 14 8b 89 de 44 89 f2 e8 3c bf e5 08 48 8b 7c 24 28 e8 72 97 fa ff &lt;0f&gt; 0b e8 7b fe e7 08 66 2e 0f 1f 84 00 00 00 00 00 90 f3 0f 1e fa
+RSP: 0018:ffffc900059979a0 EFLAGS: 00010282
+RAX: 0000000000000333 RBX: 0000000000000015 RCX: 05509ca8c7ddb600
+RDX: 0000000000000000 RSI: 0000000080000000 RDI: 0000000000000000
+RBP: ffffc90005997ad0 R08: ffffffff816f481c R09: 1ffff92000b32e98
+R10: dffffc0000000000 R11: fffff52000b32e99 R12: dffffc0000000000
+R13: ffffc90005997a20 R14: 0000000000000014 R15: 00007ffe309a8000
+FS:  00007f8388039700(0000) GS:ffff8880b9800000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 00007f83889181d8 CR3: 000000007c42b000 CR4: 00000000003506f0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+</pre></div><br>
+	
+
+	
+
+<table class="list_table">
+	<caption>Crashes (217):</caption>
+		<thead>
+		<tr>
+			<th><a onclick="return sortTable(this, 'Time', textSort, true)" href="#">Time</a></th>
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+			<th><a onclick="return sortTable(this, 'Commit', textSort)" href="#">Commit</a></th>
+			<th><a onclick="return sortTable(this, 'Syzkaller', textSort)" href="#">Syzkaller</a></th>
+			<th><a onclick="return sortTable(this, 'Config', textSort)" href="#">Config</a></th>
+			<th><a onclick="return sortTable(this, 'Log', textSort)" href="#">Log</a></th>
+			<th><a onclick="return sortTable(this, 'Report', reproSort)" href="#">Report</a></th>
+			<th><a onclick="return sortTable(this, 'Syz repro', reproSort)" href="#">Syz repro</a></th>
+			<th><a onclick="return sortTable(this, 'C repro', textSort)" href="#">C repro</a></th>
+			<th><a onclick="return sortTable(this, 'VM info', textSort)" href="#">VM info</a></th>
+			<th><a onclick="return sortTable(this, 'Assets', textSort)" href="#">Assets</a> (<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot_assets.md">help?</a>)</th>
+			<th><a onclick="return sortTable(this, 'Manager', textSort)" href="#">Manager</a></th>
+			<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		</tr>
+		</thead>
+		<tbody>
+		
+		<tr>
+			<td class="time">2023/07/03 21:49</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451
+	2023/07/02 18:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451">a901a3568fd2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6e553898b1a72d31248a221bb0bff5bc62fce879">6e553898</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d787595a482d6a43">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1111ecf0a80000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=176bfa30a80000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=160f9d48a80000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=13683b04a80000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/35902c43a7c2/disk-a901a356.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/78b3ce875c7d/vmlinux-a901a356.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/150b1474a952/bzImage-a901a356.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6a5521c87d55/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/03 07:57</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451
+	2023/07/02 18:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451">a901a3568fd2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7406f415f386e786">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11033d14a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11aab1fb280000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=1115c348a80000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=16fcef14a80000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9773cd7bb952/disk-a901a356.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3511c9de2632/vmlinux-a901a356.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7e86a63be835/bzImage-a901a356.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/03 06:32</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451
+	2023/07/02 18:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451">a901a3568fd2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=3f27fb02fc20d955">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1695bb80a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1275b2a4a80000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=12f8c030a80000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=16252770a80000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7bc7510fe41f/non_bootable_disk-a901a356.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ac3ec2df224b/vmlinux-a901a356.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3c5be27d0a14/bzImage-a901a356.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/15ad17f57096/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/02 10:52</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="f8566aa4f1766bb0267b7a0ed89c1d2c4a82ee1a
+	2023/07/01 18:40"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=f8566aa4f1766bb0267b7a0ed89c1d2c4a82ee1a">f8566aa4f176</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7406f415f386e786">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15829dfb280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10f2938f280000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=151822fb280000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=10eb8c0ca80000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/afab0dafcce3/disk-f8566aa4.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6b77678d9c2a/vmlinux-f8566aa4.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ec2a20a04171/bzImage-f8566aa4.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/deac206ead7a/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/02 09:49</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dfab92f27c600fea3cadc6e2cb39f092024e1fef
+	2023/07/01 21:38"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dfab92f27c600fea3cadc6e2cb39f092024e1fef">dfab92f27c60</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=71a52faf60231bc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13dca8b8a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14492fcb280000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=151524e7280000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=101df82ca80000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/32f183ec0f2c/disk-dfab92f2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e8f47f491184/vmlinux-dfab92f2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ad90306c0fe6/bzImage-dfab92f2.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9811d58d3816/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/02 05:50</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="f8566aa4f1766bb0267b7a0ed89c1d2c4a82ee1a
+	2023/07/01 18:40"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=f8566aa4f1766bb0267b7a0ed89c1d2c4a82ee1a">f8566aa4f176</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=3f27fb02fc20d955">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16113ee7280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10fc9dfb280000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=133a2dfb280000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=113af110a80000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a3571d0ab664/disk-f8566aa4.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e42931f37f05/vmlinux-f8566aa4.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/40b4e5087ede/bzImage-f8566aa4.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d4690be6451e/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-selinux-root</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/02 05:33</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dfab92f27c600fea3cadc6e2cb39f092024e1fef
+	2023/07/01 21:38"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dfab92f27c600fea3cadc6e2cb39f092024e1fef">dfab92f27c60</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=71a52faf60231bc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=141c8ac8a80000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11c79d48a80000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=102a7fcb280000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=13e31c84a80000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/32f183ec0f2c/disk-dfab92f2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e8f47f491184/vmlinux-dfab92f2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ad90306c0fe6/bzImage-dfab92f2.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/37ee0d196498/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/02 01:02</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="f8566aa4f1766bb0267b7a0ed89c1d2c4a82ee1a
+	2023/07/01 18:40"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=f8566aa4f1766bb0267b7a0ed89c1d2c4a82ee1a">f8566aa4f176</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7406f415f386e786">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17eca8b8a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=170ad7eca80000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=167187eca80000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=108ee2c8a80000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/08033ccab6ef/disk-f8566aa4.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/04c5c8c7e53a/vmlinux-f8566aa4.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/942a1c157a92/bzImage-f8566aa4.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/02 00:35</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="f8566aa4f1766bb0267b7a0ed89c1d2c4a82ee1a
+	2023/07/01 18:40"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=f8566aa4f1766bb0267b7a0ed89c1d2c4a82ee1a">f8566aa4f176</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7406f415f386e786">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17e564a4a80000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=179b7dd0a80000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=152be50b280000">syz</a>
+				
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=1135bc84a80000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/08033ccab6ef/disk-f8566aa4.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/04c5c8c7e53a/vmlinux-f8566aa4.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/942a1c157a92/bzImage-f8566aa4.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/04 03:35</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451
+	2023/07/02 18:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451">a901a3568fd2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6e553898b1a72d31248a221bb0bff5bc62fce879">6e553898</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=f5e1158c5b2f83bb">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1712c0c8a80000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1778054f280000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=16eb622ca80000">syz</a>
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/07a995e5618a/disk-a901a356.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ad2efb29f1e0/vmlinux-a901a356.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/74fa7ac85d25/bzImage-a901a356.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2794dffbe1de/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-badwrites-root</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/04 01:01</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451
+	2023/07/02 18:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451">a901a3568fd2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6e553898b1a72d31248a221bb0bff5bc62fce879">6e553898</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=f5e1158c5b2f83bb">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=179c302ca80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=146aa484a80000">report</a></td>
+			<td class="repro stale_repro">
+				<a href="/text?tag=ReproSyz&amp;x=1511d490a80000">syz</a>
+				
+			</td>
+			<td class="repro stale_repro"><a href="/text?tag=ReproC&amp;x=130e5cfb280000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/07a995e5618a/disk-a901a356.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ad2efb29f1e0/vmlinux-a901a356.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/74fa7ac85d25/bzImage-a901a356.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/77e05f49bdce/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-badwrites-root</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/04 06:53</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451
+	2023/07/02 18:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451">a901a3568fd2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6e553898b1a72d31248a221bb0bff5bc62fce879">6e553898</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d787595a482d6a43">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1652c0c8a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1293bc84a80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=449499851b57756b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/35902c43a7c2/disk-a901a356.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/78b3ce875c7d/vmlinux-a901a356.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/150b1474a952/bzImage-a901a356.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/04 05:50</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451
+	2023/07/02 18:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451">a901a3568fd2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6e553898b1a72d31248a221bb0bff5bc62fce879">6e553898</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d787595a482d6a43">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=107a9dfb280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1740fdd0a80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=449499851b57756b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/35902c43a7c2/disk-a901a356.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/78b3ce875c7d/vmlinux-a901a356.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/150b1474a952/bzImage-a901a356.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/04 04:50</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451
+	2023/07/02 18:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451">a901a3568fd2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6e553898b1a72d31248a221bb0bff5bc62fce879">6e553898</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d787595a482d6a43">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10966b34a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=146e31fca80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=449499851b57756b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/35902c43a7c2/disk-a901a356.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/78b3ce875c7d/vmlinux-a901a356.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/150b1474a952/bzImage-a901a356.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/04 04:38</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451
+	2023/07/02 18:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451">a901a3568fd2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6e553898b1a72d31248a221bb0bff5bc62fce879">6e553898</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d787595a482d6a43">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1041a47f280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12cf8c0ca80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=d863f224c108e358">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/35902c43a7c2/disk-a901a356.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/78b3ce875c7d/vmlinux-a901a356.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/150b1474a952/bzImage-a901a356.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/04 02:40</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451
+	2023/07/02 18:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451">a901a3568fd2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6e553898b1a72d31248a221bb0bff5bc62fce879">6e553898</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d787595a482d6a43">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17d60c90a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=115810c8a80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=bfce545388ca5a20">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/35902c43a7c2/disk-a901a356.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/78b3ce875c7d/vmlinux-a901a356.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/150b1474a952/bzImage-a901a356.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/04 01:02</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451
+	2023/07/02 18:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451">a901a3568fd2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6e553898b1a72d31248a221bb0bff5bc62fce879">6e553898</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d787595a482d6a43">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=172b622ca80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16f00a10a80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=449499851b57756b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9f5f0447f626/disk-a901a356.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/500177760bfb/vmlinux-a901a356.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/82352cc74fb3/bzImage-a901a356.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-smack-root</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/04 00:58</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451
+	2023/07/02 18:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451">a901a3568fd2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6e553898b1a72d31248a221bb0bff5bc62fce879">6e553898</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d787595a482d6a43">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1052e724a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15b3ff80a80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=449499851b57756b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9f5f0447f626/disk-a901a356.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/500177760bfb/vmlinux-a901a356.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/82352cc74fb3/bzImage-a901a356.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-smack-root</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/03 23:53</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451
+	2023/07/02 18:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451">a901a3568fd2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6e553898b1a72d31248a221bb0bff5bc62fce879">6e553898</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d787595a482d6a43">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12db2a68a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1548121ca80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=4e85297d4d6f03d5">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/35902c43a7c2/disk-a901a356.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/78b3ce875c7d/vmlinux-a901a356.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/150b1474a952/bzImage-a901a356.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/03 22:50</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451
+	2023/07/02 18:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451">a901a3568fd2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6e553898b1a72d31248a221bb0bff5bc62fce879">6e553898</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d787595a482d6a43">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16d99630a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=104ccf70a80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=d1004aeb981655bb">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/35902c43a7c2/disk-a901a356.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/78b3ce875c7d/vmlinux-a901a356.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/150b1474a952/bzImage-a901a356.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/03 21:42</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451
+	2023/07/02 18:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451">a901a3568fd2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6e553898b1a72d31248a221bb0bff5bc62fce879">6e553898</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d787595a482d6a43">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=142ae02ca80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12be7630a80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=449499851b57756b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/35902c43a7c2/disk-a901a356.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/78b3ce875c7d/vmlinux-a901a356.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/150b1474a952/bzImage-a901a356.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/03 20:32</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451
+	2023/07/02 18:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451">a901a3568fd2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6e553898b1a72d31248a221bb0bff5bc62fce879">6e553898</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=12d3428a307a1111">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=171fccc8a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=157b86c2a80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ec139fdafc57fac">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d5b4ad8feb6a/disk-a901a356.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b59c91556f58/vmlinux-a901a356.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dcd583b21e5c/bzImage-a901a356.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/03 19:23</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451
+	2023/07/02 18:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451">a901a3568fd2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6e553898b1a72d31248a221bb0bff5bc62fce879">6e553898</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d787595a482d6a43">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14e0abc8a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12ec302ca80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=8179204def4a8958">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9f5f0447f626/disk-a901a356.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/500177760bfb/vmlinux-a901a356.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/82352cc74fb3/bzImage-a901a356.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-smack-root</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/03 15:18</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451
+	2023/07/02 18:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451">a901a3568fd2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/49fef1e5021689d713c2b0ce15779bc3c39c70d4">49fef1e5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=db74cd5aa6878807">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10ceddf0a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13141c2ca80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=3f7a645a57a4f920">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7bc7510fe41f/non_bootable_disk-a901a356.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ab583c97152f/vmlinux-a901a356.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5b50cfdcec38/bzImage-a901a356.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/03 15:09</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451
+	2023/07/02 18:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451">a901a3568fd2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=71a52faf60231bc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12731208a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=126c003ca80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=449499851b57756b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/061ac43c8091/disk-a901a356.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d1b46910561d/vmlinux-a901a356.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9d07b6fce41d/bzImage-a901a356.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/03 13:56</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451
+	2023/07/02 18:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451">a901a3568fd2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7406f415f386e786">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17bfe890a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14476648a80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ec139fdafc57fac">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/119fd918f733/disk-a901a356.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/79f9ac119639/vmlinux-a901a356.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8bd8662e2869/bzImage-a901a356.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/03 12:40</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451
+	2023/07/02 18:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451">a901a3568fd2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7406f415f386e786">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11e345b8a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=167599dca80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=85594b64ada3f0c9">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9773cd7bb952/disk-a901a356.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3511c9de2632/vmlinux-a901a356.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7e86a63be835/bzImage-a901a356.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/03 11:14</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451
+	2023/07/02 18:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451">a901a3568fd2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=71a52faf60231bc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=110a3aa4a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1659cbb8a80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=9cc67078c487e2ed">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/061ac43c8091/disk-a901a356.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d1b46910561d/vmlinux-a901a356.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9d07b6fce41d/bzImage-a901a356.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/03 10:41</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451
+	2023/07/02 18:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451">a901a3568fd2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=71a52faf60231bc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1163da4f280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=159a6d68a80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=5ff6f799069b802d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/061ac43c8091/disk-a901a356.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d1b46910561d/vmlinux-a901a356.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9d07b6fce41d/bzImage-a901a356.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/03 09:25</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451
+	2023/07/02 18:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451">a901a3568fd2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=71a52faf60231bc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13a41c2ca80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=108e2dfb280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=449499851b57756b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/061ac43c8091/disk-a901a356.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d1b46910561d/vmlinux-a901a356.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9d07b6fce41d/bzImage-a901a356.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/03 06:07</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451
+	2023/07/02 18:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451">a901a3568fd2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=71a52faf60231bc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10cc302ca80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=119eecb8a80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=449499851b57756b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/05c47680c33c/disk-a901a356.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/afacdf34f5c5/vmlinux-a901a356.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4f319620b311/bzImage-a901a356.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-smack-root</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/03 04:59</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="995b406c7e972fab181a4bb57f3b95e59b8e5bf3
+	2023/07/02 04:12"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=995b406c7e972fab181a4bb57f3b95e59b8e5bf3">995b406c7e97</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=71a52faf60231bc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=107a32c8a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1332a484a80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=449499851b57756b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/01122b567c73/disk-995b406c.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/75b7a37e981e/vmlinux-995b406c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/758b5afcf092/bzImage-995b406c.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/03 03:57</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451
+	2023/07/02 18:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451">a901a3568fd2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=71a52faf60231bc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15028ac8a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13638c94a80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=449499851b57756b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/05c47680c33c/disk-a901a356.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/afacdf34f5c5/vmlinux-a901a356.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4f319620b311/bzImage-a901a356.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-smack-root</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/03 00:25</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="995b406c7e972fab181a4bb57f3b95e59b8e5bf3
+	2023/07/02 04:12"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=995b406c7e972fab181a4bb57f3b95e59b8e5bf3">995b406c7e97</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=71a52faf60231bc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10766df0a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=111ea47f280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=449499851b57756b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/01122b567c73/disk-995b406c.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/75b7a37e981e/vmlinux-995b406c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/758b5afcf092/bzImage-995b406c.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/02 23:43</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="995b406c7e972fab181a4bb57f3b95e59b8e5bf3
+	2023/07/02 04:12"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=995b406c7e972fab181a4bb57f3b95e59b8e5bf3">995b406c7e97</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=71a52faf60231bc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1736f110a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=177b8c0ca80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=449499851b57756b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/01122b567c73/disk-995b406c.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/75b7a37e981e/vmlinux-995b406c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/758b5afcf092/bzImage-995b406c.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/02 22:42</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="995b406c7e972fab181a4bb57f3b95e59b8e5bf3
+	2023/07/02 04:12"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=995b406c7e972fab181a4bb57f3b95e59b8e5bf3">995b406c7e97</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=71a52faf60231bc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=168ab1fb280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14d92770a80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=449499851b57756b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/01122b567c73/disk-995b406c.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/75b7a37e981e/vmlinux-995b406c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/758b5afcf092/bzImage-995b406c.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/02 21:32</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="995b406c7e972fab181a4bb57f3b95e59b8e5bf3
+	2023/07/02 04:12"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=995b406c7e972fab181a4bb57f3b95e59b8e5bf3">995b406c7e97</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=71a52faf60231bc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=135cc0c8a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13b6670ca80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=85594b64ada3f0c9">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/01122b567c73/disk-995b406c.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/75b7a37e981e/vmlinux-995b406c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/758b5afcf092/bzImage-995b406c.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/02 20:31</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="995b406c7e972fab181a4bb57f3b95e59b8e5bf3
+	2023/07/02 04:12"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=995b406c7e972fab181a4bb57f3b95e59b8e5bf3">995b406c7e97</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=71a52faf60231bc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15f5b04f280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10219fbf280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=449499851b57756b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/01122b567c73/disk-995b406c.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/75b7a37e981e/vmlinux-995b406c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/758b5afcf092/bzImage-995b406c.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/02 19:47</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="995b406c7e972fab181a4bb57f3b95e59b8e5bf3
+	2023/07/02 04:12"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=995b406c7e972fab181a4bb57f3b95e59b8e5bf3">995b406c7e97</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=71a52faf60231bc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10a0a3f0a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=123addf0a80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b067f0cacc4c9a7f">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d61d1dbcb956/disk-995b406c.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f471061e6439/vmlinux-995b406c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9dcd428320a5/bzImage-995b406c.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-smack-root</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/02 18:41</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="995b406c7e972fab181a4bb57f3b95e59b8e5bf3
+	2023/07/02 04:12"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=995b406c7e972fab181a4bb57f3b95e59b8e5bf3">995b406c7e97</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7406f415f386e786">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17566df0a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=101250f7280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ec139fdafc57fac">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/bf7e228b7235/disk-995b406c.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c80e997d9074/vmlinux-995b406c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/826390d53480/bzImage-995b406c.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/02 16:53</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="995b406c7e972fab181a4bb57f3b95e59b8e5bf3
+	2023/07/02 04:12"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=995b406c7e972fab181a4bb57f3b95e59b8e5bf3">995b406c7e97</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=3f27fb02fc20d955">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=146ee2c8a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=154a738f280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=924f37cf71de0028">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5f69ba80794a/disk-995b406c.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9323c8107561/vmlinux-995b406c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/09f68e50fe1c/bzImage-995b406c.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-selinux-root</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/02 15:33</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dfab92f27c600fea3cadc6e2cb39f092024e1fef
+	2023/07/01 21:38"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dfab92f27c600fea3cadc6e2cb39f092024e1fef">dfab92f27c60</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=71a52faf60231bc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10583bbf280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1119bb80a80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=449499851b57756b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/32f183ec0f2c/disk-dfab92f2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e8f47f491184/vmlinux-dfab92f2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ad90306c0fe6/bzImage-dfab92f2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/02 14:49</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dfab92f27c600fea3cadc6e2cb39f092024e1fef
+	2023/07/01 21:38"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dfab92f27c600fea3cadc6e2cb39f092024e1fef">dfab92f27c60</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=71a52faf60231bc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=124d0110a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16a010c8a80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ff140aa340387b97">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/32f183ec0f2c/disk-dfab92f2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e8f47f491184/vmlinux-dfab92f2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ad90306c0fe6/bzImage-dfab92f2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/02 13:47</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="995b406c7e972fab181a4bb57f3b95e59b8e5bf3
+	2023/07/02 04:12"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=995b406c7e972fab181a4bb57f3b95e59b8e5bf3">995b406c7e97</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=3f27fb02fc20d955">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=122ee2c8a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=170a738f280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ff140aa340387b97">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5f69ba80794a/disk-995b406c.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9323c8107561/vmlinux-995b406c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/09f68e50fe1c/bzImage-995b406c.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-selinux-root</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/02 12:45</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dfab92f27c600fea3cadc6e2cb39f092024e1fef
+	2023/07/01 21:38"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dfab92f27c600fea3cadc6e2cb39f092024e1fef">dfab92f27c60</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=71a52faf60231bc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=128809e7280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13429dfb280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ff140aa340387b97">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/32f183ec0f2c/disk-dfab92f2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e8f47f491184/vmlinux-dfab92f2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ad90306c0fe6/bzImage-dfab92f2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/02 11:30</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dfab92f27c600fea3cadc6e2cb39f092024e1fef
+	2023/07/01 21:38"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dfab92f27c600fea3cadc6e2cb39f092024e1fef">dfab92f27c60</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=71a52faf60231bc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16c3f44f280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10581c2ca80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=5ff6f799069b802d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/32f183ec0f2c/disk-dfab92f2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e8f47f491184/vmlinux-dfab92f2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ad90306c0fe6/bzImage-dfab92f2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/02 11:20</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dfab92f27c600fea3cadc6e2cb39f092024e1fef
+	2023/07/01 21:38"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dfab92f27c600fea3cadc6e2cb39f092024e1fef">dfab92f27c60</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=71a52faf60231bc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1659d82b280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=170250f7280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b067f0cacc4c9a7f">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/32f183ec0f2c/disk-dfab92f2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e8f47f491184/vmlinux-dfab92f2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ad90306c0fe6/bzImage-dfab92f2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/02 11:15</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dfab92f27c600fea3cadc6e2cb39f092024e1fef
+	2023/07/01 21:38"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dfab92f27c600fea3cadc6e2cb39f092024e1fef">dfab92f27c60</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=71a52faf60231bc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11d24370a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17eca0f7280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=85594b64ada3f0c9">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/32f183ec0f2c/disk-dfab92f2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e8f47f491184/vmlinux-dfab92f2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ad90306c0fe6/bzImage-dfab92f2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/02 11:11</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dfab92f27c600fea3cadc6e2cb39f092024e1fef
+	2023/07/01 21:38"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dfab92f27c600fea3cadc6e2cb39f092024e1fef">dfab92f27c60</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=71a52faf60231bc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1392e02ca80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11cee2c8a80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=5ff6f799069b802d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/32f183ec0f2c/disk-dfab92f2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e8f47f491184/vmlinux-dfab92f2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ad90306c0fe6/bzImage-dfab92f2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/02 11:04</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dfab92f27c600fea3cadc6e2cb39f092024e1fef
+	2023/07/01 21:38"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dfab92f27c600fea3cadc6e2cb39f092024e1fef">dfab92f27c60</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=71a52faf60231bc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=122a4724a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11bf86d0a80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=994afc2e85f41ff7">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/32f183ec0f2c/disk-dfab92f2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e8f47f491184/vmlinux-dfab92f2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ad90306c0fe6/bzImage-dfab92f2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/02 10:44</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dfab92f27c600fea3cadc6e2cb39f092024e1fef
+	2023/07/01 21:38"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dfab92f27c600fea3cadc6e2cb39f092024e1fef">dfab92f27c60</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=71a52faf60231bc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14bd57bf280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17ba5cfb280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=d8a600f4947e325e">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/32f183ec0f2c/disk-dfab92f2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e8f47f491184/vmlinux-dfab92f2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ad90306c0fe6/bzImage-dfab92f2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/02 10:28</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dfab92f27c600fea3cadc6e2cb39f092024e1fef
+	2023/07/01 21:38"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dfab92f27c600fea3cadc6e2cb39f092024e1fef">dfab92f27c60</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=71a52faf60231bc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16726db8a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13eb38a4a80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=9918973a671091c2">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/32f183ec0f2c/disk-dfab92f2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e8f47f491184/vmlinux-dfab92f2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ad90306c0fe6/bzImage-dfab92f2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/02 10:27</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dfab92f27c600fea3cadc6e2cb39f092024e1fef
+	2023/07/01 21:38"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dfab92f27c600fea3cadc6e2cb39f092024e1fef">dfab92f27c60</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=71a52faf60231bc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=128af534a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=114b7feca80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=4c1327ecd08d6cc1">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/32f183ec0f2c/disk-dfab92f2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e8f47f491184/vmlinux-dfab92f2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ad90306c0fe6/bzImage-dfab92f2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/02 10:05</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dfab92f27c600fea3cadc6e2cb39f092024e1fef
+	2023/07/01 21:38"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dfab92f27c600fea3cadc6e2cb39f092024e1fef">dfab92f27c60</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=71a52faf60231bc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1059d82b280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17baac40a80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=4c1327ecd08d6cc1">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/32f183ec0f2c/disk-dfab92f2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e8f47f491184/vmlinux-dfab92f2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ad90306c0fe6/bzImage-dfab92f2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/02 09:54</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dfab92f27c600fea3cadc6e2cb39f092024e1fef
+	2023/07/01 21:38"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dfab92f27c600fea3cadc6e2cb39f092024e1fef">dfab92f27c60</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=71a52faf60231bc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15ff525f280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=121822fb280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ff140aa340387b97">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/32f183ec0f2c/disk-dfab92f2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e8f47f491184/vmlinux-dfab92f2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ad90306c0fe6/bzImage-dfab92f2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/02 09:49</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dfab92f27c600fea3cadc6e2cb39f092024e1fef
+	2023/07/01 21:38"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dfab92f27c600fea3cadc6e2cb39f092024e1fef">dfab92f27c60</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=71a52faf60231bc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17c2a484a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15f42910a80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=54d51a9f2c8abbf4">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/32f183ec0f2c/disk-dfab92f2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e8f47f491184/vmlinux-dfab92f2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ad90306c0fe6/bzImage-dfab92f2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/02 09:41</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="f8566aa4f1766bb0267b7a0ed89c1d2c4a82ee1a
+	2023/07/01 18:40"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=f8566aa4f1766bb0267b7a0ed89c1d2c4a82ee1a">f8566aa4f176</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7406f415f386e786">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10caddf0a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15fa2dfb280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ec139fdafc57fac">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/afab0dafcce3/disk-f8566aa4.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6b77678d9c2a/vmlinux-f8566aa4.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ec2a20a04171/bzImage-f8566aa4.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/03 17:50</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451
+	2023/07/02 18:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451">a901a3568fd2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6e553898b1a72d31248a221bb0bff5bc62fce879">6e553898</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=12d3428a307a1111">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1756938f280000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1741532ca80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=449499851b57756b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/291aec812c57/disk-a901a356.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0fe09c32e114/vmlinux-a901a356.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/50aa67afbce3/bzImage-a901a356.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-386</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/03 03:10</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451
+	2023/07/02 18:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a901a3568fd26ca9c4a82d8bc5ed5b3ed844d451">a901a3568fd2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7406f415f386e786">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16c2a8b8a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16a9a15f280000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=1fc08f171ffd3565">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7bc7510fe41f/non_bootable_disk-a901a356.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4d178b81b45f/vmlinux-a901a356.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c1272dd3cdc1/bzImage-a901a356.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream-386</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/07/03 01:30</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="995b406c7e972fab181a4bb57f3b95e59b8e5bf3
+	2023/07/02 04:12"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=995b406c7e972fab181a4bb57f3b95e59b8e5bf3">995b406c7e97</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bfc478367b83b3fda580f54964aa9f3651beeb3d">bfc47836</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7406f415f386e786">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10d2a484a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15bd3d14a80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=2712dabbf125aa19">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7bc7510fe41f/non_bootable_disk-995b406c.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4e4dfa473a49/vmlinux-995b406c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/00b254b62524/bzImage-995b406c.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream-386</td>
+			<td class="manager">kernel BUG in validate_mm</td>
+		</tr>
+		
+		</tbody>
+</table>
+<i>* <s>Struck through</s> repros no longer work on HEAD.</i>
+
+
+</body>
+</html>

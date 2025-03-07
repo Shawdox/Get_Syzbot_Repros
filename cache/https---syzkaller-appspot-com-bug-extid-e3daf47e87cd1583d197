@@ -1,0 +1,2979 @@
+
+
+<!doctype html>
+<html>
+<head>
+	
+	<link rel="stylesheet" href="/static/style.css"/>
+	<script src="/static/common.js"></script>
+	
+		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-116117799-1"></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag() { dataLayer.push(arguments); }
+			gtag('js', new Date());
+			gtag('config', 'UA-116117799-1');
+		</script>
+	
+
+	<title>possible deadlock in kvfree_call_rcu (2)</title>
+</head>
+<body>
+	
+	<header id="topbar">
+		<table class="position_table">
+			<tr>
+				<td>
+					<h1><a href="/upstream">syzbot</a></h1>
+				</td>
+				<td class="namespace_td">
+					<select class="namespace" onchange="window.location.href = '/' + this.value + '';">
+						
+							<option value="android-5-10" >Android 5.10</option>
+							<option value="android-5-15" >Android 5.15</option>
+							<option value="android-54" >Android 5.4</option>
+							<option value="android-6-1" >Android 6.1</option>
+							<option value="freebsd" >FreeBSD</option>
+							<option value="upstream" selected="1">Linux</option>
+							<option value="linux-5.15" >Linux 5.15</option>
+							<option value="linux-6.1" >Linux 6.1</option>
+							<option value="netbsd" >NetBSD</option>
+							<option value="openbsd" >OpenBSD</option>
+							<option value="gvisor" >gVisor</option></select>
+				</td>
+				<td class="search">
+					
+					
+						<a href="https://syzkaller.appspot.com/_ah/conflogin?continue=https://syzkaller.appspot.com/bug%3Fextid%3De3daf47e87cd1583d197">sign-in</a> |
+					
+					<a href="https://groups.google.com/forum/#!forum/syzkaller" target="_blank">mailing list</a> |
+					<a href="https://github.com/google/syzkaller" target="_blank">source</a> |
+					<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md" target="_blank">docs</a>
+				</td>
+			</tr>
+		</table>
+		
+		<div class="navigation">
+			<div class="navigation_tab">
+				<a href='/upstream'><span style="color:DeepPink;">🐞</span> Open [1659]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/subsystems'><span style="color:DeepPink;">≡</span> Subsystems</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/fixed'><span style="color:ForestGreen;">🐞</span> Fixed [6081]</a>
+			</div>
+
+			<div class="navigation_tab" href='/upstream/invalid'>
+				<a href='/upstream/invalid'><span style="color:RoyalBlue;">🐞</span> Invalid [15101]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/backports'><span style="color:ForestGreen;">⬇</span> Missing Backports [157]</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/graph/crashes'><span style="color:ForestGreen;">≡</span> Crashes</a>
+			</div>
+
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Graphs</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href='/upstream/graph/bugs'>Kernel&nbsp;Health</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/found-bugs'>Bugs/Month</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/lifetimes'>Bug&nbsp;Lifetimes</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/fuzzing'>Fuzzing</a>
+				</div>
+			</div>
+
+			
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Coverage</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href="/upstream/graph/coverage?period=quarter">Total</a>
+					<a class="navigation_tab"
+						href="/upstream/coverage?period=month">Repo&nbsp;Heatmap</a>
+					
+						<a class="navigation_tab"
+							href="/upstream/coverage/subsystems?period=month">Subsystems&nbsp;Heatmap</a>
+					
+				</div>
+			</div>
+			
+			
+			<div class="navigation_tab navigation_right">
+				<a href='mailto:syzkaller@googlegroups.com'><span style="color:ForestGreen;">💬</span> Send us feedback</a>
+			</div>
+			
+		</div>
+		
+	</header>
+	<br>
+
+
+	<b>possible deadlock in kvfree_call_rcu (2)</b><br><br>
+	Status: <a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000001bc420061a90fac5%40google.com">upstream: reported C repro on 2024/06/10 22:50</a><br>
+	
+		
+			Subsystems: 
+				<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+		<br>
+		
+	<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md#labels">[Documentation on labels]</a><br>
+	
+	
+	Reported-by: syzbot&#43;e3daf47e87cd1583d197@syzkaller.appspotmail.com<br>
+	
+	First crash: 272d, last: 89d<br>
+	
+	<div>
+		<div class="bug-bisection-info">
+
+	
+	
+	
+		
+			<b>Cause bisection: introduced by</b>
+		
+		<b>(<a href="https://syzkaller.appspot.com/x/bisect.txt?x=138c3b32980000">bisect log</a>)</b> <span class="bad">[no-op commit]</span>:<br>
+		<span class="mono">
+		
+		commit 22a7fa8848c5e881d87ef2f7f3c2ea77b286e6f9<br>
+		Author: Shile Zhang &lt;shile.zhang@linux.alibaba.com&gt;<br>
+		Date:   Mon Dec 16 03:07:29 2019 &#43;0000<br>
+		<br>
+		&nbsp;&nbsp;<a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/commit/?id=22a7fa8848c5e881d87ef2f7f3c2ea77b286e6f9">x86/unwind/orc: Fix !CONFIG_MODULES build warning</a><br>
+		</span><br>
+	
+	
+		Crash: lost connection to test machine (<a href="https://syzkaller.appspot.com/x/log.txt?x=178c3b32980000">log</a>)<br>
+		Repro: <a href="/text?tag=ReproC&x=11aa4362980000">C</a>
+		<a href="/text?tag=ReproSyz&x=15c4d20a980000">syz</a>
+		<a href="/text?tag=KernelConfig&x=b9016f104992d69c">.config</a><br>
+	
+
+	
+	&nbsp;&nbsp;
+	
+
+</div>
+		<div class="bug-bisection-info">
+
+	
+	
+	
+		
+			<b>Fix bisection:
+			the issue occurs on the latest tested release</b>
+		
+		<b>(<a href="https://syzkaller.appspot.com/x/bisect.txt?x=177e1edf980000">bisect log</a>)</b><br>
+	
+	
+
+	
+	&nbsp;&nbsp;
+	
+
+</div>
+		<div class="bug-bisection-stop"></div>
+	</div>
+
+	
+	<div class="collapsible collapsible-show">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Discussions (1)</span>
+		</div>
+		<div class="content">
+			
+			
+			
+
+<table class="list_table">
+	<thead>
+	<tr>
+		<th>Title</th>
+		<th>Replies (including bot)</th>
+		<th>Last reply</th>
+	</tr>
+	</thead>
+	<tbody>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/0000000000001bc420061a90fac5@google.com/T/">[syzbot] [net?] possible deadlock in kvfree_call_rcu (2)</a></td>
+			<td class="stat">0 (1)</td>
+			<td class="stat">2024/06/10 22:50</td>
+		</tr>
+	
+	</tbody>
+</table>
+
+
+			
+			
+		</div>
+	</div>
+	
+	<div class="collapsible collapsible-hide">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Similar bugs (3)</span>
+		</div>
+		<div class="content">
+			
+
+
+<table class="list_table">
+	
+	<thead>
+	<tr>
+		
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+		
+		<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		<th><a onclick="return sortTable(this, 'Repro', reproSort)" href="#">Repro</a></th>
+		<th><a onclick="return sortTable(this, 'Cause bisect', textSort)" href="#">Cause bisect</a></th>
+		<th><a onclick="return sortTable(this, 'Fix bisect', textSort)" href="#">Fix bisect</a></th>
+		<th><a onclick="return sortTable(this, 'Count', numSort)" href="#">Count</a></th>
+		<th><a onclick="return sortTable(this, 'Last', timeSort)" href="#">Last</a></th>
+		<th><a onclick="return sortTable(this, 'Reported', timeSort)" href="#">Reported</a></th>
+		
+		
+		
+			<th><a onclick="return sortTable(this, 'Patched', patchedSort)" href="#">Patched</a></th>
+		
+		
+			<th><a onclick="return sortTable(this, 'Status', textSort)" href="#">Status</a></th>
+		
+		
+	</tr>
+	</thead>
+	<tbody>
+	
+		<tr>
+			<td>linux-6.1</td>
+			<td class="title">
+				<a href="/bug?extid=e5952d44ee3e1993cddf">possible deadlock in kvfree_call_rcu</a>
+					<span class="bug-label"><a href="/linux-6.1?label=origin%3Aupstream">origin:upstream</a></span>
+					<span class="bug-label"><a href="/linux-6.1?label=missing-backport">missing-backport</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">723</td>
+			<td class="stat">8d08h</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/000000000000acc5d20614312fd1%40google.com">349d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/3</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/000000000000acc5d20614312fd1%40google.com">upstream: reported C repro on 2024/03/21 20:02</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?extid=1fa663a2100308ab6eab">possible deadlock in kvfree_call_rcu</a>
+					<span class="bug-label"><a href="/upstream/s/bpf">bpf</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">1431</td>
+			<td class="stat">275d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/000000000000f2f0c0061494e610%40google.com">344d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" title="bpf: Avoid kfree_rcu() under lock in bpf_lpm_trie.">25/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/000000000000f2f0c0061494e610%40google.com">fixed on 2024/06/05 13:52</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>linux-5.15</td>
+			<td class="title">
+				<a href="/bug?extid=cb88665052d93c3f0be3">possible deadlock in kvfree_call_rcu</a>
+					<span class="bug-label"><a href="/linux-5.15?label=origin%3Aupstream">origin:upstream</a></span>
+					<span class="bug-label"><a href="/linux-5.15?label=missing-backport">missing-backport</a></span>
+			</td>
+			<td class="stat">C</td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status">done</td>
+			<td class="stat ">779</td>
+			<td class="stat">2h27m</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/0000000000005436e40614846b54%40google.com">345d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/3</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/0000000000005436e40614846b54%40google.com">upstream: reported C repro on 2024/03/25 23:20</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+	</tbody>
+</table>
+
+
+
+			
+			
+			
+			
+		</div>
+	</div>
+	
+	<div class="collapsible collapsible-hide">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Last patch testing requests (10)</span>
+		</div>
+		<div class="content">
+			
+			
+
+	<table class="list_table">
+		<caption id="jobs"><a class="plain" href="#jobs"></a></caption>
+		<thead>
+		<tr>
+			
+			<th>Created</th>
+			<th>Duration</th>
+			<th>User</th>
+			<th>Patch</th>
+			<th>Repo</th>
+			
+			<th>Result</th>
+		</tr>
+		</thead>
+		<tbody>
+		
+			<tr>
+				
+				<td class="time">2025/02/11 11:27</td>
+				<td class="time" title="started: 2025/02/11 11:27&#013;finished: 2025/02/11 11:53">
+					26m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="net"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/commit/?id=44ce3511c21c6ba87a719a0b9f140822cc1cc00b">net</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=13e40718580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/02/11 10:32</td>
+				<td class="time" title="started: 2025/02/11 10:58&#013;finished: 2025/02/11 11:24">
+					26m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="net-next"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/commit/?id=4f280376e5318f17f7388999f9a0098ccaae931d">net-next</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=11580718580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/02/11 10:32</td>
+				<td class="time" title="started: 2025/02/11 10:32&#013;finished: 2025/02/11 10:58">
+					25m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="net-next"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/commit/?id=4f280376e5318f17f7388999f9a0098ccaae931d">net-next</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=160978e4580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/02/11 07:17</td>
+				<td class="time" title="started: 2025/02/11 07:17&#013;finished: 2025/02/11 07:43">
+					26m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="linux-next"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/commit/?id=df5d6180169ae06a2eac57e33b077ad6f6252440">linux-next</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=140e9bdf980000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/02/11 04:07</td>
+				<td class="time" title="started: 2025/02/11 04:33&#013;finished: 2025/02/11 05:09">
+					35m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="net-next"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/commit/?id=907dd32b4a8aa7fedc2ef1867a6c3a1033738bcb">net-next</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=1526c3f8580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/02/11 04:07</td>
+				<td class="time" title="started: 2025/02/11 04:13&#013;finished: 2025/02/11 04:47">
+					34m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="net-next"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/commit/?id=907dd32b4a8aa7fedc2ef1867a6c3a1033738bcb">net-next</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=15b6fb18580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/02/11 04:07</td>
+				<td class="time" title="started: 2025/02/11 04:07&#013;finished: 2025/02/11 04:33">
+					26m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="net-next"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/commit/?id=907dd32b4a8aa7fedc2ef1867a6c3a1033738bcb">net-next</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=10f89bdf980000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/02/11 03:22</td>
+				<td class="time" title="started: 2025/02/11 03:47&#013;finished: 2025/02/11 04:13">
+					26m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="net-next"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/commit/?id=907dd32b4a8aa7fedc2ef1867a6c3a1033738bcb">net-next</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=1578b1b0580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/02/11 03:22</td>
+				<td class="time" title="started: 2025/02/11 03:22&#013;finished: 2025/02/11 03:59">
+					36m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="net-next"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/commit/?id=907dd32b4a8aa7fedc2ef1867a6c3a1033738bcb">net-next</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=1682c3f8580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/02/10 20:34</td>
+				<td class="time" title="started: 2025/02/10 20:34&#013;finished: 2025/02/10 21:00">
+					26m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="bpf"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/commit/?id=8784714d7f27045c7cb72456cf66705b73fbc804">bpf</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/error.txt?x=11aa72a4580000">error</a>
+					
+					
+					
+					
+					
+				</td>
+			</tr>
+		
+		</tbody>
+	</table>
+
+
+			
+			
+			
+		</div>
+	</div>
+	
+
+	
+	<br><b>Sample crash report:</b><br>
+	<div id="crash_div"><pre>======================================================
+WARNING: possible circular locking dependency detected
+6.11.0-syzkaller-10555-gbcd28cfd04eb #0 Not tainted
+------------------------------------------------------
+syz-executor207/5227 is trying to acquire lock:
+ffff8880b8629430 (krc.lock){..-.}-{2:2}, at: krc_this_cpu_lock <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/rcu/tree.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n3312'>kernel/rcu/tree.c:3312</a> [inline]
+ffff8880b8629430 (krc.lock){..-.}-{2:2}, at: add_ptr_to_bulk_krc_lock <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/rcu/tree.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n3724'>kernel/rcu/tree.c:3724</a> [inline]
+ffff8880b8629430 (krc.lock){..-.}-{2:2}, at: kvfree_call_rcu+0x18a/0x790 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/rcu/tree.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n3810'>kernel/rcu/tree.c:3810</a>
+
+but task is already holding lock:
+ffff8880b862a718 (&amp;base-&gt;lock){-.-.}-{2:2}, at: lock_timer_base+0x112/0x240 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/time/timer.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n1051'>kernel/time/timer.c:1051</a>
+
+which lock already depends on the new lock.
+
+
+the existing dependency chain (in reverse order) is:
+
+-&gt; #1 (&amp;base-&gt;lock){-.-.}-{2:2}:
+       lock_acquire+0x1ed/0x550 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/locking/lockdep.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n5822'>kernel/locking/lockdep.c:5822</a>
+       __raw_spin_lock_irqsave <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/include/linux/spinlock_api_smp.h?id=bcd28cfd04ebd3f871443e4746e511147686e517#n110'>include/linux/spinlock_api_smp.h:110</a> [inline]
+       _raw_spin_lock_irqsave+0xd5/0x120 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/locking/spinlock.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n162'>kernel/locking/spinlock.c:162</a>
+       lock_timer_base+0x112/0x240 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/time/timer.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n1051'>kernel/time/timer.c:1051</a>
+       __mod_timer+0x1ca/0xeb0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/time/timer.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n1132'>kernel/time/timer.c:1132</a>
+       queue_delayed_work_on+0x1ca/0x390 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/workqueue.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n2552'>kernel/workqueue.c:2552</a>
+       kvfree_call_rcu+0x47f/0x790 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/rcu/tree.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n3838'>kernel/rcu/tree.c:3838</a>
+       pwq_release_workfn+0x664/0x800 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/workqueue.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n5078'>kernel/workqueue.c:5078</a>
+       kthread_worker_fn+0x500/0xb70 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/kthread.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n842'>kernel/kthread.c:842</a>
+       kthread+0x2f0/0x390 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/kthread.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n389'>kernel/kthread.c:389</a>
+       ret_from_fork+0x4b/0x80 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/arch/x86/kernel/process.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n147'>arch/x86/kernel/process.c:147</a>
+       ret_from_fork_asm+0x1a/0x30 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/arch/x86/entry/entry_64.S?id=bcd28cfd04ebd3f871443e4746e511147686e517#n244'>arch/x86/entry/entry_64.S:244</a>
+
+-&gt; #0 (krc.lock){..-.}-{2:2}:
+       check_prev_add <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/locking/lockdep.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n3158'>kernel/locking/lockdep.c:3158</a> [inline]
+       check_prevs_add <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/locking/lockdep.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n3277'>kernel/locking/lockdep.c:3277</a> [inline]
+       validate_chain+0x18ef/0x5920 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/locking/lockdep.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n3901'>kernel/locking/lockdep.c:3901</a>
+       __lock_acquire+0x1384/0x2050 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/locking/lockdep.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n5199'>kernel/locking/lockdep.c:5199</a>
+       lock_acquire+0x1ed/0x550 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/locking/lockdep.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n5822'>kernel/locking/lockdep.c:5822</a>
+       __raw_spin_lock <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/include/linux/spinlock_api_smp.h?id=bcd28cfd04ebd3f871443e4746e511147686e517#n133'>include/linux/spinlock_api_smp.h:133</a> [inline]
+       _raw_spin_lock+0x2e/0x40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/locking/spinlock.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n154'>kernel/locking/spinlock.c:154</a>
+       krc_this_cpu_lock <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/rcu/tree.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n3312'>kernel/rcu/tree.c:3312</a> [inline]
+       add_ptr_to_bulk_krc_lock <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/rcu/tree.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n3724'>kernel/rcu/tree.c:3724</a> [inline]
+       kvfree_call_rcu+0x18a/0x790 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/rcu/tree.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n3810'>kernel/rcu/tree.c:3810</a>
+       trie_delete_elem+0x546/0x6a0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/bpf/lpm_trie.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n540'>kernel/bpf/lpm_trie.c:540</a>
+       bpf_prog_4febba1e7eaf042b+0x4b/0x54
+       bpf_dispatcher_nop_func <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/include/linux/bpf.h?id=bcd28cfd04ebd3f871443e4746e511147686e517#n1257'>include/linux/bpf.h:1257</a> [inline]
+       __bpf_prog_run <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/include/linux/filter.h?id=bcd28cfd04ebd3f871443e4746e511147686e517#n701'>include/linux/filter.h:701</a> [inline]
+       bpf_prog_run <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/include/linux/filter.h?id=bcd28cfd04ebd3f871443e4746e511147686e517#n708'>include/linux/filter.h:708</a> [inline]
+       __bpf_trace_run <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/trace/bpf_trace.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n2318'>kernel/trace/bpf_trace.c:2318</a> [inline]
+       bpf_trace_run2+0x2ec/0x540 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/trace/bpf_trace.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n2359'>kernel/trace/bpf_trace.c:2359</a>
+       trace_timer_start <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/include/trace/events/timer.h?id=bcd28cfd04ebd3f871443e4746e511147686e517#n52'>include/trace/events/timer.h:52</a> [inline]
+       enqueue_timer+0x3ce/0x570 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/time/timer.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n663'>kernel/time/timer.c:663</a>
+       internal_add_timer <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/time/timer.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n688'>kernel/time/timer.c:688</a> [inline]
+       __mod_timer+0xa0e/0xeb0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/time/timer.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n1183'>kernel/time/timer.c:1183</a>
+       dsp_cmx_send+0x21bf/0x2240 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/drivers/isdn/mISDN/dsp_cmx.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n1839'>drivers/isdn/mISDN/dsp_cmx.c:1839</a>
+       call_timer_fn+0x18e/0x650 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/time/timer.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n1794'>kernel/time/timer.c:1794</a>
+       expire_timers <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/time/timer.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n1845'>kernel/time/timer.c:1845</a> [inline]
+       __run_timers <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/time/timer.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n2419'>kernel/time/timer.c:2419</a> [inline]
+       __run_timer_base+0x66a/0x8e0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/time/timer.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n2430'>kernel/time/timer.c:2430</a>
+       run_timer_base <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/time/timer.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n2439'>kernel/time/timer.c:2439</a> [inline]
+       run_timer_softirq+0xb7/0x170 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/time/timer.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n2449'>kernel/time/timer.c:2449</a>
+       handle_softirqs+0x2c5/0x980 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/softirq.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n554'>kernel/softirq.c:554</a>
+       __do_softirq <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/softirq.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n588'>kernel/softirq.c:588</a> [inline]
+       invoke_softirq <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/softirq.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n428'>kernel/softirq.c:428</a> [inline]
+       __irq_exit_rcu+0xf4/0x1c0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/softirq.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n637'>kernel/softirq.c:637</a>
+       irq_exit_rcu+0x9/0x30 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/softirq.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n649'>kernel/softirq.c:649</a>
+       instr_sysvec_apic_timer_interrupt <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/arch/x86/kernel/apic/apic.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n1037'>arch/x86/kernel/apic/apic.c:1037</a> [inline]
+       sysvec_apic_timer_interrupt+0xa6/0xc0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/arch/x86/kernel/apic/apic.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n1037'>arch/x86/kernel/apic/apic.c:1037</a>
+       asm_sysvec_apic_timer_interrupt+0x1a/0x20 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/arch/x86/include/asm/idtentry.h?id=bcd28cfd04ebd3f871443e4746e511147686e517#n702'>arch/x86/include/asm/idtentry.h:702</a>
+       lock_acquire+0x264/0x550 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/locking/lockdep.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n5826'>kernel/locking/lockdep.c:5826</a>
+       rcu_lock_acquire <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/include/linux/rcupdate.h?id=bcd28cfd04ebd3f871443e4746e511147686e517#n337'>include/linux/rcupdate.h:337</a> [inline]
+       rcu_read_lock <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/include/linux/rcupdate.h?id=bcd28cfd04ebd3f871443e4746e511147686e517#n849'>include/linux/rcupdate.h:849</a> [inline]
+       __pte_offset_map+0x9e/0x380 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/mm/pgtable-generic.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n287'>mm/pgtable-generic.c:287</a>
+       pte_offset_map_nolock+0xad/0x1f0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/mm/pgtable-generic.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n314'>mm/pgtable-generic.c:314</a>
+       handle_pte_fault+0x1b5/0x6800 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/mm/memory.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n5737'>mm/memory.c:5737</a>
+       __handle_mm_fault <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/mm/memory.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n5894'>mm/memory.c:5894</a> [inline]
+       handle_mm_fault+0x1106/0x1bb0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/mm/memory.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n6062'>mm/memory.c:6062</a>
+       do_user_addr_fault <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/arch/x86/mm/fault.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n1338'>arch/x86/mm/fault.c:1338</a> [inline]
+       handle_page_fault <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/arch/x86/mm/fault.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n1481'>arch/x86/mm/fault.c:1481</a> [inline]
+       exc_page_fault+0x459/0x8c0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/arch/x86/mm/fault.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n1539'>arch/x86/mm/fault.c:1539</a>
+       asm_exc_page_fault+0x26/0x30 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/arch/x86/include/asm/idtentry.h?id=bcd28cfd04ebd3f871443e4746e511147686e517#n623'>arch/x86/include/asm/idtentry.h:623</a>
+
+other info that might help us debug this:
+
+ Possible unsafe locking scenario:
+
+       CPU0                    CPU1
+       ----                    ----
+  lock(&amp;base-&gt;lock);
+                               lock(krc.lock);
+                               lock(&amp;base-&gt;lock);
+  lock(krc.lock);
+
+ *** DEADLOCK ***
+
+6 locks held by syz-executor207/5227:
+ #0: ffff888024c67df0 (&amp;vma-&gt;vm_lock-&gt;lock){++++}-{3:3}, at: vma_start_read <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/include/linux/mm.h?id=bcd28cfd04ebd3f871443e4746e511147686e517#n704'>include/linux/mm.h:704</a> [inline]
+ #0: ffff888024c67df0 (&amp;vma-&gt;vm_lock-&gt;lock){++++}-{3:3}, at: lock_vma_under_rcu+0x34b/0x790 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/mm/memory.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n6228'>mm/memory.c:6228</a>
+ #1: ffffffff8e937ee0 (rcu_read_lock){....}-{1:2}, at: rcu_lock_acquire <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/include/linux/rcupdate.h?id=bcd28cfd04ebd3f871443e4746e511147686e517#n337'>include/linux/rcupdate.h:337</a> [inline]
+ #1: ffffffff8e937ee0 (rcu_read_lock){....}-{1:2}, at: rcu_read_lock <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/include/linux/rcupdate.h?id=bcd28cfd04ebd3f871443e4746e511147686e517#n849'>include/linux/rcupdate.h:849</a> [inline]
+ #1: ffffffff8e937ee0 (rcu_read_lock){....}-{1:2}, at: __pte_offset_map+0x82/0x380 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/mm/pgtable-generic.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n287'>mm/pgtable-generic.c:287</a>
+ #2: ffffc90000007c00 ((&amp;dsp_spl_tl)){+.-.}-{0:0}, at: call_timer_fn+0xc0/0x650 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/time/timer.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n1791'>kernel/time/timer.c:1791</a>
+ #3: ffffffff8fa01478 (dsp_lock){..-.}-{2:2}, at: dsp_cmx_send+0x26/0x2240 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/drivers/isdn/mISDN/dsp_cmx.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n1632'>drivers/isdn/mISDN/dsp_cmx.c:1632</a>
+ #4: ffff8880b862a718 (&amp;base-&gt;lock){-.-.}-{2:2}, at: lock_timer_base+0x112/0x240 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/time/timer.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n1051'>kernel/time/timer.c:1051</a>
+ #5: ffffffff8e937ee0 (rcu_read_lock){....}-{1:2}, at: rcu_lock_acquire <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/include/linux/rcupdate.h?id=bcd28cfd04ebd3f871443e4746e511147686e517#n337'>include/linux/rcupdate.h:337</a> [inline]
+ #5: ffffffff8e937ee0 (rcu_read_lock){....}-{1:2}, at: rcu_read_lock <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/include/linux/rcupdate.h?id=bcd28cfd04ebd3f871443e4746e511147686e517#n849'>include/linux/rcupdate.h:849</a> [inline]
+ #5: ffffffff8e937ee0 (rcu_read_lock){....}-{1:2}, at: __bpf_trace_run <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/trace/bpf_trace.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n2317'>kernel/trace/bpf_trace.c:2317</a> [inline]
+ #5: ffffffff8e937ee0 (rcu_read_lock){....}-{1:2}, at: bpf_trace_run2+0x1fc/0x540 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/trace/bpf_trace.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n2359'>kernel/trace/bpf_trace.c:2359</a>
+
+stack backtrace:
+CPU: 0 UID: 0 PID: 5227 Comm: syz-executor207 Not tainted 6.11.0-syzkaller-10555-gbcd28cfd04eb #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 09/13/2024
+Call Trace:
+ &lt;IRQ&gt;
+ __dump_stack <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/lib/dump_stack.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n94'>lib/dump_stack.c:94</a> [inline]
+ dump_stack_lvl+0x241/0x360 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/lib/dump_stack.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n120'>lib/dump_stack.c:120</a>
+ print_circular_bug+0x13a/0x1b0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/locking/lockdep.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n2074'>kernel/locking/lockdep.c:2074</a>
+ check_noncircular+0x36a/0x4a0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/locking/lockdep.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n2203'>kernel/locking/lockdep.c:2203</a>
+ check_prev_add <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/locking/lockdep.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n3158'>kernel/locking/lockdep.c:3158</a> [inline]
+ check_prevs_add <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/locking/lockdep.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n3277'>kernel/locking/lockdep.c:3277</a> [inline]
+ validate_chain+0x18ef/0x5920 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/locking/lockdep.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n3901'>kernel/locking/lockdep.c:3901</a>
+ __lock_acquire+0x1384/0x2050 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/locking/lockdep.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n5199'>kernel/locking/lockdep.c:5199</a>
+ lock_acquire+0x1ed/0x550 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/locking/lockdep.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n5822'>kernel/locking/lockdep.c:5822</a>
+ __raw_spin_lock <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/include/linux/spinlock_api_smp.h?id=bcd28cfd04ebd3f871443e4746e511147686e517#n133'>include/linux/spinlock_api_smp.h:133</a> [inline]
+ _raw_spin_lock+0x2e/0x40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/locking/spinlock.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n154'>kernel/locking/spinlock.c:154</a>
+ krc_this_cpu_lock <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/rcu/tree.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n3312'>kernel/rcu/tree.c:3312</a> [inline]
+ add_ptr_to_bulk_krc_lock <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/rcu/tree.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n3724'>kernel/rcu/tree.c:3724</a> [inline]
+ kvfree_call_rcu+0x18a/0x790 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/rcu/tree.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n3810'>kernel/rcu/tree.c:3810</a>
+ trie_delete_elem+0x546/0x6a0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/bpf/lpm_trie.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n540'>kernel/bpf/lpm_trie.c:540</a>
+ bpf_prog_4febba1e7eaf042b+0x4b/0x54
+ bpf_dispatcher_nop_func <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/include/linux/bpf.h?id=bcd28cfd04ebd3f871443e4746e511147686e517#n1257'>include/linux/bpf.h:1257</a> [inline]
+ __bpf_prog_run <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/include/linux/filter.h?id=bcd28cfd04ebd3f871443e4746e511147686e517#n701'>include/linux/filter.h:701</a> [inline]
+ bpf_prog_run <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/include/linux/filter.h?id=bcd28cfd04ebd3f871443e4746e511147686e517#n708'>include/linux/filter.h:708</a> [inline]
+ __bpf_trace_run <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/trace/bpf_trace.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n2318'>kernel/trace/bpf_trace.c:2318</a> [inline]
+ bpf_trace_run2+0x2ec/0x540 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/trace/bpf_trace.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n2359'>kernel/trace/bpf_trace.c:2359</a>
+ trace_timer_start <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/include/trace/events/timer.h?id=bcd28cfd04ebd3f871443e4746e511147686e517#n52'>include/trace/events/timer.h:52</a> [inline]
+ enqueue_timer+0x3ce/0x570 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/time/timer.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n663'>kernel/time/timer.c:663</a>
+ internal_add_timer <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/time/timer.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n688'>kernel/time/timer.c:688</a> [inline]
+ __mod_timer+0xa0e/0xeb0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/time/timer.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n1183'>kernel/time/timer.c:1183</a>
+ dsp_cmx_send+0x21bf/0x2240 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/drivers/isdn/mISDN/dsp_cmx.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n1839'>drivers/isdn/mISDN/dsp_cmx.c:1839</a>
+ call_timer_fn+0x18e/0x650 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/time/timer.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n1794'>kernel/time/timer.c:1794</a>
+ expire_timers <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/time/timer.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n1845'>kernel/time/timer.c:1845</a> [inline]
+ __run_timers <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/time/timer.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n2419'>kernel/time/timer.c:2419</a> [inline]
+ __run_timer_base+0x66a/0x8e0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/time/timer.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n2430'>kernel/time/timer.c:2430</a>
+ run_timer_base <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/time/timer.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n2439'>kernel/time/timer.c:2439</a> [inline]
+ run_timer_softirq+0xb7/0x170 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/time/timer.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n2449'>kernel/time/timer.c:2449</a>
+ handle_softirqs+0x2c5/0x980 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/softirq.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n554'>kernel/softirq.c:554</a>
+ __do_softirq <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/softirq.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n588'>kernel/softirq.c:588</a> [inline]
+ invoke_softirq <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/softirq.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n428'>kernel/softirq.c:428</a> [inline]
+ __irq_exit_rcu+0xf4/0x1c0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/softirq.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n637'>kernel/softirq.c:637</a>
+ irq_exit_rcu+0x9/0x30 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/softirq.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n649'>kernel/softirq.c:649</a>
+ instr_sysvec_apic_timer_interrupt <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/arch/x86/kernel/apic/apic.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n1037'>arch/x86/kernel/apic/apic.c:1037</a> [inline]
+ sysvec_apic_timer_interrupt+0xa6/0xc0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/arch/x86/kernel/apic/apic.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n1037'>arch/x86/kernel/apic/apic.c:1037</a>
+ &lt;/IRQ&gt;
+ &lt;TASK&gt;
+ asm_sysvec_apic_timer_interrupt+0x1a/0x20 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/arch/x86/include/asm/idtentry.h?id=bcd28cfd04ebd3f871443e4746e511147686e517#n702'>arch/x86/include/asm/idtentry.h:702</a>
+RIP: 0010:lock_acquire+0x264/0x550 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/kernel/locking/lockdep.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n5826'>kernel/locking/lockdep.c:5826</a>
+Code: 2b 00 74 08 4c 89 f7 e8 0a 4d 8e 00 f6 44 24 61 02 0f 85 85 01 00 00 41 f7 c7 00 02 00 00 74 01 fb 48 c7 44 24 40 0e 36 e0 45 &lt;4b&gt; c7 44 25 00 00 00 00 00 43 c7 44 25 09 00 00 00 00 43 c7 44 25
+RSP: 0000:ffffc90002f2f6a0 EFLAGS: 00000206
+RAX: 0000000000000001 RBX: 1ffff920005e5ee0 RCX: 44cd3a51c77b4d00
+RDX: dffffc0000000000 RSI: ffffffff8c0adbc0 RDI: ffffffff8c6100a0
+RBP: ffffc90002f2f7e8 R08: ffffffff942687c7 R09: 1ffffffff284d0f8
+R10: dffffc0000000000 R11: fffffbfff284d0f9 R12: 1ffff920005e5edc
+R13: dffffc0000000000 R14: ffffc90002f2f700 R15: 0000000000000246
+ rcu_lock_acquire <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/include/linux/rcupdate.h?id=bcd28cfd04ebd3f871443e4746e511147686e517#n337'>include/linux/rcupdate.h:337</a> [inline]
+ rcu_read_lock <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/include/linux/rcupdate.h?id=bcd28cfd04ebd3f871443e4746e511147686e517#n849'>include/linux/rcupdate.h:849</a> [inline]
+ __pte_offset_map+0x9e/0x380 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/mm/pgtable-generic.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n287'>mm/pgtable-generic.c:287</a>
+ pte_offset_map_nolock+0xad/0x1f0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/mm/pgtable-generic.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n314'>mm/pgtable-generic.c:314</a>
+ handle_pte_fault+0x1b5/0x6800 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/mm/memory.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n5737'>mm/memory.c:5737</a>
+ __handle_mm_fault <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/mm/memory.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n5894'>mm/memory.c:5894</a> [inline]
+ handle_mm_fault+0x1106/0x1bb0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/mm/memory.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n6062'>mm/memory.c:6062</a>
+ do_user_addr_fault <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/arch/x86/mm/fault.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n1338'>arch/x86/mm/fault.c:1338</a> [inline]
+ handle_page_fault <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/arch/x86/mm/fault.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n1481'>arch/x86/mm/fault.c:1481</a> [inline]
+ exc_page_fault+0x459/0x8c0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/arch/x86/mm/fault.c?id=bcd28cfd04ebd3f871443e4746e511147686e517#n1539'>arch/x86/mm/fault.c:1539</a>
+ asm_exc_page_fault+0x26/0x30 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/tree/arch/x86/include/asm/idtentry.h?id=bcd28cfd04ebd3f871443e4746e511147686e517#n623'>arch/x86/include/asm/idtentry.h:623</a>
+RIP: 0033:0x7fa7b8d341f8
+Code: Unable to access opcode bytes at 0x7fa7b8d341ce.
+RSP: 002b:00007ffcb673a298 EFLAGS: 00010206
+RAX: 00007fa7b8d64ad8 RBX: 0000000000000000 RCX: 0000000000000004
+RDX: 00007fa7b8d65d00 RSI: 0000000000000000 RDI: 00007fa7b8d64ad8
+RBP: 00007fa7b8d63120 R08: 0000000000000006 R09: 0000000000000006
+R10: 0000000000000000 R11: 0000000000000246 R12: 00007fa7b8d65ce8
+R13: 0000000000000000 R14: 00007fa7b8d65d00 R15: 00007fa7b8cbb1f0
+ &lt;/TASK&gt;
+----------------
+Code disassembly (best guess):
+   0:	2b 00                	sub    (%rax),%eax
+   2:	74 08                	je     0xc
+   4:	4c 89 f7             	mov    %r14,%rdi
+   7:	e8 0a 4d 8e 00       	call   0x8e4d16
+   c:	f6 44 24 61 02       	testb  $0x2,0x61(%rsp)
+  11:	0f 85 85 01 00 00    	jne    0x19c
+  17:	41 f7 c7 00 02 00 00 	test   $0x200,%r15d
+  1e:	74 01                	je     0x21
+  20:	fb                   	sti
+  21:	48 c7 44 24 40 0e 36 	movq   $0x45e0360e,0x40(%rsp)
+  28:	e0 45
+* 2a:	4b c7 44 25 00 00 00 	movq   $0x0,0x0(%r13,%r12,1) &lt;-- trapping instruction
+  31:	00 00
+  33:	43 c7 44 25 09 00 00 	movl   $0x0,0x9(%r13,%r12,1)
+  3a:	00 00
+  3c:	43                   	rex.XB
+  3d:	c7                   	.byte 0xc7
+  3e:	44                   	rex.R
+  3f:	25                   	.byte 0x25
+</pre></div><br>
+	
+
+	
+
+<table class="list_table">
+	<caption>Crashes (1097):</caption>
+		<thead>
+		<tr>
+			<th><a onclick="return sortTable(this, 'Time', textSort, true)" href="#">Time</a></th>
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+			<th><a onclick="return sortTable(this, 'Commit', textSort)" href="#">Commit</a></th>
+			<th><a onclick="return sortTable(this, 'Syzkaller', textSort)" href="#">Syzkaller</a></th>
+			<th><a onclick="return sortTable(this, 'Config', textSort)" href="#">Config</a></th>
+			<th><a onclick="return sortTable(this, 'Log', textSort)" href="#">Log</a></th>
+			<th><a onclick="return sortTable(this, 'Report', reproSort)" href="#">Report</a></th>
+			<th><a onclick="return sortTable(this, 'Syz repro', reproSort)" href="#">Syz repro</a></th>
+			<th><a onclick="return sortTable(this, 'C repro', textSort)" href="#">C repro</a></th>
+			<th><a onclick="return sortTable(this, 'VM info', textSort)" href="#">VM info</a></th>
+			<th><a onclick="return sortTable(this, 'Assets', textSort)" href="#">Assets</a> (<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot_assets.md">help?</a>)</th>
+			<th><a onclick="return sortTable(this, 'Manager', textSort)" href="#">Manager</a></th>
+			<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		</tr>
+		</thead>
+		<tbody>
+		
+		<tr>
+			<td class="time">2024/10/04 03:54</td>
+			<td class="kernel" title="bpf">bpf</td>
+			<td class="tag" title="bcd28cfd04ebd3f871443e4746e511147686e517
+	2024/10/02 20:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/log/?id=bcd28cfd04ebd3f871443e4746e511147686e517">bcd28cfd04eb</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d7906effc263366a8b067258cec67072b29aa5e0">d7906eff</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d3e39725ec0dfcbc">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=166bb680580000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=111f0767980000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=12d94c57980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=164a4b8b980000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=10835f3b980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2f9443c476df/disk-bcd28cfd.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/759286342946/vmlinux-bcd28cfd.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b94e6a4a2e8d/bzImage-bcd28cfd.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-bpf-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/06/21 14:57</td>
+			<td class="kernel" title="bpf">bpf</td>
+			<td class="tag" title="36534d3c54537bf098224a32dc31397793d4594d
+	2024/06/11 02:50"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/log/?id=36534d3c54537bf098224a32dc31397793d4594d">36534d3c5453</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/dac2aa43b4dbdbffa2c5e24a736096a6d928f633">dac2aa43</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=333ebe38d43c42e2">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16c777ee980000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1146d151980000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=16288a61980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=104090d6980000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=165bb071980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4e648f638b5f/disk-36534d3c.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/bbe0d41240f1/vmlinux-36534d3c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/17eb17ecd214/bzImage-36534d3c.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-bpf-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/06/21 14:19</td>
+			<td class="kernel" title="bpf">bpf</td>
+			<td class="tag" title="36534d3c54537bf098224a32dc31397793d4594d
+	2024/06/11 02:50"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/log/?id=36534d3c54537bf098224a32dc31397793d4594d">36534d3c5453</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/dac2aa43b4dbdbffa2c5e24a736096a6d928f633">dac2aa43</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=333ebe38d43c42e2">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=141ccdda980000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11fa29ea980000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=11deafb1980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=14aa608e980000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=1204d08e980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4e648f638b5f/disk-36534d3c.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/bbe0d41240f1/vmlinux-36534d3c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/17eb17ecd214/bzImage-36534d3c.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-bpf-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/06/21 13:37</td>
+			<td class="kernel" title="bpf">bpf</td>
+			<td class="tag" title="36534d3c54537bf098224a32dc31397793d4594d
+	2024/06/11 02:50"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/log/?id=36534d3c54537bf098224a32dc31397793d4594d">36534d3c5453</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/dac2aa43b4dbdbffa2c5e24a736096a6d928f633">dac2aa43</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=333ebe38d43c42e2">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=139ec02a980000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=127a883e980000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=157ad151980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=12f2ff56980000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=13eeafb1980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4e648f638b5f/disk-36534d3c.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/bbe0d41240f1/vmlinux-36534d3c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/17eb17ecd214/bzImage-36534d3c.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-bpf-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/06/07 00:14</td>
+			<td class="kernel" title="bpf">bpf</td>
+			<td class="tag" title="0dcc53abf58d572d34c5313de85f607cd33fc691
+	2024/06/06 11:34"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/log/?id=0dcc53abf58d572d34c5313de85f607cd33fc691">0dcc53abf58d</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/121701b62358a454bbfdccfadfcce9bb843602d6">121701b6</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b9016f104992d69c">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12287274980000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=149151ce980000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=177fbfc2980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=15a0aeac980000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=11f1aa22980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/34587fb77a38/disk-0dcc53ab.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c6139df1434d/vmlinux-0dcc53ab.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3e72e66b5cbc/bzImage-0dcc53ab.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-bpf-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/10 03:28</td>
+			<td class="kernel" title="net-next">net-next</td>
+			<td class="tag" title="cf6d9fe09185aa7e296c24385940f29a1364e87d
+	2024/11/09 17:43"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/log/?id=cf6d9fe09185aa7e296c24385940f29a1364e87d">cf6d9fe09185</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6b856513c13bbdf86191190923fb64438219ea68">6b856513</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ea5200d154f868aa">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=151e1ea7980000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=104db0c0580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=131e1ea7980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=144db0c0580000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=171e1ea7980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/55dc4020bbca/disk-cf6d9fe0.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/82ef5253745a/vmlinux-cf6d9fe0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0a4aaa3b3834/bzImage-cf6d9fe0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/08 12:26</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="906bd684e4b1e517dd424a354744c5b0aebef8af
+	2024/11/07 22:53"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=906bd684e4b1e517dd424a354744c5b0aebef8af">906bd684e4b1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/179b040e9d2068ccf2d0e0d3b084dd2293d85e04">179b040e</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e64b6ec9385faef5">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1285ee30580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1609cea7980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=2af7dab77ef2d758">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8e9af0457d22/disk-906bd684.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/543d6ac8ddc4/vmlinux-906bd684.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/42c36ce0fd68/bzImage-906bd684.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-badwrites-root</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/08 09:51</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="906bd684e4b1e517dd424a354744c5b0aebef8af
+	2024/11/07 22:53"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=906bd684e4b1e517dd424a354744c5b0aebef8af">906bd684e4b1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/179b040e9d2068ccf2d0e0d3b084dd2293d85e04">179b040e</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=64aa0d9945bd5c1">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=169ccea7980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1419c0c0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=1a27a69766a5af1">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/216b277852c8/disk-906bd684.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/76033c8a938c/vmlinux-906bd684.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ab45fb75eef2/bzImage-906bd684.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/08 06:06</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="906bd684e4b1e517dd424a354744c5b0aebef8af
+	2024/11/07 22:53"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=906bd684e4b1e517dd424a354744c5b0aebef8af">906bd684e4b1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c069283c08fdf374781b75452d49c5a29e92a8c3">c069283c</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=20d60fe605153ebe">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10c34ea7980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1690ee30580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=27e06f3814be5fe8">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e2c59b90f607/disk-906bd684.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3077b4bd37ab/vmlinux-906bd684.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7ded2c585379/bzImage-906bd684.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-selinux-root</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/07 22:34</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2
+	2024/11/06 23:09"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2">ff7afaeca1a1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c069283c08fdf374781b75452d49c5a29e92a8c3">c069283c</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ccde56cfe75061d9">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10fd8ea7980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13b2fd5f980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=596adecd61c925f1">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/85da39cb77dc/disk-ff7afaec.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/00a95f1f3a0f/vmlinux-ff7afaec.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f3fafdf3153c/bzImage-ff7afaec.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-badwrites-root</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/06 07:18</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="2e1b3cc9d7f790145a80cb705b168f05dab65df2
+	2024/11/05 01:23"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=2e1b3cc9d7f790145a80cb705b168f05dab65df2">2e1b3cc9d7f7</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/3a4654820e658eac4775498511ddef4f1019ed67">3a465482</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c0b2fb415081f288">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17474e30580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=154136a7980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=3b5836e202e9adca">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/96e4f790a995/disk-2e1b3cc9.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d624c9aeae08/vmlinux-2e1b3cc9.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e0b61a1fe229/bzImage-2e1b3cc9.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-selinux-root</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/03 16:35</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="3e5e6c9900c3d71895e8bdeacfb579462e98eba1
+	2024/11/02 19:27"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=3e5e6c9900c3d71895e8bdeacfb579462e98eba1">3e5e6c9900c3</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f00eed24f2a1332b07fef1a353a439133978d97b">f00eed24</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=cf5329baa0b5a257">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=137f0740580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15d64587980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=e43364e5e16a1b88">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fdb02302219c/disk-3e5e6c99.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/90c0f59f141e/vmlinux-3e5e6c99.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1d4999d67d87/bzImage-3e5e6c99.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-badwrites-root</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/03 11:16</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="3e5e6c9900c3d71895e8bdeacfb579462e98eba1
+	2024/11/02 19:27"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=3e5e6c9900c3d71895e8bdeacfb579462e98eba1">3e5e6c9900c3</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f00eed24f2a1332b07fef1a353a439133978d97b">f00eed24</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=672325e7ab17fdf7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12bbe987980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15da8d5f980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=5c12abd8b4437860">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/897aa492080a/disk-3e5e6c99.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/73c5d5a161c7/vmlinux-3e5e6c99.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5a4c3efa2b12/bzImage-3e5e6c99.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/03 10:10</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="3e5e6c9900c3d71895e8bdeacfb579462e98eba1
+	2024/11/02 19:27"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=3e5e6c9900c3d71895e8bdeacfb579462e98eba1">3e5e6c9900c3</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f00eed24f2a1332b07fef1a353a439133978d97b">f00eed24</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=728f7ffd25400452">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12469aa7980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11aa6b40580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=8a50f4e5de8f4003">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1a172894b257/disk-3e5e6c99.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/082ab4d460ff/vmlinux-3e5e6c99.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/19475ee58348/bzImage-3e5e6c99.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-selinux-root</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/23 16:10</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="c2ee9f594da826bea183ed14f2cc029c719bf4da
+	2024/10/21 22:49"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=c2ee9f594da826bea183ed14f2cc029c719bf4da">c2ee9f594da8</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/15fa29791c1707abd7faed4110e284d0ccb72fae">15fa2979</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=eb669db83dde269">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12623640580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12e8265f980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=753c8484228145cb">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/46565cbc53a2/disk-c2ee9f59.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e31e6708341c/vmlinux-c2ee9f59.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0fa951b908bd/bzImage-c2ee9f59.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-badwrites-root</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/23 16:10</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="c2ee9f594da826bea183ed14f2cc029c719bf4da
+	2024/10/21 22:49"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=c2ee9f594da826bea183ed14f2cc029c719bf4da">c2ee9f594da8</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/15fa29791c1707abd7faed4110e284d0ccb72fae">15fa2979</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=eb669db83dde269">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12194c30580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=104388a7980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=d7120aa62ca2e453">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/46565cbc53a2/disk-c2ee9f59.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e31e6708341c/vmlinux-c2ee9f59.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0fa951b908bd/bzImage-c2ee9f59.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-badwrites-root</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/22 10:17</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="c2ee9f594da826bea183ed14f2cc029c719bf4da
+	2024/10/21 22:49"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=c2ee9f594da826bea183ed14f2cc029c719bf4da">c2ee9f594da8</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a93682b3599755b030b6c0211c22e56f5e0848f1">a93682b3</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d44fc602ab955c76">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=147f90a7980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12b18a5f980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=f5ccc7d71bcafaa8">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5e9cae5a94db/disk-c2ee9f59.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8cf983ace88e/vmlinux-c2ee9f59.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/af3c99ba1a93/bzImage-c2ee9f59.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-selinux-root</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/18 08:08</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="6efbea77b390604a7be7364583e19cd2d6a1291b
+	2024/10/17 16:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=6efbea77b390604a7be7364583e19cd2d6a1291b">6efbea77b390</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/666f77ed02b98b834393ff84c646a8d611605f6f">666f77ed</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=cfbd94c114a3d407">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1168c240580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16646f27980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b618a7ff0f3bc842">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9666c3f5fb9e/disk-6efbea77.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b2d2aead65fd/vmlinux-6efbea77.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/001618f6a024/bzImage-6efbea77.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/17 07:24</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="c964ced7726294d40913f2127c3f185a92cb4a41
+	2024/10/16 20:37"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=c964ced7726294d40913f2127c3f185a92cb4a41">c964ced77262</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/666f77ed02b98b834393ff84c646a8d611605f6f">666f77ed</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=164d2822debd8b0d">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12180357980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1651391b980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=3dedf41ffcaad2b9">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f38e667195b9/disk-c964ced7.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/26d0c90447f6/vmlinux-c964ced7.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dad0aed39425/bzImage-c964ced7.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-smack-root</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/17 10:26</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="4a5df37964673effcd9f84041f7423206a5ae5f2
+	2024/11/17 00:00"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=4a5df37964673effcd9f84041f7423206a5ae5f2">4a5df3796467</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/cfe3a04a188eb9a2c407783d8d6e6f55a4b30886">cfe3a04a</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=95b7d4b29182ed62">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1724f130580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=102c5378580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-4a5df379.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cb509a18129b/vmlinux-4a5df379.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4a4deaeedf54/bzImage-4a5df379.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/14 18:19</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="0a9b9d17f3a781dea03baca01c835deaa07f7cc3
+	2024/11/13 21:32"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=0a9b9d17f3a781dea03baca01c835deaa07f7cc3">0a9b9d17f3a7</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/77f3eeb755d0c3e79023775a7e72e05dded0f8a1">77f3eeb7</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=327b6119dd928cbc">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1355f4c0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16b22130580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=2abcdb9988c1cd91">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-0a9b9d17.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/195202dc7078/vmlinux-0a9b9d17.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a4b9f1da6d1b/bzImage-0a9b9d17.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/08 05:09</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="906bd684e4b1e517dd424a354744c5b0aebef8af
+	2024/11/07 22:53"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=906bd684e4b1e517dd424a354744c5b0aebef8af">906bd684e4b1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/179b040e9d2068ccf2d0e0d3b084dd2293d85e04">179b040e</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=20d60fe605153ebe">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=149c035f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=127f5d87980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=e674925541071cf6">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-906bd684.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/34d4b570061f/vmlinux-906bd684.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/08ae18992ed1/bzImage-906bd684.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/07 14:35</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2
+	2024/11/06 23:09"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2">ff7afaeca1a1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/867e44df36d93e8127938eca6f6a5c339a2ba0b8">867e44df</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=11254d3590b16717">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11902d87980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15902d87980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-ff7afaec.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d8c6d968e5c0/vmlinux-ff7afaec.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dcee7f1927a8/bzImage-ff7afaec.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/07 14:35</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2
+	2024/11/06 23:09"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ff7afaeca1a15fbeaa2c4795ee806c0667bd77b2">ff7afaeca1a1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/867e44df36d93e8127938eca6f6a5c339a2ba0b8">867e44df</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=11254d3590b16717">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17103f40580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11850ea7980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-ff7afaec.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d8c6d968e5c0/vmlinux-ff7afaec.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dcee7f1927a8/bzImage-ff7afaec.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/03 20:58</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="b9021de3ec2f39074aae92ed69c3823e30cd8cdb
+	2024/11/03 18:26"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=b9021de3ec2f39074aae92ed69c3823e30cd8cdb">b9021de3ec2f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f00eed24f2a1332b07fef1a353a439133978d97b">f00eed24</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=672325e7ab17fdf7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12298740580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17a0c587980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-b9021de3.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/69f0dcfd4970/vmlinux-b9021de3.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6a2aeb3206b0/bzImage-b9021de3.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/02 23:40</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="11066801dd4b7c4d75fce65c812723a80c1481ae
+	2024/11/02 02:05"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=11066801dd4b7c4d75fce65c812723a80c1481ae">11066801dd4b</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f00eed24f2a1332b07fef1a353a439133978d97b">f00eed24</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=728f7ffd25400452">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=132fd630580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11d46987980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=394898d22684355a">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-11066801.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7bed13852afc/vmlinux-11066801.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/bff1dbfb5cae/bzImage-11066801.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/22 06:29</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="c2ee9f594da826bea183ed14f2cc029c719bf4da
+	2024/10/21 22:49"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=c2ee9f594da826bea183ed14f2cc029c719bf4da">c2ee9f594da8</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a93682b3599755b030b6c0211c22e56f5e0848f1">a93682b3</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d44fc602ab955c76">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17308a5f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13c6dc87980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=233195fa7c24b3b0">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-c2ee9f59.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b9e61ac77a9d/vmlinux-c2ee9f59.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ca5323fafeb1/bzImage-c2ee9f59.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/18 12:35</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="4d939780b70592e0f4bc6c397e52e518f8fb7916
+	2024/10/17 23:33"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=4d939780b70592e0f4bc6c397e52e518f8fb7916">4d939780b705</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0270e7290c090520569b42253bbe13ee1bdb0d92">0270e729</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=cfbd94c114a3d407">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1335c240580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12b84c5f980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-4d939780.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/12c327c1ad70/vmlinux-4d939780.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c7596a960357/bzImage-4d939780.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/18 02:43</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="6efbea77b390604a7be7364583e19cd2d6a1291b
+	2024/10/17 16:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=6efbea77b390604a7be7364583e19cd2d6a1291b">6efbea77b390</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/666f77ed02b98b834393ff84c646a8d611605f6f">666f77ed</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=cfbd94c114a3d407">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11570c5f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15264240580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-6efbea77.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/aa4b0fb0c7f0/vmlinux-6efbea77.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7128c5b0c0b5/bzImage-6efbea77.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/08 11:22</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="906bd684e4b1e517dd424a354744c5b0aebef8af
+	2024/11/07 22:53"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=906bd684e4b1e517dd424a354744c5b0aebef8af">906bd684e4b1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/179b040e9d2068ccf2d0e0d3b084dd2293d85e04">179b040e</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e568a63823509f1f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1421ee30580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11d3dd87980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=e149c1714ff282cb">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-906bd684.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9535b001bd69/vmlinux-906bd684.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/92e5ecf7bef7/bzImage-906bd684.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream-386</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/18 04:11</td>
+			<td class="kernel" title="bpf">bpf</td>
+			<td class="tag" title="9f8e716d46c68112484a23d1742d9ec725e082fc
+	2024/11/13 17:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/log/?id=9f8e716d46c68112484a23d1742d9ec725e082fc">9f8e716d46c6</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/cfe3a04a188eb9a2c407783d8d6e6f55a4b30886">cfe3a04a</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d2aeec8c0b2e420c">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=108c8930580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14b4b2e8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=c1cbc25c1da1a660">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ce7d5d8e76ac/disk-9f8e716d.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/adb0bd64fea2/vmlinux-9f8e716d.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a0d2a05ea108/bzImage-9f8e716d.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-bpf-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/12 20:01</td>
+			<td class="kernel" title="bpf">bpf</td>
+			<td class="tag" title="fb86c42a2a5d44e849ddfbc98b8d2f4f40d36ee3
+	2024/11/08 20:41"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/log/?id=fb86c42a2a5d44e849ddfbc98b8d2f4f40d36ee3">fb86c42a2a5d</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/75bb1b32609dc8e20e442a992f648e465c66cdf3">75bb1b32</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=11254d3590b16717">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=172c735f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=105ff8c0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=4056e6cfec7335c5">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5b202234ee08/disk-fb86c42a.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dbf4c194ce1d/vmlinux-fb86c42a.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/44077f5ea6d7/bzImage-fb86c42a.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-bpf-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/12 13:06</td>
+			<td class="kernel" title="bpf">bpf</td>
+			<td class="tag" title="fb86c42a2a5d44e849ddfbc98b8d2f4f40d36ee3
+	2024/11/08 20:41"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/log/?id=fb86c42a2a5d44e849ddfbc98b8d2f4f40d36ee3">fb86c42a2a5d</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/75bb1b32609dc8e20e442a992f648e465c66cdf3">75bb1b32</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=11254d3590b16717">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16a2b35f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1557fe30580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=77042004ceff0ec3">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5b202234ee08/disk-fb86c42a.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dbf4c194ce1d/vmlinux-fb86c42a.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/44077f5ea6d7/bzImage-fb86c42a.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-bpf-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/10 05:15</td>
+			<td class="kernel" title="bpf">bpf</td>
+			<td class="tag" title="fb86c42a2a5d44e849ddfbc98b8d2f4f40d36ee3
+	2024/11/08 20:41"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/log/?id=fb86c42a2a5d44e849ddfbc98b8d2f4f40d36ee3">fb86c42a2a5d</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6b856513c13bbdf86191190923fb64438219ea68">6b856513</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=11254d3590b16717">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15cfb0c0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=111f14e8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=44243c76d1bed7d1">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5b202234ee08/disk-fb86c42a.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dbf4c194ce1d/vmlinux-fb86c42a.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/44077f5ea6d7/bzImage-fb86c42a.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-bpf-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/09 06:31</td>
+			<td class="kernel" title="bpf">bpf</td>
+			<td class="tag" title="fb86c42a2a5d44e849ddfbc98b8d2f4f40d36ee3
+	2024/11/08 20:41"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/log/?id=fb86c42a2a5d44e849ddfbc98b8d2f4f40d36ee3">fb86c42a2a5d</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6b856513c13bbdf86191190923fb64438219ea68">6b856513</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=11254d3590b16717">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=122c9e30580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=119ac35f980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=9e122ec262ceaa0d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5b202234ee08/disk-fb86c42a.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dbf4c194ce1d/vmlinux-fb86c42a.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/44077f5ea6d7/bzImage-fb86c42a.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-bpf-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/08 08:50</td>
+			<td class="kernel" title="bpf">bpf</td>
+			<td class="tag" title="44d0469f79bd3d0b3433732877358df7dc6b17b1
+	2024/11/06 19:08"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/log/?id=44d0469f79bd3d0b3433732877358df7dc6b17b1">44d0469f79bd</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/179b040e9d2068ccf2d0e0d3b084dd2293d85e04">179b040e</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=11254d3590b16717">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1692ee30580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1298cea7980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=e30d52c33a120ab8">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1e9cfde0e10a/disk-44d0469f.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e3a077989683/vmlinux-44d0469f.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e894aa25694e/bzImage-44d0469f.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-bpf-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/07 15:35</td>
+			<td class="kernel" title="bpf">bpf</td>
+			<td class="tag" title="44d0469f79bd3d0b3433732877358df7dc6b17b1
+	2024/11/06 19:08"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/log/?id=44d0469f79bd3d0b3433732877358df7dc6b17b1">44d0469f79bd</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c069283c08fdf374781b75452d49c5a29e92a8c3">c069283c</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=11254d3590b16717">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13830ea7980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14b43f40580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=a47537e9b9dfb3ac">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1e9cfde0e10a/disk-44d0469f.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e3a077989683/vmlinux-44d0469f.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e894aa25694e/bzImage-44d0469f.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-bpf-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/04 11:16</td>
+			<td class="kernel" title="bpf">bpf</td>
+			<td class="tag" title="6c52d4da1c742cd01a797a4d0a2d3c5a60dc9bfe
+	2024/11/01 02:49"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/log/?id=6c52d4da1c742cd01a797a4d0a2d3c5a60dc9bfe">6c52d4da1c74</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f00eed24f2a1332b07fef1a353a439133978d97b">f00eed24</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=672325e7ab17fdf7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15b986a7980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16fac740580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=32e2d9bfa699027a">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/89937e5da907/disk-6c52d4da.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8eca9b412b80/vmlinux-6c52d4da.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7dde0a50ddab/bzImage-6c52d4da.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-bpf-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/04 09:37</td>
+			<td class="kernel" title="bpf">bpf</td>
+			<td class="tag" title="6c52d4da1c742cd01a797a4d0a2d3c5a60dc9bfe
+	2024/11/01 02:49"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/log/?id=6c52d4da1c742cd01a797a4d0a2d3c5a60dc9bfe">6c52d4da1c74</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f00eed24f2a1332b07fef1a353a439133978d97b">f00eed24</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=672325e7ab17fdf7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11ccc740580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=117686a7980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7f438c329660820e">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/89937e5da907/disk-6c52d4da.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8eca9b412b80/vmlinux-6c52d4da.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7dde0a50ddab/bzImage-6c52d4da.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-bpf-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/03 18:33</td>
+			<td class="kernel" title="bpf">bpf</td>
+			<td class="tag" title="6c52d4da1c742cd01a797a4d0a2d3c5a60dc9bfe
+	2024/11/01 02:49"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/log/?id=6c52d4da1c742cd01a797a4d0a2d3c5a60dc9bfe">6c52d4da1c74</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f00eed24f2a1332b07fef1a353a439133978d97b">f00eed24</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=672325e7ab17fdf7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11a64d5f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=151efaa7980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ba9d6ee4fd7aa78e">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/89937e5da907/disk-6c52d4da.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8eca9b412b80/vmlinux-6c52d4da.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7dde0a50ddab/bzImage-6c52d4da.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-bpf-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/03 08:37</td>
+			<td class="kernel" title="bpf">bpf</td>
+			<td class="tag" title="6c52d4da1c742cd01a797a4d0a2d3c5a60dc9bfe
+	2024/11/01 02:49"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/log/?id=6c52d4da1c742cd01a797a4d0a2d3c5a60dc9bfe">6c52d4da1c74</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f00eed24f2a1332b07fef1a353a439133978d97b">f00eed24</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=672325e7ab17fdf7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12149aa7980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13808d5f980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=be61d8f2e1c51ba4">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/89937e5da907/disk-6c52d4da.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8eca9b412b80/vmlinux-6c52d4da.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7dde0a50ddab/bzImage-6c52d4da.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-bpf-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/03 01:24</td>
+			<td class="kernel" title="net">net</td>
+			<td class="tag" title="b2183187c5fd30659b9caccb92f7e5e680301769
+	2024/11/02 02:02"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/log/?id=b2183187c5fd30659b9caccb92f7e5e680301769">b2183187c5fd</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f00eed24f2a1332b07fef1a353a439133978d97b">f00eed24</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=672325e7ab17fdf7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16d66987980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13281aa7980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b1377ab043e50247">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/34fd8fbfb246/disk-b2183187.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d03b9b6ff534/vmlinux-b2183187.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3304dee9907a/bzImage-b2183187.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-this-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/01 02:20</td>
+			<td class="kernel" title="bpf">bpf</td>
+			<td class="tag" title="c40dd8c4732551605712985bc5b7045094c6458d
+	2024/10/31 15:15"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/log/?id=c40dd8c4732551605712985bc5b7045094c6458d">c40dd8c47325</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/96eb609f6eb9558e2fab491a2c63a11bb0556471">96eb609f</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=309bb816d40abc28">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15a46e87980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13bc155f980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=98ed22df16322644">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f38e93d395b4/disk-c40dd8c4.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/49f7c6b95b00/vmlinux-c40dd8c4.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d58882140682/bzImage-c40dd8c4.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-bpf-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/31 12:55</td>
+			<td class="kernel" title="bpf">bpf</td>
+			<td class="tag" title="053b212b3a356e47fe7772fbf19e07721393ba72
+	2024/10/30 19:13"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/log/?id=053b212b3a356e47fe7772fbf19e07721393ba72">053b212b3a35</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/fb888278a6b21eda7fa63551c83fd17b90305ba1">fb888278</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=309bb816d40abc28">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10cd52a7980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14145540580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=513c26aa0e1a9498">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f00a2dab9828/disk-053b212b.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2cc1d293c933/vmlinux-053b212b.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c199150a37af/bzImage-053b212b.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-bpf-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/28 06:37</td>
+			<td class="kernel" title="bpf">bpf</td>
+			<td class="tag" title="ae90f6a6170d7a7a1aa4fddf664fbd093e3023bc
+	2024/10/24 23:53"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/log/?id=ae90f6a6170d7a7a1aa4fddf664fbd093e3023bc">ae90f6a6170d</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/65e8686b0e9e909b6ea5629f95a9b14e81927872">65e8686b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=309bb816d40abc28">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1615b24b980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=129c6940580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=d2f2c9030b125cc8">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fd08e9b3dd55/disk-ae90f6a6.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9dbe075b9179/vmlinux-ae90f6a6.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/635333d1c2e3/bzImage-ae90f6a6.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-bpf-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/22 09:02</td>
+			<td class="kernel" title="bpf">bpf</td>
+			<td class="tag" title="a552e2ef5fd1a6c78267cd4ec5a9b49aa11bbb1c
+	2024/10/21 07:45"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/log/?id=a552e2ef5fd1a6c78267cd4ec5a9b49aa11bbb1c">a552e2ef5fd1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a93682b3599755b030b6c0211c22e56f5e0848f1">a93682b3</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=fc6f8ce8c5369043">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14c68a5f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17545430580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=a5dab35e7838dc08">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/921899fd5abd/disk-a552e2ef.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6d2f4df205b1/vmlinux-a552e2ef.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5bf01b09be59/bzImage-a552e2ef.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-bpf-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/02 13:07</td>
+			<td class="kernel" title="net">net</td>
+			<td class="tag" title="a3c1e45156ad39f225cd7ddae0f81230a3b1e657
+	2024/09/02 09:35"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/log/?id=a3c1e45156ad39f225cd7ddae0f81230a3b1e657">a3c1e45156ad</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/1eda0d1459e5ff07903ffa2f8cedf55ae7b24af0">1eda0d14</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=996585887acdadb3">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12275b47980000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=106cdc67980000">report</a></td>
+			<td class="repro stale_repro">
+				<a href="/text?tag=ReproSyz&amp;x=1334f0fb980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=114e8963980000">log</a>
+			</td>
+			<td class="repro stale_repro"><a href="/text?tag=ReproC&amp;x=11274d43980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/008c8ee0f81d/disk-a3c1e451.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ff1a5bd135f4/vmlinux-a3c1e451.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fbe6ff561faf/bzImage-a3c1e451.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-this-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/02 12:03</td>
+			<td class="kernel" title="net">net</td>
+			<td class="tag" title="a3c1e45156ad39f225cd7ddae0f81230a3b1e657
+	2024/09/02 09:35"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/log/?id=a3c1e45156ad39f225cd7ddae0f81230a3b1e657">a3c1e45156ad</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/1eda0d1459e5ff07903ffa2f8cedf55ae7b24af0">1eda0d14</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=996585887acdadb3">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=109833db980000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1134ea63980000">report</a></td>
+			<td class="repro stale_repro">
+				<a href="/text?tag=ReproSyz&amp;x=13430f33980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=10831ddb980000">log</a>
+			</td>
+			<td class="repro stale_repro"><a href="/text?tag=ReproC&amp;x=15fe9b0b980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/008c8ee0f81d/disk-a3c1e451.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ff1a5bd135f4/vmlinux-a3c1e451.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fbe6ff561faf/bzImage-a3c1e451.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-this-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/02 09:41</td>
+			<td class="kernel" title="net">net</td>
+			<td class="tag" title="9b0874286768d7f380b08e4f1fa9b96c526b0bad
+	2024/09/01 17:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/log/?id=9b0874286768d7f380b08e4f1fa9b96c526b0bad">9b0874286768</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/1eda0d1459e5ff07903ffa2f8cedf55ae7b24af0">1eda0d14</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=996585887acdadb3">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10a7ab2b980000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=168a828f980000">report</a></td>
+			<td class="repro stale_repro">
+				<a href="/text?tag=ReproSyz&amp;x=10b65eb7980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=126b4d43980000">log</a>
+			</td>
+			<td class="repro stale_repro"><a href="/text?tag=ReproC&amp;x=17ca6cfb980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dcf9f909bf9e/disk-9b087428.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/edebf1ed521a/vmlinux-9b087428.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/df22819dee6a/bzImage-9b087428.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-this-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/01 21:49</td>
+			<td class="kernel" title="net">net</td>
+			<td class="tag" title="9b0874286768d7f380b08e4f1fa9b96c526b0bad
+	2024/09/01 17:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/log/?id=9b0874286768d7f380b08e4f1fa9b96c526b0bad">9b0874286768</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/1eda0d1459e5ff07903ffa2f8cedf55ae7b24af0">1eda0d14</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=996585887acdadb3">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=162ffb39980000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=156ce529980000">report</a></td>
+			<td class="repro stale_repro">
+				<a href="/text?tag=ReproSyz&amp;x=1533370b980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=115809eb980000">log</a>
+			</td>
+			<td class="repro stale_repro"><a href="/text?tag=ReproC&amp;x=157f72b7980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dcf9f909bf9e/disk-9b087428.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/edebf1ed521a/vmlinux-9b087428.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/df22819dee6a/bzImage-9b087428.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-this-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/09/01 19:55</td>
+			<td class="kernel" title="net">net</td>
+			<td class="tag" title="9b0874286768d7f380b08e4f1fa9b96c526b0bad
+	2024/09/01 17:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/log/?id=9b0874286768d7f380b08e4f1fa9b96c526b0bad">9b0874286768</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/1eda0d1459e5ff07903ffa2f8cedf55ae7b24af0">1eda0d14</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=996585887acdadb3">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11366d1f980000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16fe0f33980000">report</a></td>
+			<td class="repro stale_repro">
+				<a href="/text?tag=ReproSyz&amp;x=1455e347980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=13e8dcfb980000">log</a>
+			</td>
+			<td class="repro stale_repro"><a href="/text?tag=ReproC&amp;x=103afeb7980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dcf9f909bf9e/disk-9b087428.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/edebf1ed521a/vmlinux-9b087428.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/df22819dee6a/bzImage-9b087428.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-this-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/06/07 00:31</td>
+			<td class="kernel" title="net">net</td>
+			<td class="tag" title="b0c9a26435413b81799047a7be53255640432547
+	2024/06/06 08:15"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/log/?id=b0c9a26435413b81799047a7be53255640432547">b0c9a2643541</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/121701b62358a454bbfdccfadfcce9bb843602d6">121701b6</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b9016f104992d69c">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16b243fc980000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10570032980000">report</a></td>
+			<td class="repro stale_repro">
+				<a href="/text?tag=ReproSyz&amp;x=15c4d20a980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=12e33022980000">log</a>
+			</td>
+			<td class="repro stale_repro"><a href="/text?tag=ReproC&amp;x=11aa4362980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/62df44056b9e/disk-b0c9a264.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c6fbd552be98/vmlinux-b0c9a264.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/aaed51bb11ba/bzImage-b0c9a264.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-this-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/06 19:55</td>
+			<td class="kernel" title="bpf-next">bpf-next</td>
+			<td class="tag" title="e10500b69c3f3378f3dcfc8c2fe4cdb74fc844f5
+	2024/12/05 23:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf-next.git/log/?id=e10500b69c3f3378f3dcfc8c2fe4cdb74fc844f5">e10500b69c3f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9ac0fdc66500475f1914254ef369b32d51adbff9">9ac0fdc6</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=50c7a61469ce77e7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14b9d330580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=158398df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=caa227037bc7b25a">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/507ba3ee482f/disk-e10500b6.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eee76e040a68/vmlinux-e10500b6.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/467d27b9b238/bzImage-e10500b6.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-bpf-next-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/11 07:45</td>
+			<td class="kernel" title="net-next">net-next</td>
+			<td class="tag" title="774ca6d3bf24287ff60b7d6dd4171ebb6e47760a
+	2024/11/10 00:16"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/log/?id=774ca6d3bf24287ff60b7d6dd4171ebb6e47760a">774ca6d3bf24</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6b856513c13bbdf86191190923fb64438219ea68">6b856513</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ea5200d154f868aa">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11b634e8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=118d68c0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=13033c2a7dc11943">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cb43fe295534/disk-774ca6d3.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/91f67adff5e4/vmlinux-774ca6d3.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/af71eaae3429/bzImage-774ca6d3.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/10 02:32</td>
+			<td class="kernel" title="net-next">net-next</td>
+			<td class="tag" title="cf6d9fe09185aa7e296c24385940f29a1364e87d
+	2024/11/09 17:43"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/log/?id=cf6d9fe09185aa7e296c24385940f29a1364e87d">cf6d9fe09185</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6b856513c13bbdf86191190923fb64438219ea68">6b856513</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ea5200d154f868aa">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15b914e8580000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14ea1ea7980000">report</a></td>
+			<td class="repro stale_repro">
+				<a href="/text?tag=ReproSyz&amp;x=159f5e30580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=1249b0c0580000">log</a>
+			</td>
+			<td class="repro stale_repro"><a href="/text?tag=ReproC&amp;x=13dda35f980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/55dc4020bbca/disk-cf6d9fe0.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/82ef5253745a/vmlinux-cf6d9fe0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0a4aaa3b3834/bzImage-cf6d9fe0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/10 01:35</td>
+			<td class="kernel" title="net-next">net-next</td>
+			<td class="tag" title="cf6d9fe09185aa7e296c24385940f29a1364e87d
+	2024/11/09 17:43"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/log/?id=cf6d9fe09185aa7e296c24385940f29a1364e87d">cf6d9fe09185</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6b856513c13bbdf86191190923fb64438219ea68">6b856513</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ea5200d154f868aa">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15cc1ea7980000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=159e14e8580000">report</a></td>
+			<td class="repro stale_repro">
+				<a href="/text?tag=ReproSyz&amp;x=1719a35f980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=13cc1ea7980000">log</a>
+			</td>
+			<td class="repro stale_repro"><a href="/text?tag=ReproC&amp;x=168eb0c0580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/55dc4020bbca/disk-cf6d9fe0.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/82ef5253745a/vmlinux-cf6d9fe0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0a4aaa3b3834/bzImage-cf6d9fe0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/09 23:49</td>
+			<td class="kernel" title="net-next">net-next</td>
+			<td class="tag" title="cf6d9fe09185aa7e296c24385940f29a1364e87d
+	2024/11/09 17:43"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/log/?id=cf6d9fe09185aa7e296c24385940f29a1364e87d">cf6d9fe09185</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6b856513c13bbdf86191190923fb64438219ea68">6b856513</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ea5200d154f868aa">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17d4b0c0580000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=145aa35f980000">report</a></td>
+			<td class="repro stale_repro">
+				<a href="/text?tag=ReproSyz&amp;x=139c14e8580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=125aa35f980000">log</a>
+			</td>
+			<td class="repro stale_repro"><a href="/text?tag=ReproC&amp;x=104feea7980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/55dc4020bbca/disk-cf6d9fe0.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/82ef5253745a/vmlinux-cf6d9fe0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0a4aaa3b3834/bzImage-cf6d9fe0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/09 22:59</td>
+			<td class="kernel" title="net-next">net-next</td>
+			<td class="tag" title="cf6d9fe09185aa7e296c24385940f29a1364e87d
+	2024/11/09 17:43"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/log/?id=cf6d9fe09185aa7e296c24385940f29a1364e87d">cf6d9fe09185</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6b856513c13bbdf86191190923fb64438219ea68">6b856513</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ea5200d154f868aa">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1673eea7980000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=131ca35f980000">report</a></td>
+			<td class="repro stale_repro">
+				<a href="/text?tag=ReproSyz&amp;x=1210b0c0580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=13a814e8580000">log</a>
+			</td>
+			<td class="repro stale_repro"><a href="/text?tag=ReproC&amp;x=1173eea7980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/55dc4020bbca/disk-cf6d9fe0.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/82ef5253745a/vmlinux-cf6d9fe0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0a4aaa3b3834/bzImage-cf6d9fe0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/06 07:10</td>
+			<td class="kernel" title="net-next">net-next</td>
+			<td class="tag" title="ccb35037c48a16dfa377e3af3be2c164e73d54f0
+	2024/11/05 12:31"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/log/?id=ccb35037c48a16dfa377e3af3be2c164e73d54f0">ccb35037c48a</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/3a4654820e658eac4775498511ddef4f1019ed67">3a465482</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a9d1c42858837b59">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17c8cf40580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16fb4e30580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=dbbe802e900fe53e">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4c339ec95c42/disk-ccb35037.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/328f6f24277e/vmlinux-ccb35037.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0473d4109fcb/bzImage-ccb35037.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/04 06:59</td>
+			<td class="kernel" title="bpf-next">bpf-next</td>
+			<td class="tag" title="f2daa5a577e95f4be4e9ffae17b5bbf1ffe7a852
+	2024/11/04 00:52"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf-next.git/log/?id=f2daa5a577e95f4be4e9ffae17b5bbf1ffe7a852">f2daa5a577e9</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f00eed24f2a1332b07fef1a353a439133978d97b">f00eed24</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=aaece0de9f2a23c3">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15d74740580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10602d5f980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=eee3a823867e19d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/46188021f0f1/disk-f2daa5a5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/579e1f8f180a/vmlinux-f2daa5a5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8d8b4bb15302/bzImage-f2daa5a5.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-bpf-next-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/03 11:13</td>
+			<td class="kernel" title="bpf-next">bpf-next</td>
+			<td class="tag" title="77017b9c46820d72596e50a3986bd0734c1340a9
+	2024/11/01 19:37"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf-next.git/log/?id=77017b9c46820d72596e50a3986bd0734c1340a9">77017b9c4682</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f00eed24f2a1332b07fef1a353a439133978d97b">f00eed24</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=aaece0de9f2a23c3">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11dbe987980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=159a8d5f980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=d1b4d761fdbe391a">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2378820b99ce/disk-77017b9c.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a365e755da4a/vmlinux-77017b9c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6e6a61afe3b6/bzImage-77017b9c.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-bpf-next-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/03 08:05</td>
+			<td class="kernel" title="bpf-next">bpf-next</td>
+			<td class="tag" title="77017b9c46820d72596e50a3986bd0734c1340a9
+	2024/11/01 19:37"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf-next.git/log/?id=77017b9c46820d72596e50a3986bd0734c1340a9">77017b9c4682</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f00eed24f2a1332b07fef1a353a439133978d97b">f00eed24</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=aaece0de9f2a23c3">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=110d3630580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10a6e987980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=4374033e681a3f5e">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2378820b99ce/disk-77017b9c.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a365e755da4a/vmlinux-77017b9c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6e6a61afe3b6/bzImage-77017b9c.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-bpf-next-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/03 06:58</td>
+			<td class="kernel" title="bpf-next">bpf-next</td>
+			<td class="tag" title="77017b9c46820d72596e50a3986bd0734c1340a9
+	2024/11/01 19:37"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf-next.git/log/?id=77017b9c46820d72596e50a3986bd0734c1340a9">77017b9c4682</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f00eed24f2a1332b07fef1a353a439133978d97b">f00eed24</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=aaece0de9f2a23c3">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=129ce987980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13e93630580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=8cdb2ec47238ea14">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2378820b99ce/disk-77017b9c.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a365e755da4a/vmlinux-77017b9c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6e6a61afe3b6/bzImage-77017b9c.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-bpf-next-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/03 01:08</td>
+			<td class="kernel" title="bpf-next">bpf-next</td>
+			<td class="tag" title="77017b9c46820d72596e50a3986bd0734c1340a9
+	2024/11/01 19:37"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf-next.git/log/?id=77017b9c46820d72596e50a3986bd0734c1340a9">77017b9c4682</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f00eed24f2a1332b07fef1a353a439133978d97b">f00eed24</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=aaece0de9f2a23c3">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17501aa7980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10d01aa7980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=f10f6e9384dd4b26">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2378820b99ce/disk-77017b9c.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a365e755da4a/vmlinux-77017b9c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6e6a61afe3b6/bzImage-77017b9c.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-bpf-next-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/01 10:27</td>
+			<td class="kernel" title="bpf-next">bpf-next</td>
+			<td class="tag" title="e626a13f6fbb4697f8734333432dca577628d09a
+	2024/10/30 00:43"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf-next.git/log/?id=e626a13f6fbb4697f8734333432dca577628d09a">e626a13f6fbb</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/96eb609f6eb9558e2fab491a2c63a11bb0556471">96eb609f</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=309bb816d40abc28">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1426e630580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=140da187980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=2d46c7a34bea1747">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4751c7140599/disk-e626a13f.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/956c2b482705/vmlinux-e626a13f.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/bc9127617cc0/bzImage-e626a13f.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-bpf-next-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/31 19:12</td>
+			<td class="kernel" title="bpf-next">bpf-next</td>
+			<td class="tag" title="e626a13f6fbb4697f8734333432dca577628d09a
+	2024/10/30 00:43"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf-next.git/log/?id=e626a13f6fbb4697f8734333432dca577628d09a">e626a13f6fbb</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/96eb609f6eb9558e2fab491a2c63a11bb0556471">96eb609f</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=309bb816d40abc28">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13cea630580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15c1e55f980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=8e92b0e2621aeea1">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4751c7140599/disk-e626a13f.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/956c2b482705/vmlinux-e626a13f.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/bc9127617cc0/bzImage-e626a13f.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-bpf-next-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/29 00:58</td>
+			<td class="kernel" title="bpf-next">bpf-next</td>
+			<td class="tag" title="87cb58aebdf7005661a07e9fd5a900f924d48c75
+	2024/10/25 16:11"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf-next.git/log/?id=87cb58aebdf7005661a07e9fd5a900f924d48c75">87cb58aebdf7</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9efb3cc7d524771b347fdd278c089ee920df8da4">9efb3cc7</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=309bb816d40abc28">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13876ca7980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=110c015f980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7c8b9c0ad94651de">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/725a53de2910/disk-87cb58ae.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f12b9ae41f7c/vmlinux-87cb58ae.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a4872b48a699/bzImage-87cb58ae.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-bpf-next-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/27 20:22</td>
+			<td class="kernel" title="bpf-next">bpf-next</td>
+			<td class="tag" title="87cb58aebdf7005661a07e9fd5a900f924d48c75
+	2024/10/25 16:11"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf-next.git/log/?id=87cb58aebdf7005661a07e9fd5a900f924d48c75">87cb58aebdf7</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/65e8686b0e9e909b6ea5629f95a9b14e81927872">65e8686b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=309bb816d40abc28">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16821a87980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13e4a940580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=9ed273687d9a7497">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/725a53de2910/disk-87cb58ae.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f12b9ae41f7c/vmlinux-87cb58ae.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a4872b48a699/bzImage-87cb58ae.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-bpf-next-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/27 13:59</td>
+			<td class="kernel" title="bpf-next">bpf-next</td>
+			<td class="tag" title="87cb58aebdf7005661a07e9fd5a900f924d48c75
+	2024/10/25 16:11"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf-next.git/log/?id=87cb58aebdf7005661a07e9fd5a900f924d48c75">87cb58aebdf7</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/65e8686b0e9e909b6ea5629f95a9b14e81927872">65e8686b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=309bb816d40abc28">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16d1cca7980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17ff3e5f980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=f9dc2df7e3f367ef">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/725a53de2910/disk-87cb58ae.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f12b9ae41f7c/vmlinux-87cb58ae.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a4872b48a699/bzImage-87cb58ae.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-bpf-next-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/27 08:05</td>
+			<td class="kernel" title="bpf-next">bpf-next</td>
+			<td class="tag" title="87cb58aebdf7005661a07e9fd5a900f924d48c75
+	2024/10/25 16:11"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf-next.git/log/?id=87cb58aebdf7005661a07e9fd5a900f924d48c75">87cb58aebdf7</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/65e8686b0e9e909b6ea5629f95a9b14e81927872">65e8686b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=309bb816d40abc28">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10c5b65f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=133824a7980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=8d1df072e06b4227">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/725a53de2910/disk-87cb58ae.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f12b9ae41f7c/vmlinux-87cb58ae.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a4872b48a699/bzImage-87cb58ae.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-bpf-next-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/22 09:08</td>
+			<td class="kernel" title="net-next">net-next</td>
+			<td class="tag" title="6d858708d465669ba7de17e9c5691eb4019166e8
+	2024/10/15 17:55"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/log/?id=6d858708d465669ba7de17e9c5691eb4019166e8">6d858708d465</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a93682b3599755b030b6c0211c22e56f5e0848f1">a93682b3</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e7f0cac6eaefe81d">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13b45430580000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16eac640580000">report</a></td>
+			<td class="repro stale_repro">
+				<a href="/text?tag=ReproSyz&amp;x=158790a7980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=11eac640580000">log</a>
+			</td>
+			<td class="repro stale_repro"><a href="/text?tag=ReproC&amp;x=17b45430580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/88c678a36ec8/disk-6d858708.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b19b4fbbd593/vmlinux-6d858708.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/18fef9c3fe20/bzImage-6d858708.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/21 01:51</td>
+			<td class="kernel" title="bpf-next">bpf-next</td>
+			<td class="tag" title="8ca77b8f6223e92c9cf28ccbac54291d6e97dae1
+	2024/10/16 16:21"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf-next.git/log/?id=8ca77b8f6223e92c9cf28ccbac54291d6e97dae1">8ca77b8f6223</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/cd6fc0a3018e5d793bdcca6530622493f5e88307">cd6fc0a3</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=f95955e3f7b5790c">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=117960a7980000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=123dc25f980000">report</a></td>
+			<td class="repro stale_repro">
+				<a href="/text?tag=ReproSyz&amp;x=15aaaa40580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=13c7ec87980000">log</a>
+			</td>
+			<td class="repro stale_repro"><a href="/text?tag=ReproC&amp;x=13aaaa40580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/00ed07b98ca7/disk-8ca77b8f.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3f36577c372b/vmlinux-8ca77b8f.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f62499b197e1/bzImage-8ca77b8f.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-bpf-next-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/18 02:47</td>
+			<td class="kernel" title="net-next">net-next</td>
+			<td class="tag" title="6d858708d465669ba7de17e9c5691eb4019166e8
+	2024/10/15 17:55"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/log/?id=6d858708d465669ba7de17e9c5691eb4019166e8">6d858708d465</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/666f77ed02b98b834393ff84c646a8d611605f6f">666f77ed</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e7f0cac6eaefe81d">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17370c5f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15e64240580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=3b64630b55589ff5">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/88c678a36ec8/disk-6d858708.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b19b4fbbd593/vmlinux-6d858708.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/18fef9c3fe20/bzImage-6d858708.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/07/12 08:22</td>
+			<td class="kernel" title="bpf-next">bpf-next</td>
+			<td class="tag" title="b3470da314fd8018ee237e382000c4154a942420
+	2024/07/11 21:15"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf-next.git/log/?id=b3470da314fd8018ee237e382000c4154a942420">b3470da314fd</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/eaeb5c15ad704753a93bc8f8c7fc422d2a189581">eaeb5c15</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=db697e01efa9d1d7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=111d9ee1980000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16f911e1980000">report</a></td>
+			<td class="repro stale_repro">
+				<a href="/text?tag=ReproSyz&amp;x=14a0864e980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=16edf566980000">log</a>
+			</td>
+			<td class="repro stale_repro"><a href="/text?tag=ReproC&amp;x=10c566a5980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8b2e287d5ef6/disk-b3470da3.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d1d9a4698910/vmlinux-b3470da3.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d5bd7c94ae84/bzImage-b3470da3.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-bpf-next-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/07/12 08:20</td>
+			<td class="kernel" title="bpf-next">bpf-next</td>
+			<td class="tag" title="b3470da314fd8018ee237e382000c4154a942420
+	2024/07/11 21:15"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf-next.git/log/?id=b3470da314fd8018ee237e382000c4154a942420">b3470da314fd</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/eaeb5c15ad704753a93bc8f8c7fc422d2a189581">eaeb5c15</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=db697e01efa9d1d7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1109f985980000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=140b1715980000">report</a></td>
+			<td class="repro stale_repro">
+				<a href="/text?tag=ReproSyz&amp;x=1152140d980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=12a92d66980000">log</a>
+			</td>
+			<td class="repro stale_repro"><a href="/text?tag=ReproC&amp;x=100bf535980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8b2e287d5ef6/disk-b3470da3.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d1d9a4698910/vmlinux-b3470da3.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d5bd7c94ae84/bzImage-b3470da3.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-bpf-next-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/06/07 00:22</td>
+			<td class="kernel" title="bpf-next">bpf-next</td>
+			<td class="tag" title="7015843afcaf68c132784c89528dfddc0005e483
+	2024/06/06 13:49"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf-next.git/log/?id=7015843afcaf68c132784c89528dfddc0005e483">7015843afcaf</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/121701b62358a454bbfdccfadfcce9bb843602d6">121701b6</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=48c05addbb27f3b0">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16b5d896980000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16c9e486980000">report</a></td>
+			<td class="repro stale_repro">
+				<a href="/text?tag=ReproSyz&amp;x=149af202980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=1315ae5a980000">log</a>
+			</td>
+			<td class="repro stale_repro"><a href="/text?tag=ReproC&amp;x=10544036980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/54ad202c7930/disk-7015843a.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2ee4eddb0121/vmlinux-7015843a.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/569febc50f23/bzImage-7015843a.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-bpf-next-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/06/07 00:17</td>
+			<td class="kernel" title="net-next">net-next</td>
+			<td class="tag" title="98aa546af5e4f180439c82da403cc77926d3953b
+	2024/06/06 10:33"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/log/?id=98aa546af5e4f180439c82da403cc77926d3953b">98aa546af5e4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/121701b62358a454bbfdccfadfcce9bb843602d6">121701b6</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b9016f104992d69c">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=171e5626980000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11018674980000">report</a></td>
+			<td class="repro stale_repro">
+				<a href="/text?tag=ReproSyz&amp;x=12b5d896980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=10e33022980000">log</a>
+			</td>
+			<td class="repro stale_repro"><a href="/text?tag=ReproC&amp;x=14bed9ba980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8f70a2b46760/disk-98aa546a.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0df00b9796a0/vmlinux-98aa546a.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6068380a5ddc/bzImage-98aa546a.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-kasan-gce</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/17 08:40</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="15e7d45e786a62a211dd0098fee7c57f84f8c681
+	2024/10/16 06:02"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=15e7d45e786a62a211dd0098fee7c57f84f8c681">15e7d45e786a</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/666f77ed02b98b834393ff84c646a8d611605f6f">666f77ed</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c36416f1c54640c0">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16d37887980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11d37887980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=9bd045210647646a">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cf2ad43c81cc/disk-15e7d45e.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c85347a66a1c/vmlinux-15e7d45e.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/648cf8e59c13/bzImage-15e7d45e.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/06/07 00:37</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="ee78a17615ad0cfdbbc27182b1047cd36c9d4d5f
+	2024/06/06 03:32"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=ee78a17615ad0cfdbbc27182b1047cd36c9d4d5f">ee78a17615ad</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/121701b62358a454bbfdccfadfcce9bb843602d6">121701b6</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a8c69ee180de0793">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13f84d64980000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14136e16980000">report</a></td>
+			<td class="repro stale_repro">
+				<a href="/text?tag=ReproSyz&amp;x=131e1402980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=112b0cac980000">log</a>
+			</td>
+			<td class="repro stale_repro"><a href="/text?tag=ReproC&amp;x=1355c1ac980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c685971c3d74/disk-ee78a176.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e36ba73a22c7/vmlinux-ee78a176.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/39ed510b9963/bzImage-ee78a176.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">possible deadlock in kvfree_call_rcu</td>
+		</tr>
+		
+		</tbody>
+</table>
+<i>* <s>Struck through</s> repros no longer work on HEAD.</i>
+
+
+</body>
+</html>

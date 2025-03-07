@@ -1,0 +1,1397 @@
+
+
+<!doctype html>
+<html>
+<head>
+	
+	<link rel="stylesheet" href="/static/style.css"/>
+	<script src="/static/common.js"></script>
+	
+		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-116117799-1"></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag() { dataLayer.push(arguments); }
+			gtag('js', new Date());
+			gtag('config', 'UA-116117799-1');
+		</script>
+	
+
+	<title>KASAN: slab-use-after-free Read in lockref_get</title>
+</head>
+<body>
+	
+	<header id="topbar">
+		<table class="position_table">
+			<tr>
+				<td>
+					<h1><a href="/upstream">syzbot</a></h1>
+				</td>
+				<td class="namespace_td">
+					<select class="namespace" onchange="window.location.href = '/' + this.value + '';">
+						
+							<option value="android-5-10" >Android 5.10</option>
+							<option value="android-5-15" >Android 5.15</option>
+							<option value="android-54" >Android 5.4</option>
+							<option value="android-6-1" >Android 6.1</option>
+							<option value="freebsd" >FreeBSD</option>
+							<option value="upstream" selected="1">Linux</option>
+							<option value="linux-5.15" >Linux 5.15</option>
+							<option value="linux-6.1" >Linux 6.1</option>
+							<option value="netbsd" >NetBSD</option>
+							<option value="openbsd" >OpenBSD</option>
+							<option value="gvisor" >gVisor</option></select>
+				</td>
+				<td class="search">
+					
+					
+						<a href="https://syzkaller.appspot.com/_ah/conflogin?continue=https://syzkaller.appspot.com/bug%3Fextid%3Dd5dc2801166df6d34774">sign-in</a> |
+					
+					<a href="https://groups.google.com/forum/#!forum/syzkaller" target="_blank">mailing list</a> |
+					<a href="https://github.com/google/syzkaller" target="_blank">source</a> |
+					<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md" target="_blank">docs</a>
+				</td>
+			</tr>
+		</table>
+		
+		<div class="navigation">
+			<div class="navigation_tab">
+				<a href='/upstream'><span style="color:DeepPink;">🐞</span> Open [1659]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/subsystems'><span style="color:DeepPink;">≡</span> Subsystems</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/fixed'><span style="color:ForestGreen;">🐞</span> Fixed [6081]</a>
+			</div>
+
+			<div class="navigation_tab" href='/upstream/invalid'>
+				<a href='/upstream/invalid'><span style="color:RoyalBlue;">🐞</span> Invalid [15101]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/backports'><span style="color:ForestGreen;">⬇</span> Missing Backports [157]</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/graph/crashes'><span style="color:ForestGreen;">≡</span> Crashes</a>
+			</div>
+
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Graphs</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href='/upstream/graph/bugs'>Kernel&nbsp;Health</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/found-bugs'>Bugs/Month</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/lifetimes'>Bug&nbsp;Lifetimes</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/fuzzing'>Fuzzing</a>
+				</div>
+			</div>
+
+			
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Coverage</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href="/upstream/graph/coverage?period=quarter">Total</a>
+					<a class="navigation_tab"
+						href="/upstream/coverage?period=month">Repo&nbsp;Heatmap</a>
+					
+						<a class="navigation_tab"
+							href="/upstream/coverage/subsystems?period=month">Subsystems&nbsp;Heatmap</a>
+					
+				</div>
+			</div>
+			
+			
+			<div class="navigation_tab navigation_right">
+				<a href='mailto:syzkaller@googlegroups.com'><span style="color:ForestGreen;">💬</span> Send us feedback</a>
+			</div>
+			
+		</div>
+		
+	</header>
+	<br>
+
+
+	<b>KASAN: slab-use-after-free Read in lockref_get</b><br><br>
+	Status: <a href="https://groups.google.com/d/msgid/syzkaller-bugs/0000000000005c6453061d53bc0f%40google.com">upstream: reported C repro on 2024/07/16 02:02</a><br>
+	
+		
+			Subsystems: 
+				<span class="bug-label"><a href="/upstream/s/wireless">wireless</a></span>
+				<span class="bug-label"><a href="/upstream/s/fs">fs</a></span>
+		<br>
+		
+	<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md#labels">[Documentation on labels]</a><br>
+	
+	
+	Reported-by: syzbot&#43;d5dc2801166df6d34774@syzkaller.appspotmail.com<br>
+	
+	First crash: 272d, last: 1d09h<br>
+	
+	<div>
+		<div class="bug-bisection-info">
+
+	
+	
+	
+		
+			<b>Cause bisection: introduced by</b>
+		
+		<b>(<a href="https://syzkaller.appspot.com/x/bisect.txt?x=150e3cf1980000">bisect log</a>)</b> <span class="bad"></span>:<br>
+		<span class="mono">
+		
+		commit 0a3d898ee9a8303d5b3982b97ef0703919c3ea76<br>
+		Author: Benjamin Berg &lt;benjamin.berg@intel.com&gt;<br>
+		Date:   Wed Dec 20 02:38:01 2023 &#43;0000<br>
+		<br>
+		&nbsp;&nbsp;<a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/commit/?id=0a3d898ee9a8303d5b3982b97ef0703919c3ea76">wifi: mac80211: add/remove driver debugfs entries as appropriate</a><br>
+		</span><br>
+	
+	
+		Crash: <a href="https://syzkaller.appspot.com/x/report.txt?x=170e3cf1980000">KASAN: slab-use-after-free Read in lockref_get</a> (<a href="https://syzkaller.appspot.com/x/log.txt?x=130e3cf1980000">log</a>)<br>
+		Repro: <a href="/text?tag=ReproC&x=16ed24b5980000">C</a>
+		<a href="/text?tag=ReproSyz&x=1658c7dd980000">syz</a>
+		<a href="/text?tag=KernelConfig&x=db697e01efa9d1d7">.config</a><br>
+	
+
+	
+	&nbsp;&nbsp;
+	
+
+</div>
+		<div class="bug-bisection-info">
+
+	
+	
+	
+		
+			<b>Fix bisection:
+			the issue occurs on the latest tested release</b>
+		
+		<b>(<a href="https://syzkaller.appspot.com/x/bisect.txt?x=126afea4580000">bisect log</a>)</b><br>
+	
+	
+
+	
+	&nbsp;&nbsp;
+	
+
+</div>
+		<div class="bug-bisection-stop"></div>
+	</div>
+
+	
+	<div class="collapsible collapsible-show">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Discussions (3)</span>
+		</div>
+		<div class="content">
+			
+			
+			
+
+<table class="list_table">
+	<thead>
+	<tr>
+		<th>Title</th>
+		<th>Replies (including bot)</th>
+		<th>Last reply</th>
+	</tr>
+	</thead>
+	<tbody>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/1ff58acb-4171-46ff-8a33-821600a8d8e4@yandex.ru/T/">Managing debugfs entries and https://syzkaller.appspot.com/bug?extid=d5dc2801166df6d34774</a></td>
+			<td class="stat">2 (2)</td>
+			<td class="stat">2024/07/19 09:38</td>
+		</tr>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/0000000000005c6453061d53bc0f@google.com/T/">[syzbot] [fs?] KASAN: slab-use-after-free Read in lockref_get</a></td>
+			<td class="stat">8 (17)</td>
+			<td class="stat">2024/07/18 14:18</td>
+		</tr>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/20240716174011.236849-1-dmantipov@yandex.ru/T/">[PATCH] wifi: wireless: fix more UBSAN noise in cfg80211_conn_scan()</a></td>
+			<td class="stat">2 (2)</td>
+			<td class="stat">2024/07/16 18:21</td>
+		</tr>
+	
+	</tbody>
+</table>
+
+
+			
+			
+		</div>
+	</div>
+	
+	<div class="collapsible collapsible-hide">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Last patch testing requests (17)</span>
+		</div>
+		<div class="content">
+			
+			
+
+	<table class="list_table">
+		<caption id="jobs"><a class="plain" href="#jobs"></a></caption>
+		<thead>
+		<tr>
+			
+			<th>Created</th>
+			<th>Duration</th>
+			<th>User</th>
+			<th>Patch</th>
+			<th>Repo</th>
+			
+			<th>Result</th>
+		</tr>
+		</thead>
+		<tbody>
+		
+			<tr>
+				
+				<td class="time">2025/01/26 10:45</td>
+				<td class="time" title="started: 2025/01/26 11:23&#013;finished: 2025/01/26 11:41">
+					17m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="net-next"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/commit/?id=0ad9617c78acbc71373fb341a6f75d4012b01d69">net-next</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/error.txt?x=17e13e18580000">error</a>
+					
+					
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/01/26 10:45</td>
+				<td class="time" title="started: 2025/01/26 11:05&#013;finished: 2025/01/26 11:23">
+					18m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="net-next"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/commit/?id=0ad9617c78acbc71373fb341a6f75d4012b01d69">net-next</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/error.txt?x=17013e18580000">error</a>
+					
+					
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/01/26 10:45</td>
+				<td class="time" title="started: 2025/01/26 10:45&#013;finished: 2025/01/26 11:05">
+					19m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="net-next"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/commit/?id=0ad9617c78acbc71373fb341a6f75d4012b01d69">net-next</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/error.txt?x=1642cd64580000">error</a>
+					
+					
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/01/10 10:17</td>
+				<td class="time" title="started: 2025/01/10 10:39&#013;finished: 2025/01/10 11:02">
+					22m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="net"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/commit/?id=8c7a6efc017e59f2b773a8a4c0897309dfe1d742">net</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=10da53c4580000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=175a53c4580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/01/10 10:17</td>
+				<td class="time" title="started: 2025/01/10 10:17&#013;finished: 2025/01/10 10:39">
+					22m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="net"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/commit/?id=8c7a6efc017e59f2b773a8a4c0897309dfe1d742">net</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=124a53c4580000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=144a53c4580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/10/22 07:32</td>
+				<td class="time" title="started: 2024/10/22 07:54&#013;finished: 2024/10/22 08:40">
+					46m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="net-next"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/commit/?id=6f07cd8301706b661776074ddc97c991d107cc91">net-next</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=17aa8a5f980000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=13aa8a5f980000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/10/22 07:32</td>
+				<td class="time" title="started: 2024/10/22 07:32&#013;finished: 2024/10/22 07:54">
+					21m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="net-next"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/commit/?id=6f07cd8301706b661776074ddc97c991d107cc91">net-next</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=1264c640580000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=1464c640580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/10/08 06:51</td>
+				<td class="time" title="started: 2024/10/08 06:51&#013;finished: 2024/10/08 07:12">
+					21m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="net-next"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/commit/?id=f95b4725e796b12e5f347a0d161e1d3843142aa8">net-next</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=120c17d0580000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=140c17d0580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/07/30 06:28</td>
+				<td class="time" title="started: 2024/07/30 06:54&#013;finished: 2024/07/30 07:21">
+					26m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="net-next"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/commit/?id=1722389b0d863056d78287a120a1d6cadb8d4f7b">net-next</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=173f41c9980000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=133f41c9980000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/07/30 06:28</td>
+				<td class="time" title="started: 2024/07/30 06:52&#013;finished: 2024/07/30 07:11">
+					19m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="net-next"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/commit/?id=1722389b0d863056d78287a120a1d6cadb8d4f7b">net-next</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=131195a1980000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=151195a1980000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/07/18 10:40</td>
+				<td class="time" title="started: 2024/07/18 12:42&#013;finished: 2024/07/18 14:17">
+					1h35m
+				</td>
+				<td>
+					
+						hdanton@sina.com
+					
+				</td>
+				<td><a href="/text?tag=Patch&x=111a7b2d980000">patch</a></td>
+				<td class="kernel" title="https://git.kernel.org/pub/scm/linux/kernel/git/netdev/net-next.git 58f9416d413a"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/netdev/net-next.git/commit/?id=58f9416d413aa2c20b2515233ce450a1607ef843">https://git.kernel.org/pub/scm/linux/kernel/git/netdev/net-next.git 58f9416d413a</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=12d9e159980000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/07/17 14:07</td>
+				<td class="time" title="started: 2024/07/17 20:00&#013;finished: 2024/07/17 21:37">
+					1h37m
+				</td>
+				<td>
+					
+						eadavis@qq.com
+					
+				</td>
+				<td><a href="/text?tag=Patch&x=136131fd980000">patch</a></td>
+				<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git 58f9416d413a"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/commit/?id=58f9416d413aa2c20b2515233ce450a1607ef843">git://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git 58f9416d413a</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=13a8c72d980000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/07/17 13:19</td>
+				<td class="time" title="started: 2024/07/17 13:19&#013;finished: 2024/07/17 13:37">
+					18m
+				</td>
+				<td>
+					
+						eadavis@qq.com
+					
+				</td>
+				<td><a href="/text?tag=Patch&x=12f885a5980000">patch</a></td>
+				<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git 58f9416d413a"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/commit/?id=58f9416d413aa2c20b2515233ce450a1607ef843">git://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git 58f9416d413a</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=12034f31980000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=14034f31980000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/07/17 11:39</td>
+				<td class="time" title="started: 2024/07/17 11:42&#013;finished: 2024/07/17 12:52">
+					1h09m
+				</td>
+				<td>
+					
+						eadavis@qq.com
+					
+				</td>
+				<td><a href="/text?tag=Patch&x=1028d8e6980000">patch</a></td>
+				<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git 58f9416d413a"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/commit/?id=58f9416d413aa2c20b2515233ce450a1607ef843">git://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git 58f9416d413a</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=10f36fdd980000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=17736fdd980000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/07/17 10:59</td>
+				<td class="time" title="started: 2024/07/17 10:59&#013;finished: 2024/07/17 11:17">
+					17m
+				</td>
+				<td>
+					
+						hdanton@sina.com
+					
+				</td>
+				<td><a href="/text?tag=Patch&x=13a3b731980000">patch</a></td>
+				<td class="kernel" title="https://git.kernel.org/pub/scm/linux/kernel/git/netdev/net-next.git 58f9416d413a"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/netdev/net-next.git/commit/?id=58f9416d413aa2c20b2515233ce450a1607ef843">https://git.kernel.org/pub/scm/linux/kernel/git/netdev/net-next.git 58f9416d413a</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=16e6a03d980000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=12e6a03d980000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/07/17 03:24</td>
+				<td class="time" title="started: 2024/07/17 03:57&#013;finished: 2024/07/17 04:18">
+					21m
+				</td>
+				<td>
+					
+						eadavis@qq.com
+					
+				</td>
+				<td><a href="/text?tag=Patch&x=168e003d980000">patch</a></td>
+				<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git 58f9416d413a"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/commit/?id=58f9416d413aa2c20b2515233ce450a1607ef843">git://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git 58f9416d413a</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=13ce003d980000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=15ce003d980000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/07/16 11:20</td>
+				<td class="time" title="started: 2024/07/16 12:49&#013;finished: 2024/07/16 14:03">
+					1h13m
+				</td>
+				<td>
+					
+						hdanton@sina.com
+					
+				</td>
+				<td><a href="/text?tag=Patch&x=13cb792d980000">patch</a></td>
+				<td class="kernel" title="https://git.kernel.org/pub/scm/linux/kernel/git/netdev/net-next.git 58f9416d413a"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/netdev/net-next.git/commit/?id=58f9416d413aa2c20b2515233ce450a1607ef843">https://git.kernel.org/pub/scm/linux/kernel/git/netdev/net-next.git 58f9416d413a</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=156d152d980000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=116d152d980000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+		</tbody>
+	</table>
+
+
+			
+			
+			
+		</div>
+	</div>
+	
+
+	
+	<br><b>Sample crash report:</b><br>
+	<div id="crash_div"><pre>wlan1: authentication with 08:02:11:00:00:00 timed out
+==================================================================
+BUG: KASAN: slab-use-after-free in __lock_acquire+0x78/0x2100 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/kernel/locking/lockdep.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n5089'>kernel/locking/lockdep.c:5089</a>
+Read of size 8 at addr ffff88807bfb76d8 by task kworker/u8:7/1171
+
+CPU: 1 UID: 0 PID: 1171 Comm: kworker/u8:7 Not tainted 6.13.0-rc1-syzkaller-00230-g15bfb14727bc #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 11/25/2024
+Workqueue: events_unbound cfg80211_wiphy_work
+Call Trace:
+ &lt;TASK&gt;
+ __dump_stack <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/lib/dump_stack.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n94'>lib/dump_stack.c:94</a> [inline]
+ dump_stack_lvl+0x241/0x360 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/lib/dump_stack.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n120'>lib/dump_stack.c:120</a>
+ print_address_description <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/kasan/report.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n378'>mm/kasan/report.c:378</a> [inline]
+ print_report+0x169/0x550 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/kasan/report.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n489'>mm/kasan/report.c:489</a>
+ kasan_report+0x143/0x180 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/kasan/report.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n602'>mm/kasan/report.c:602</a>
+ __lock_acquire+0x78/0x2100 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/kernel/locking/lockdep.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n5089'>kernel/locking/lockdep.c:5089</a>
+ lock_acquire+0x1ed/0x550 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/kernel/locking/lockdep.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n5849'>kernel/locking/lockdep.c:5849</a>
+ __raw_spin_lock <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/include/linux/spinlock_api_smp.h?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n133'>include/linux/spinlock_api_smp.h:133</a> [inline]
+ _raw_spin_lock+0x2e/0x40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/kernel/locking/spinlock.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n154'>kernel/locking/spinlock.c:154</a>
+ spin_lock <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/include/linux/spinlock.h?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n351'>include/linux/spinlock.h:351</a> [inline]
+ lockref_get+0x15/0x60 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/lib/lockref.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n50'>lib/lockref.c:50</a>
+ dget <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/include/linux/dcache.h?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n340'>include/linux/dcache.h:340</a> [inline]
+ simple_recursive_removal+0x35/0x8f0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/fs/libfs.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n618'>fs/libfs.c:618</a>
+ debugfs_remove+0x49/0x70 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/fs/debugfs/inode.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n812'>fs/debugfs/inode.c:812</a>
+ ieee80211_sta_debugfs_remove+0x40/0x60 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/net/mac80211/debugfs_sta.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n1284'>net/mac80211/debugfs_sta.c:1284</a>
+ __sta_info_destroy_part2+0x35e/0x450 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/net/mac80211/sta_info.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n1476'>net/mac80211/sta_info.c:1476</a>
+ __sta_info_destroy <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/net/mac80211/sta_info.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n1492'>net/mac80211/sta_info.c:1492</a> [inline]
+ sta_info_destroy_addr+0xf4/0x140 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/net/mac80211/sta_info.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n1504'>net/mac80211/sta_info.c:1504</a>
+ ieee80211_destroy_auth_data+0x139/0x270 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/net/mac80211/mlme.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n4230'>net/mac80211/mlme.c:4230</a>
+ ieee80211_sta_work+0x1256/0x3890 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/net/mac80211/mlme.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n7878'>net/mac80211/mlme.c:7878</a>
+ cfg80211_wiphy_work+0x2db/0x480 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/net/wireless/core.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n440'>net/wireless/core.c:440</a>
+ process_one_work <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/kernel/workqueue.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n3229'>kernel/workqueue.c:3229</a> [inline]
+ process_scheduled_works+0xa66/0x1840 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/kernel/workqueue.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n3310'>kernel/workqueue.c:3310</a>
+ worker_thread+0x870/0xd30 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/kernel/workqueue.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n3391'>kernel/workqueue.c:3391</a>
+ kthread+0x2f0/0x390 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/kernel/kthread.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n389'>kernel/kthread.c:389</a>
+ ret_from_fork+0x4b/0x80 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/arch/x86/kernel/process.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n147'>arch/x86/kernel/process.c:147</a>
+ ret_from_fork_asm+0x1a/0x30 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/arch/x86/entry/entry_64.S?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n244'>arch/x86/entry/entry_64.S:244</a>
+ &lt;/TASK&gt;
+
+Allocated by task 46:
+ kasan_save_stack <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/kasan/common.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n47'>mm/kasan/common.c:47</a> [inline]
+ kasan_save_track+0x3f/0x80 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/kasan/common.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n68'>mm/kasan/common.c:68</a>
+ unpoison_slab_object <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/kasan/common.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n319'>mm/kasan/common.c:319</a> [inline]
+ __kasan_slab_alloc+0x66/0x80 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/kasan/common.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n345'>mm/kasan/common.c:345</a>
+ kasan_slab_alloc <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/include/linux/kasan.h?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n250'>include/linux/kasan.h:250</a> [inline]
+ slab_post_alloc_hook <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/slub.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n4104'>mm/slub.c:4104</a> [inline]
+ slab_alloc_node <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/slub.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n4153'>mm/slub.c:4153</a> [inline]
+ kmem_cache_alloc_lru_noprof+0x1dd/0x390 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/slub.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n4172'>mm/slub.c:4172</a>
+ __d_alloc+0x31/0x700 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/fs/dcache.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n1646'>fs/dcache.c:1646</a>
+ d_alloc <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/fs/dcache.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n1726'>fs/dcache.c:1726</a> [inline]
+ d_alloc_parallel+0xdf/0x1600 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/fs/dcache.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n2490'>fs/dcache.c:2490</a>
+ __lookup_slow+0x117/0x3f0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/fs/namei.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n1776'>fs/namei.c:1776</a>
+ lookup_one_len+0x18b/0x2d0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/fs/namei.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n2905'>fs/namei.c:2905</a>
+ start_creating+0x187/0x310 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/fs/debugfs/inode.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n378'>fs/debugfs/inode.c:378</a>
+ debugfs_create_dir+0x25/0x430 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/fs/debugfs/inode.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n582'>fs/debugfs/inode.c:582</a>
+ ieee80211_sta_debugfs_add+0x132/0x820 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/net/mac80211/debugfs_sta.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n1259'>net/mac80211/debugfs_sta.c:1259</a>
+ sta_info_insert_finish <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/net/mac80211/sta_info.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n881'>net/mac80211/sta_info.c:881</a> [inline]
+ sta_info_insert_rcu+0xecf/0x1900 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/net/mac80211/sta_info.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n949'>net/mac80211/sta_info.c:949</a>
+ sta_info_insert+0x16/0xc0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/net/mac80211/sta_info.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n954'>net/mac80211/sta_info.c:954</a>
+ ieee80211_prep_connection+0xecd/0x12d0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/net/mac80211/mlme.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n8396'>net/mac80211/mlme.c:8396</a>
+ ieee80211_mgd_auth+0xd42/0x14c0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/net/mac80211/mlme.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n8641'>net/mac80211/mlme.c:8641</a>
+ rdev_auth <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/net/wireless/rdev-ops.h?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n486'>net/wireless/rdev-ops.h:486</a> [inline]
+ cfg80211_mlme_auth+0x59f/0x970 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/net/wireless/mlme.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n291'>net/wireless/mlme.c:291</a>
+ cfg80211_conn_do_work+0x5ed/0xe60 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/net/wireless/sme.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n183'>net/wireless/sme.c:183</a>
+ cfg80211_conn_work+0x27c/0x4d0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/net/wireless/sme.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n273'>net/wireless/sme.c:273</a>
+ process_one_work <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/kernel/workqueue.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n3229'>kernel/workqueue.c:3229</a> [inline]
+ process_scheduled_works+0xa66/0x1840 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/kernel/workqueue.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n3310'>kernel/workqueue.c:3310</a>
+ worker_thread+0x870/0xd30 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/kernel/workqueue.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n3391'>kernel/workqueue.c:3391</a>
+ kthread+0x2f0/0x390 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/kernel/kthread.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n389'>kernel/kthread.c:389</a>
+ ret_from_fork+0x4b/0x80 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/arch/x86/kernel/process.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n147'>arch/x86/kernel/process.c:147</a>
+ ret_from_fork_asm+0x1a/0x30 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/arch/x86/entry/entry_64.S?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n244'>arch/x86/entry/entry_64.S:244</a>
+
+Freed by task 0:
+ kasan_save_stack <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/kasan/common.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n47'>mm/kasan/common.c:47</a> [inline]
+ kasan_save_track+0x3f/0x80 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/kasan/common.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n68'>mm/kasan/common.c:68</a>
+ kasan_save_free_info+0x40/0x50 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/kasan/generic.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n582'>mm/kasan/generic.c:582</a>
+ poison_slab_object <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/kasan/common.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n247'>mm/kasan/common.c:247</a> [inline]
+ __kasan_slab_free+0x59/0x70 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/kasan/common.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n264'>mm/kasan/common.c:264</a>
+ kasan_slab_free <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/include/linux/kasan.h?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n233'>include/linux/kasan.h:233</a> [inline]
+ slab_free_hook <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/slub.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n2338'>mm/slub.c:2338</a> [inline]
+ slab_free <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/slub.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n4598'>mm/slub.c:4598</a> [inline]
+ kmem_cache_free+0x195/0x410 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/slub.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n4700'>mm/slub.c:4700</a>
+ rcu_do_batch <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/kernel/rcu/tree.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n2567'>kernel/rcu/tree.c:2567</a> [inline]
+ rcu_core+0xaaa/0x17a0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/kernel/rcu/tree.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n2823'>kernel/rcu/tree.c:2823</a>
+ handle_softirqs+0x2d4/0x9b0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/kernel/softirq.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n554'>kernel/softirq.c:554</a>
+ __do_softirq <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/kernel/softirq.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n588'>kernel/softirq.c:588</a> [inline]
+ invoke_softirq <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/kernel/softirq.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n428'>kernel/softirq.c:428</a> [inline]
+ __irq_exit_rcu+0xf7/0x220 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/kernel/softirq.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n655'>kernel/softirq.c:655</a>
+ irq_exit_rcu+0x9/0x30 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/kernel/softirq.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n671'>kernel/softirq.c:671</a>
+ instr_sysvec_apic_timer_interrupt <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/arch/x86/kernel/apic/apic.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n1049'>arch/x86/kernel/apic/apic.c:1049</a> [inline]
+ sysvec_apic_timer_interrupt+0xa6/0xc0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/arch/x86/kernel/apic/apic.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n1049'>arch/x86/kernel/apic/apic.c:1049</a>
+ asm_sysvec_apic_timer_interrupt+0x1a/0x20 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/arch/x86/include/asm/idtentry.h?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n702'>arch/x86/include/asm/idtentry.h:702</a>
+
+Last potentially related work creation:
+ kasan_save_stack+0x3f/0x60 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/kasan/common.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n47'>mm/kasan/common.c:47</a>
+ __kasan_record_aux_stack+0xac/0xc0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/kasan/generic.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n544'>mm/kasan/generic.c:544</a>
+ __call_rcu_common <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/kernel/rcu/tree.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n3086'>kernel/rcu/tree.c:3086</a> [inline]
+ call_rcu+0x167/0xa70 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/kernel/rcu/tree.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n3190'>kernel/rcu/tree.c:3190</a>
+ __dentry_kill+0x497/0x630 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/fs/dcache.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n644'>fs/dcache.c:644</a>
+ dput+0x19f/0x2b0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/fs/dcache.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n867'>fs/dcache.c:867</a>
+ find_next_child <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/fs/libfs.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n611'>fs/libfs.c:611</a> [inline]
+ simple_recursive_removal+0x2bd/0x8f0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/fs/libfs.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n626'>fs/libfs.c:626</a>
+ debugfs_remove+0x49/0x70 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/fs/debugfs/inode.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n812'>fs/debugfs/inode.c:812</a>
+ ieee80211_debugfs_remove_netdev <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/net/mac80211/debugfs_netdev.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n1021'>net/mac80211/debugfs_netdev.c:1021</a> [inline]
+ ieee80211_debugfs_recreate_netdev+0xc4/0x1400 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/net/mac80211/debugfs_netdev.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n1043'>net/mac80211/debugfs_netdev.c:1043</a>
+ drv_remove_interface+0x1e1/0x590 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/net/mac80211/driver-ops.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n120'>net/mac80211/driver-ops.c:120</a>
+ _ieee80211_change_mac <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/net/mac80211/iface.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n277'>net/mac80211/iface.c:277</a> [inline]
+ ieee80211_change_mac+0xaf5/0x11e0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/net/mac80211/iface.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n309'>net/mac80211/iface.c:309</a>
+ dev_set_mac_address+0x327/0x510 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/net/core/dev.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n9207'>net/core/dev.c:9207</a>
+ dev_set_mac_address_user+0x31/0x50 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/net/core/dev.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n9226'>net/core/dev.c:9226</a>
+ dev_ifsioc+0xbd9/0xe70 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/net/core/dev_ioctl.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n538'>net/core/dev_ioctl.c:538</a>
+ dev_ioctl+0x719/0x1340 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/net/core/dev_ioctl.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n783'>net/core/dev_ioctl.c:783</a>
+ sock_do_ioctl+0x240/0x460 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/net/socket.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n1223'>net/socket.c:1223</a>
+ sock_ioctl+0x626/0x8e0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/net/socket.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n1328'>net/socket.c:1328</a>
+ vfs_ioctl <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/fs/ioctl.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n51'>fs/ioctl.c:51</a> [inline]
+ __do_sys_ioctl <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/fs/ioctl.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n906'>fs/ioctl.c:906</a> [inline]
+ __se_sys_ioctl+0xf5/0x170 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/fs/ioctl.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n892'>fs/ioctl.c:892</a>
+ do_syscall_x64 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/arch/x86/entry/common.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n52'>arch/x86/entry/common.c:52</a> [inline]
+ do_syscall_64+0xf3/0x230 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/arch/x86/entry/common.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n83'>arch/x86/entry/common.c:83</a>
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+
+The buggy address belongs to the object at ffff88807bfb7608
+ which belongs to the cache dentry of size 312
+The buggy address is located 208 bytes inside of
+ freed 312-byte region [ffff88807bfb7608, ffff88807bfb7740)
+
+The buggy address belongs to the physical page:
+page: refcount:1 mapcount:0 mapping:0000000000000000 index:0x0 pfn:0x7bfb6
+head: order:1 mapcount:0 entire_mapcount:0 nr_pages_mapped:0 pincount:0
+flags: 0xfff00000000040(head|node=0|zone=1|lastcpupid=0x7ff)
+page_type: f5(slab)
+raw: 00fff00000000040 ffff88801baff8c0 ffffea0001ef8100 dead000000000002
+raw: 0000000000000000 0000000000150015 00000001f5000000 0000000000000000
+head: 00fff00000000040 ffff88801baff8c0 ffffea0001ef8100 dead000000000002
+head: 0000000000000000 0000000000150015 00000001f5000000 0000000000000000
+head: 00fff00000000001 ffffea0001efed81 ffffffffffffffff 0000000000000000
+head: 0000000000000002 0000000000000000 00000000ffffffff 0000000000000000
+page dumped because: kasan: bad access detected
+page_owner tracks the page as allocated
+page last allocated via order 1, migratetype Reclaimable, gfp_mask 0xd20d0(__GFP_IO|__GFP_FS|__GFP_NOWARN|__GFP_NORETRY|__GFP_COMP|__GFP_NOMEMALLOC|__GFP_RECLAIMABLE), pid 5214, tgid 5214 (udevd), ts 35293024299, free_ts 18333902605
+ set_page_owner <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/include/linux/page_owner.h?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n32'>include/linux/page_owner.h:32</a> [inline]
+ post_alloc_hook+0x1f3/0x230 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/page_alloc.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n1556'>mm/page_alloc.c:1556</a>
+ prep_new_page <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/page_alloc.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n1564'>mm/page_alloc.c:1564</a> [inline]
+ get_page_from_freelist+0x365c/0x37a0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/page_alloc.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n3474'>mm/page_alloc.c:3474</a>
+ __alloc_pages_noprof+0x292/0x710 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/page_alloc.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n4751'>mm/page_alloc.c:4751</a>
+ alloc_pages_mpol_noprof+0x3e8/0x680 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/mempolicy.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n2265'>mm/mempolicy.c:2265</a>
+ alloc_slab_page+0x6a/0x140 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/slub.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n2408'>mm/slub.c:2408</a>
+ allocate_slab+0x5a/0x2f0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/slub.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n2574'>mm/slub.c:2574</a>
+ new_slab <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/slub.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n2627'>mm/slub.c:2627</a> [inline]
+ ___slab_alloc+0xcd1/0x14b0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/slub.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n3815'>mm/slub.c:3815</a>
+ __slab_alloc+0x58/0xa0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/slub.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n3905'>mm/slub.c:3905</a>
+ __slab_alloc_node <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/slub.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n3980'>mm/slub.c:3980</a> [inline]
+ slab_alloc_node <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/slub.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n4141'>mm/slub.c:4141</a> [inline]
+ kmem_cache_alloc_lru_noprof+0x26c/0x390 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/slub.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n4172'>mm/slub.c:4172</a>
+ __d_alloc+0x31/0x700 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/fs/dcache.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n1646'>fs/dcache.c:1646</a>
+ d_alloc+0x4b/0x190 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/fs/dcache.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n1726'>fs/dcache.c:1726</a>
+ lookup_one_qstr_excl+0xce/0x260 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/fs/namei.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n1688'>fs/namei.c:1688</a>
+ do_renameat2+0x706/0x13f0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/fs/namei.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n5174'>fs/namei.c:5174</a>
+ __do_sys_rename <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/fs/namei.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n5271'>fs/namei.c:5271</a> [inline]
+ __se_sys_rename <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/fs/namei.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n5269'>fs/namei.c:5269</a> [inline]
+ __x64_sys_rename+0x82/0x90 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/fs/namei.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n5269'>fs/namei.c:5269</a>
+ do_syscall_x64 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/arch/x86/entry/common.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n52'>arch/x86/entry/common.c:52</a> [inline]
+ do_syscall_64+0xf3/0x230 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/arch/x86/entry/common.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n83'>arch/x86/entry/common.c:83</a>
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+page last free pid 1 tgid 1 stack trace:
+ reset_page_owner <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/include/linux/page_owner.h?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n25'>include/linux/page_owner.h:25</a> [inline]
+ free_pages_prepare <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/page_alloc.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n1127'>mm/page_alloc.c:1127</a> [inline]
+ free_unref_page+0xdef/0x1130 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/page_alloc.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n2657'>mm/page_alloc.c:2657</a>
+ free_contig_range+0x152/0x550 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/page_alloc.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n6630'>mm/page_alloc.c:6630</a>
+ destroy_args+0x92/0x910 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/debug_vm_pgtable.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n1017'>mm/debug_vm_pgtable.c:1017</a>
+ debug_vm_pgtable+0x4be/0x550 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/mm/debug_vm_pgtable.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n1397'>mm/debug_vm_pgtable.c:1397</a>
+ do_one_initcall+0x248/0x870 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/init/main.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n1266'>init/main.c:1266</a>
+ do_initcall_level+0x157/0x210 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/init/main.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n1328'>init/main.c:1328</a>
+ do_initcalls+0x3f/0x80 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/init/main.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n1344'>init/main.c:1344</a>
+ kernel_init_freeable+0x435/0x5d0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/init/main.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n1577'>init/main.c:1577</a>
+ kernel_init+0x1d/0x2b0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/init/main.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n1466'>init/main.c:1466</a>
+ ret_from_fork+0x4b/0x80 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/arch/x86/kernel/process.c?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n147'>arch/x86/kernel/process.c:147</a>
+ ret_from_fork_asm+0x1a/0x30 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/tree/arch/x86/entry/entry_64.S?id=15bfb14727bcf5f72b099338fcdb5aca631f9197#n244'>arch/x86/entry/entry_64.S:244</a>
+
+Memory state around the buggy address:
+ ffff88807bfb7580: 00 00 00 00 00 00 00 00 00 fc fc fc fc fc fc fc
+ ffff88807bfb7600: fc fa fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+&gt;ffff88807bfb7680: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+                                                    ^
+ ffff88807bfb7700: fb fb fb fb fb fb fb fb fc fc fc fc fc fc fc fc
+ ffff88807bfb7780: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+==================================================================
+</pre></div><br>
+	
+
+	
+
+<table class="list_table">
+	<caption>Crashes (17):</caption>
+		<thead>
+		<tr>
+			<th><a onclick="return sortTable(this, 'Time', textSort, true)" href="#">Time</a></th>
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+			<th><a onclick="return sortTable(this, 'Commit', textSort)" href="#">Commit</a></th>
+			<th><a onclick="return sortTable(this, 'Syzkaller', textSort)" href="#">Syzkaller</a></th>
+			<th><a onclick="return sortTable(this, 'Config', textSort)" href="#">Config</a></th>
+			<th><a onclick="return sortTable(this, 'Log', textSort)" href="#">Log</a></th>
+			<th><a onclick="return sortTable(this, 'Report', reproSort)" href="#">Report</a></th>
+			<th><a onclick="return sortTable(this, 'Syz repro', reproSort)" href="#">Syz repro</a></th>
+			<th><a onclick="return sortTable(this, 'C repro', textSort)" href="#">C repro</a></th>
+			<th><a onclick="return sortTable(this, 'VM info', textSort)" href="#">VM info</a></th>
+			<th><a onclick="return sortTable(this, 'Assets', textSort)" href="#">Assets</a> (<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot_assets.md">help?</a>)</th>
+			<th><a onclick="return sortTable(this, 'Manager', textSort)" href="#">Manager</a></th>
+			<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		</tr>
+		</thead>
+		<tbody>
+		
+		<tr>
+			<td class="time">2024/12/12 09:55</td>
+			<td class="kernel" title="net">net</td>
+			<td class="tag" title="15bfb14727bcf5f72b099338fcdb5aca631f9197
+	2024/12/12 03:55"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/log/?id=15bfb14727bcf5f72b099338fcdb5aca631f9197">15bfb14727bc</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ff949d2512c5ac33d0407d26d80f1df77b2de0e7">ff949d25</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1362a5aee630ff34">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16d16cdf980000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1662b20f980000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=1173ebe8580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=11d16cdf980000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=120f04f8580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1a049b6d3107/disk-15bfb147.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6ec93447ce2e/vmlinux-15bfb147.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3c68a69f3efe/bzImage-15bfb147.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-this-kasan-gce</td>
+			<td class="manager">KASAN: slab-use-after-free Read in lockref_get</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/12 08:51</td>
+			<td class="kernel" title="net">net</td>
+			<td class="tag" title="15bfb14727bcf5f72b099338fcdb5aca631f9197
+	2024/12/12 03:55"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/log/?id=15bfb14727bcf5f72b099338fcdb5aca631f9197">15bfb14727bc</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ff949d2512c5ac33d0407d26d80f1df77b2de0e7">ff949d25</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1362a5aee630ff34">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14cdebe8580000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=142bfb30580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=13ee6cdf980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=15078d44580000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=1494b20f980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1a049b6d3107/disk-15bfb147.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6ec93447ce2e/vmlinux-15bfb147.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3c68a69f3efe/bzImage-15bfb147.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-this-kasan-gce</td>
+			<td class="manager">KASAN: slab-use-after-free Read in lockref_get</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/07/16 06:16</td>
+			<td class="kernel" title="net-next">net-next</td>
+			<td class="tag" title="58f9416d413aa2c20b2515233ce450a1607ef843
+	2024/07/11 02:09"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/log/?id=58f9416d413aa2c20b2515233ce450a1607ef843">58f9416d413a</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/e8709b21d7c474a0fb6b8ff13039702865fd83bb">e8709b21</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=db697e01efa9d1d7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=130bb279980000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=151c4d2d980000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=154cf295980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=16f6e0e6980000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=11b2520d980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3fb480f5ebf6/disk-58f9416d.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1a62eb04b3aa/vmlinux-58f9416d.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/67d14a897f84/bzImage-58f9416d.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-net-next-test-gce</td>
+			<td class="manager">KASAN: slab-use-after-free Read in lockref_get</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/07/16 04:14</td>
+			<td class="kernel" title="net-next">net-next</td>
+			<td class="tag" title="58f9416d413aa2c20b2515233ce450a1607ef843
+	2024/07/11 02:09"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/log/?id=58f9416d413aa2c20b2515233ce450a1607ef843">58f9416d413a</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/e8709b21d7c474a0fb6b8ff13039702865fd83bb">e8709b21</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=db697e01efa9d1d7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11df1785980000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1785434e980000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=16cabe59980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=1449ecf1980000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=118bf8b5980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3fb480f5ebf6/disk-58f9416d.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1a62eb04b3aa/vmlinux-58f9416d.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/67d14a897f84/bzImage-58f9416d.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-net-next-test-gce</td>
+			<td class="manager">KASAN: slab-use-after-free Read in lockref_get</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/07/16 02:01</td>
+			<td class="kernel" title="net-next">net-next</td>
+			<td class="tag" title="58f9416d413aa2c20b2515233ce450a1607ef843
+	2024/07/11 02:09"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/log/?id=58f9416d413aa2c20b2515233ce450a1607ef843">58f9416d413a</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/e8709b21d7c474a0fb6b8ff13039702865fd83bb">e8709b21</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=db697e01efa9d1d7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12e2e3e1980000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1577bd9e980000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=1658c7dd980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=1683bf66980000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=16ed24b5980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3fb480f5ebf6/disk-58f9416d.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1a62eb04b3aa/vmlinux-58f9416d.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/67d14a897f84/bzImage-58f9416d.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-net-next-test-gce</td>
+			<td class="manager">KASAN: slab-use-after-free Read in lockref_get</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/26 02:23</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="a1c24ab822793eb513351686f631bd18952b7870
+	2025/02/21 09:38"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=a1c24ab822793eb513351686f631bd18952b7870">a1c24ab82279</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=f6b108de97771157">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15c6ffdf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16f3edb0580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=1035f7f8580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=13c6ffdf980000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=1435f7f8580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9581dbc26f55/disk-a1c24ab8.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/50aec9ab8b8b/vmlinux-a1c24ab8.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3a018984f8f5/Image-a1c24ab8.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">KASAN: slab-use-after-free Read in lockref_get</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/25 03:26</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="a1c24ab822793eb513351686f631bd18952b7870
+	2025/02/21 09:38"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=a1c24ab822793eb513351686f631bd18952b7870">a1c24ab82279</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=f6b108de97771157">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16a3b7f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15cac6e4580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=167b17a4580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=11a3b7f8580000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=12158c98580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9581dbc26f55/disk-a1c24ab8.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/50aec9ab8b8b/vmlinux-a1c24ab8.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3a018984f8f5/Image-a1c24ab8.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">KASAN: slab-use-after-free Read in lockref_get</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/18 06:43</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="2408a807bfc3f738850ef5ad5e3fd59d66168996
+	2025/02/17 18:38"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=2408a807bfc3f738850ef5ad5e3fd59d66168996">2408a807bfc3</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/429ea00719313e5b518a2093a9f48c79bb7b5f52">429ea007</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b7bde34acd8f53b1">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1689fda4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1634b7df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-2408a807.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f62d1e4db390/vmlinux-2408a807.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eb24d3a710ff/bzImage-2408a807.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: slab-use-after-free Read in lockref_get</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/12 09:38</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="b62cef9a5c673f1b8083159f5dc03c1c5daced2f
+	2025/01/11 19:42"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=b62cef9a5c673f1b8083159f5dc03c1c5daced2f">b62cef9a5c67</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6dbc6a9bc76e06852841ed5c5bdbb78409b17f53">6dbc6a9b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4ef22c4fce5135b4">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1068bf0f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=129ddef8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-b62cef9a.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b41aebe26f97/vmlinux-b62cef9a.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3ffdc0f63e63/bzImage-b62cef9a.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: slab-use-after-free Read in lockref_get</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/27 10:08</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="d6ef8b40d075c425f548002d2f35ae3f06e9cf96
+	2024/12/26 18:49"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=d6ef8b40d075c425f548002d2f35ae3f06e9cf96">d6ef8b40d075</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d269ef41b9262400">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15773adf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1660e0b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-d6ef8b40.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/38a9784dd46d/vmlinux-d6ef8b40.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8d1728b3051d/bzImage-d6ef8b40.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: slab-use-after-free Read in lockref_get</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/15 09:45</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="2d8308bf5b67dff50262d8a9260a50113b3628c6
+	2024/12/14 23:53"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=2d8308bf5b67dff50262d8a9260a50113b3628c6">2d8308bf5b67</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/7cbfbb3ab457b0a8ecf525a27a65a2078c5dcaa8">7cbfbb3a</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=fee25f93665c89ac">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10a76730580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=117807e8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-2d8308bf.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9b39f9cb9826/vmlinux-2d8308bf.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fa446e1a9eb8/bzImage-2d8308bf.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: slab-use-after-free Read in lockref_get</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/06/07 02:07</td>
+			<td class="kernel" title="net-next">net-next</td>
+			<td class="tag" title="749332814479ad2e06d892109227d3d93032f65b
+	2024/06/06 13:18"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/log/?id=749332814479ad2e06d892109227d3d93032f65b">749332814479</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/121701b62358a454bbfdccfadfcce9bb843602d6">121701b6</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b9016f104992d69c">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17be5626980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15591226980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=88699434d542c95d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/40ac64d072bb/disk-74933281.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a29e8894a6f5/vmlinux-74933281.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/96e0f6fc2ff8/bzImage-74933281.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-net-next-test-gce</td>
+			<td class="manager">KASAN: slab-use-after-free Read in lockref_get</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/06/07 02:07</td>
+			<td class="kernel" title="net-next">net-next</td>
+			<td class="tag" title="749332814479ad2e06d892109227d3d93032f65b
+	2024/06/06 13:18"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/log/?id=749332814479ad2e06d892109227d3d93032f65b">749332814479</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/121701b62358a454bbfdccfadfcce9bb843602d6">121701b6</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b9016f104992d69c">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1167a032980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=149a580a980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7e533fe0c2af6a7a">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/40ac64d072bb/disk-74933281.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a29e8894a6f5/vmlinux-74933281.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/96e0f6fc2ff8/bzImage-74933281.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-net-next-test-gce</td>
+			<td class="manager">KASAN: slab-use-after-free Read in lockref_get</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/26 02:21</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="573067a5a685c238d90270ffb6efae6b26c72fed
+	2024/12/20 13:37"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=573067a5a685c238d90270ffb6efae6b26c72fed">573067a5a685</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/444551c40edde85b5e4900ae27d432bd1da7079c">444551c4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=cd7202b56d469648">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17f740b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16d962f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ef88d4edbfe23996">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9d3b5c855aa0/disk-573067a5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0c06fc1ead83/vmlinux-573067a5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3390e59b9e4b/Image-573067a5.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">KASAN: slab-use-after-free Read in lockref_get</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/03/04 19:15</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="99fa936e8e4f117d62f229003c9799686f74cebc
+	2025/03/03 17:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=99fa936e8e4f117d62f229003c9799686f74cebc">99fa936e8e4f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c3901742785ff25afdc6f470af7b25b69d7c4f2f">c3901742</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=2040405600e83619">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16348078580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1172d8b7980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-99fa936e.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef04f83d96f6/vmlinux-99fa936e.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/583a7eea5c8e/bzImage-99fa936e.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: wild-memory-access Read in lockref_get</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/03/04 14:17</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="99fa936e8e4f117d62f229003c9799686f74cebc
+	2025/03/03 17:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=99fa936e8e4f117d62f229003c9799686f74cebc">99fa936e8e4f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c3901742785ff25afdc6f470af7b25b69d7c4f2f">c3901742</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=2040405600e83619">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=141f97a0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10d30078580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-99fa936e.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef04f83d96f6/vmlinux-99fa936e.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/583a7eea5c8e/bzImage-99fa936e.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: wild-memory-access Read in lockref_get</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/03/04 07:12</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="99fa936e8e4f117d62f229003c9799686f74cebc
+	2025/03/03 17:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=99fa936e8e4f117d62f229003c9799686f74cebc">99fa936e8e4f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c3901742785ff25afdc6f470af7b25b69d7c4f2f">c3901742</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=2040405600e83619">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=163458b7980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12566fb8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-99fa936e.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef04f83d96f6/vmlinux-99fa936e.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/583a7eea5c8e/bzImage-99fa936e.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: wild-memory-access Read in lockref_get</td>
+		</tr>
+		
+		</tbody>
+</table>
+<i>* <s>Struck through</s> repros no longer work on HEAD.</i>
+
+
+</body>
+</html>

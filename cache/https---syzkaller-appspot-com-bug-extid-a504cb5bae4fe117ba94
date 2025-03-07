@@ -1,0 +1,1782 @@
+
+
+<!doctype html>
+<html>
+<head>
+	
+	<link rel="stylesheet" href="/static/style.css"/>
+	<script src="/static/common.js"></script>
+	
+		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-116117799-1"></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag() { dataLayer.push(arguments); }
+			gtag('js', new Date());
+			gtag('config', 'UA-116117799-1');
+		</script>
+	
+
+	<title>kernel BUG in alloc_hugetlb_folio_reserve</title>
+</head>
+<body>
+	
+	<header id="topbar">
+		<table class="position_table">
+			<tr>
+				<td>
+					<h1><a href="/upstream">syzbot</a></h1>
+				</td>
+				<td class="namespace_td">
+					<select class="namespace" onchange="window.location.href = '/' + this.value + '';">
+						
+							<option value="android-5-10" >Android 5.10</option>
+							<option value="android-5-15" >Android 5.15</option>
+							<option value="android-54" >Android 5.4</option>
+							<option value="android-6-1" >Android 6.1</option>
+							<option value="freebsd" >FreeBSD</option>
+							<option value="upstream" selected="1">Linux</option>
+							<option value="linux-5.15" >Linux 5.15</option>
+							<option value="linux-6.1" >Linux 6.1</option>
+							<option value="netbsd" >NetBSD</option>
+							<option value="openbsd" >OpenBSD</option>
+							<option value="gvisor" >gVisor</option></select>
+				</td>
+				<td class="search">
+					
+					
+						<a href="https://syzkaller.appspot.com/_ah/conflogin?continue=https://syzkaller.appspot.com/bug%3Fextid%3Da504cb5bae4fe117ba94">sign-in</a> |
+					
+					<a href="https://groups.google.com/forum/#!forum/syzkaller" target="_blank">mailing list</a> |
+					<a href="https://github.com/google/syzkaller" target="_blank">source</a> |
+					<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md" target="_blank">docs</a>
+				</td>
+			</tr>
+		</table>
+		
+		<div class="navigation">
+			<div class="navigation_tab">
+				<a href='/upstream'><span style="color:DeepPink;">🐞</span> Open [1659]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/subsystems'><span style="color:DeepPink;">≡</span> Subsystems</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/fixed'><span style="color:ForestGreen;">🐞</span> Fixed [6081]</a>
+			</div>
+
+			<div class="navigation_tab" href='/upstream/invalid'>
+				<a href='/upstream/invalid'><span style="color:RoyalBlue;">🐞</span> Invalid [15101]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/backports'><span style="color:ForestGreen;">⬇</span> Missing Backports [157]</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/graph/crashes'><span style="color:ForestGreen;">≡</span> Crashes</a>
+			</div>
+
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Graphs</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href='/upstream/graph/bugs'>Kernel&nbsp;Health</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/found-bugs'>Bugs/Month</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/lifetimes'>Bug&nbsp;Lifetimes</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/fuzzing'>Fuzzing</a>
+				</div>
+			</div>
+
+			
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Coverage</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href="/upstream/graph/coverage?period=quarter">Total</a>
+					<a class="navigation_tab"
+						href="/upstream/coverage?period=month">Repo&nbsp;Heatmap</a>
+					
+						<a class="navigation_tab"
+							href="/upstream/coverage/subsystems?period=month">Subsystems&nbsp;Heatmap</a>
+					
+				</div>
+			</div>
+			
+			
+			<div class="navigation_tab navigation_right">
+				<a href='mailto:syzkaller@googlegroups.com'><span style="color:ForestGreen;">💬</span> Send us feedback</a>
+			</div>
+			
+		</div>
+		
+	</header>
+	<br>
+
+
+	<b>kernel BUG in alloc_hugetlb_folio_reserve</b><br><br>
+	Status: <a href="https://groups.google.com/d/msgid/syzkaller-bugs/677928b5.050a0220.3b53b0.004d.GAE@google.com">upstream: reported C repro on 2025/01/04 12:25</a><br>
+	
+		
+			Subsystems: 
+				<span class="bug-label"><a href="/upstream/s/mm">mm</a></span>
+		<br>
+		
+	<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md#labels">[Documentation on labels]</a><br>
+	
+	
+	Reported-by: syzbot&#43;a504cb5bae4fe117ba94@syzkaller.appspotmail.com<br>
+	
+	First crash: 64d, last: 11d<br>
+	
+	<div>
+		<div class="bug-bisection-info">
+
+	
+	
+	
+		
+			<b>Cause bisection: introduced by</b>
+		
+		<b>(<a href="https://syzkaller.appspot.com/x/bisect.txt?x=12c71724580000">bisect log</a>)</b> <span class="bad"></span>:<br>
+		<span class="mono">
+		
+		commit c6a3194c05e7e6fd0e8fbfb1720084ae2503c4ac<br>
+		Author: Vivek Kasireddy &lt;vivek.kasireddy@intel.com&gt;<br>
+		Date:   Mon Jun 24 06:36:16 2024 &#43;0000<br>
+		<br>
+		&nbsp;&nbsp;<a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=c6a3194c05e7e6fd0e8fbfb1720084ae2503c4ac">udmabuf: pin the pages using memfd_pin_folios() API</a><br>
+		</span><br>
+	
+	
+		Crash: <a href="https://syzkaller.appspot.com/x/report.txt?x=11c71724580000">kernel BUG in free_huge_folio</a> (<a href="https://syzkaller.appspot.com/x/log.txt?x=16c71724580000">log</a>)<br>
+		Repro: <a href="/text?tag=ReproC&x=128b55f8580000">C</a>
+		<a href="/text?tag=ReproSyz&x=1324fddf980000">syz</a>
+		<a href="/text?tag=KernelConfig&x=d033b14aeef39158">.config</a><br>
+	
+
+	
+	&nbsp;&nbsp;
+	
+
+</div>
+		
+		<div class="bug-bisection-stop"></div>
+	</div>
+
+	
+	<div class="collapsible collapsible-show">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Discussions (3)</span>
+		</div>
+		<div class="content">
+			
+			
+			
+
+<table class="list_table">
+	<thead>
+	<tr>
+		<th>Title</th>
+		<th>Replies (including bot)</th>
+		<th>Last reply</th>
+	</tr>
+	</thead>
+	<tbody>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/677928b5.050a0220.3b53b0.004d.GAE@google.com/T/">[syzbot] [mm?] kernel BUG in alloc_hugetlb_folio_reserve</a></td>
+			<td class="stat">4 (10)</td>
+			<td class="stat">2025/02/03 19:25</td>
+		</tr>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/20250114080927.2616684-2-vivek.kasireddy@intel.com/T/">[PATCH v2 1/2] mm/memfd: reserve hugetlb folios before allocation</a></td>
+			<td class="stat">5 (5)</td>
+			<td class="stat">2025/01/20 08:02</td>
+		</tr>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/20250107072517.2089633-1-vivek.kasireddy@intel.com/T/">[PATCH] mm/memfd: reserve hugetlb folios before allocation</a></td>
+			<td class="stat">8 (8)</td>
+			<td class="stat">2025/01/10 15:22</td>
+		</tr>
+	
+	</tbody>
+</table>
+
+
+			
+			
+		</div>
+	</div>
+	
+	<div class="collapsible collapsible-hide">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Last patch testing requests (2)</span>
+		</div>
+		<div class="content">
+			
+			
+
+	<table class="list_table">
+		<caption id="jobs"><a class="plain" href="#jobs"></a></caption>
+		<thead>
+		<tr>
+			
+			<th>Created</th>
+			<th>Duration</th>
+			<th>User</th>
+			<th>Patch</th>
+			<th>Repo</th>
+			
+			<th>Result</th>
+		</tr>
+		</thead>
+		<tbody>
+		
+			<tr>
+				
+				<td class="time">2025/02/03 18:52</td>
+				<td class="time" title="started: 2025/02/03 18:52&#013;finished: 2025/02/03 19:24">
+					31m
+				</td>
+				<td>
+					
+						vivek.kasireddy@intel.com
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="https://gitlab.freedesktop.org/Vivek/drm-tip.git syzbot_fix_htlb_reserve_v2_rebase">https://gitlab.freedesktop.org/Vivek/drm-tip.git syzbot_fix_htlb_reserve_v2_rebase</td>
+				
+				<td class="result">
+					
+						OK
+						
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=114b75f8580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/02/02 04:52</td>
+				<td class="time" title="started: 2025/02/02 08:00&#013;finished: 2025/02/02 08:41">
+					41m
+				</td>
+				<td>
+					
+						vivek.kasireddy@intel.com
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="https://gitlab.freedesktop.org/Vivek/drm-tip.git syzbot_fix_htlb_reserve">https://gitlab.freedesktop.org/Vivek/drm-tip.git syzbot_fix_htlb_reserve</td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/error.txt?x=15941724580000">error</a>
+					
+					
+					
+					
+					
+				</td>
+			</tr>
+		
+		</tbody>
+	</table>
+
+
+			
+			
+			
+		</div>
+	</div>
+	
+
+	
+	<br><b>Sample crash report:</b><br>
+	<div id="crash_div"><pre>------------[ cut here ]------------
+kernel BUG at <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/hugetlb.c?id=69e858e0b8b2ea07759e995aa383e8780d9d140c#n2333'>mm/hugetlb.c:2333</a>!
+Oops: invalid opcode: 0000 [#1] PREEMPT SMP KASAN PTI
+CPU: 0 UID: 0 PID: 5832 Comm: syz-executor274 Not tainted 6.13.0-syzkaller-09760-g69e858e0b8b2 #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 12/27/2024
+RIP: 0010:alloc_hugetlb_folio_reserve+0xbc/0xc0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/hugetlb.c?id=69e858e0b8b2ea07759e995aa383e8780d9d140c#n2333'>mm/hugetlb.c:2333</a>
+Code: 1f eb 05 e8 c6 e9 9f ff 48 c7 c7 40 56 61 8e e8 1a 9b d8 09 4c 89 f0 5b 41 5c 41 5e 41 5f 5d c3 cc cc cc cc e8 a5 e9 9f ff 90 &lt;0f&gt; 0b 66 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 f3 0f
+RSP: 0018:ffffc90003e3f7f8 EFLAGS: 00010093
+RAX: ffffffff821f831b RBX: 0000000000000000 RCX: ffff888034813c00
+RDX: 0000000000000000 RSI: 0000000000000000 RDI: 0000000000000000
+RBP: 1ffffffff348b4d1 R08: ffffffff821f82d3 R09: 1ffffd40005a2005
+R10: dffffc0000000000 R11: fffff940005a2006 R12: dffffc0000000000
+R13: dffffc0000000000 R14: ffffea0002d10000 R15: ffffffff9a45a688
+FS:  000055557d1c0380(0000) GS:ffff8880b8600000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 0000563d6d164000 CR3: 000000007abaa000 CR4: 00000000003526f0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+Call Trace:
+ &lt;TASK&gt;
+ memfd_alloc_folio+0x1bd/0x370 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/memfd.c?id=69e858e0b8b2ea07759e995aa383e8780d9d140c#n88'>mm/memfd.c:88</a>
+ memfd_pin_folios+0xf10/0x1570 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/gup.c?id=69e858e0b8b2ea07759e995aa383e8780d9d140c#n3746'>mm/gup.c:3746</a>
+ udmabuf_pin_folios <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/dma-buf/udmabuf.c?id=69e858e0b8b2ea07759e995aa383e8780d9d140c#n346'>drivers/dma-buf/udmabuf.c:346</a> [inline]
+ udmabuf_create+0x70e/0x10c0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/dma-buf/udmabuf.c?id=69e858e0b8b2ea07759e995aa383e8780d9d140c#n443'>drivers/dma-buf/udmabuf.c:443</a>
+ udmabuf_ioctl_create <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/dma-buf/udmabuf.c?id=69e858e0b8b2ea07759e995aa383e8780d9d140c#n495'>drivers/dma-buf/udmabuf.c:495</a> [inline]
+ udmabuf_ioctl+0x301/0x4e0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/dma-buf/udmabuf.c?id=69e858e0b8b2ea07759e995aa383e8780d9d140c#n526'>drivers/dma-buf/udmabuf.c:526</a>
+ vfs_ioctl <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/ioctl.c?id=69e858e0b8b2ea07759e995aa383e8780d9d140c#n51'>fs/ioctl.c:51</a> [inline]
+ __do_sys_ioctl <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/ioctl.c?id=69e858e0b8b2ea07759e995aa383e8780d9d140c#n906'>fs/ioctl.c:906</a> [inline]
+ __se_sys_ioctl+0xf5/0x170 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/ioctl.c?id=69e858e0b8b2ea07759e995aa383e8780d9d140c#n892'>fs/ioctl.c:892</a>
+ do_syscall_x64 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=69e858e0b8b2ea07759e995aa383e8780d9d140c#n52'>arch/x86/entry/common.c:52</a> [inline]
+ do_syscall_64+0xf3/0x230 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=69e858e0b8b2ea07759e995aa383e8780d9d140c#n83'>arch/x86/entry/common.c:83</a>
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+RIP: 0033:0x7fcd524733a9
+Code: 48 83 c4 28 c3 e8 37 17 00 00 0f 1f 80 00 00 00 00 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 &lt;48&gt; 3d 01 f0 ff ff 73 01 c3 48 c7 c1 b8 ff ff ff f7 d8 64 89 01 48
+RSP: 002b:00007ffddb5cce58 EFLAGS: 00000246 ORIG_RAX: 0000000000000010
+RAX: ffffffffffffffda RBX: 00007ffddb5cd028 RCX: 00007fcd524733a9
+RDX: 0000000020000040 RSI: 0000000040187542 RDI: 0000000000000004
+RBP: 00007fcd524e6610 R08: 0000000020000000 R09: 00007ffddb5cd028
+R10: 0000000020000000 R11: 0000000000000246 R12: 0000000000000001
+R13: 00007ffddb5cd018 R14: 0000000000000001 R15: 0000000000000001
+ &lt;/TASK&gt;
+Modules linked in:
+---[ end trace 0000000000000000 ]---
+RIP: 0010:alloc_hugetlb_folio_reserve+0xbc/0xc0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/hugetlb.c?id=69e858e0b8b2ea07759e995aa383e8780d9d140c#n2333'>mm/hugetlb.c:2333</a>
+Code: 1f eb 05 e8 c6 e9 9f ff 48 c7 c7 40 56 61 8e e8 1a 9b d8 09 4c 89 f0 5b 41 5c 41 5e 41 5f 5d c3 cc cc cc cc e8 a5 e9 9f ff 90 &lt;0f&gt; 0b 66 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 f3 0f
+RSP: 0018:ffffc90003e3f7f8 EFLAGS: 00010093
+RAX: ffffffff821f831b RBX: 0000000000000000 RCX: ffff888034813c00
+RDX: 0000000000000000 RSI: 0000000000000000 RDI: 0000000000000000
+RBP: 1ffffffff348b4d1 R08: ffffffff821f82d3 R09: 1ffffd40005a2005
+R10: dffffc0000000000 R11: fffff940005a2006 R12: dffffc0000000000
+R13: dffffc0000000000 R14: ffffea0002d10000 R15: ffffffff9a45a688
+FS:  000055557d1c0380(0000) GS:ffff8880b8600000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 0000563d6d164000 CR3: 000000007abaa000 CR4: 00000000003526f0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+</pre></div><br>
+	
+
+	
+
+<table class="list_table">
+	<caption>Crashes (85):</caption>
+		<thead>
+		<tr>
+			<th><a onclick="return sortTable(this, 'Time', textSort, true)" href="#">Time</a></th>
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+			<th><a onclick="return sortTable(this, 'Commit', textSort)" href="#">Commit</a></th>
+			<th><a onclick="return sortTable(this, 'Syzkaller', textSort)" href="#">Syzkaller</a></th>
+			<th><a onclick="return sortTable(this, 'Config', textSort)" href="#">Config</a></th>
+			<th><a onclick="return sortTable(this, 'Log', textSort)" href="#">Log</a></th>
+			<th><a onclick="return sortTable(this, 'Report', reproSort)" href="#">Report</a></th>
+			<th><a onclick="return sortTable(this, 'Syz repro', reproSort)" href="#">Syz repro</a></th>
+			<th><a onclick="return sortTable(this, 'C repro', textSort)" href="#">C repro</a></th>
+			<th><a onclick="return sortTable(this, 'VM info', textSort)" href="#">VM info</a></th>
+			<th><a onclick="return sortTable(this, 'Assets', textSort)" href="#">Assets</a> (<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot_assets.md">help?</a>)</th>
+			<th><a onclick="return sortTable(this, 'Manager', textSort)" href="#">Manager</a></th>
+			<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		</tr>
+		</thead>
+		<tbody>
+		
+		<tr>
+			<td class="time">2025/02/01 20:51</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="69e858e0b8b2ea07759e995aa383e8780d9d140c
+	2025/01/31 02:29"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=69e858e0b8b2ea07759e995aa383e8780d9d140c">69e858e0b8b2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0dff8567c67759be4a708acb57229945322c6c88">0dff8567</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d033b14aeef39158">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1431cb24580000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11884eb0580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=1324fddf980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=17e02d18580000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=128b55f8580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/144a7468bf1b/disk-69e858e0.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/86d7d452eecc/vmlinux-69e858e0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f56e292b01f5/bzImage-69e858e0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/17 09:05</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="0ad2507d5d93f39619fc42372c347d6006b64319
+	2025/02/16 22:02"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=0ad2507d5d93f39619fc42372c347d6006b64319">0ad2507d5d93</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/40a34ec944732a2502ee67d92cc8c023355dfad4">40a34ec9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b03346163189483c">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=122fc5b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14cedbf8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ea8f1e09a45b13ec">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c84ea1c2e29d/disk-0ad2507d.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c85c5680a082/vmlinux-0ad2507d.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c842328b1147/bzImage-0ad2507d.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-badwrites-root</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/17 07:02</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="0ad2507d5d93f39619fc42372c347d6006b64319
+	2025/02/16 22:02"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=0ad2507d5d93f39619fc42372c347d6006b64319">0ad2507d5d93</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/40a34ec944732a2502ee67d92cc8c023355dfad4">40a34ec9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b03346163189483c">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=130db5a4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15d2dbf8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=d4adccd7051c373f">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c84ea1c2e29d/disk-0ad2507d.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c85c5680a082/vmlinux-0ad2507d.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c842328b1147/bzImage-0ad2507d.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-badwrites-root</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/16 23:14</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ad1b832bf1cf2df9304f8eb72943111625c7e5a7
+	2025/02/16 01:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ad1b832bf1cf2df9304f8eb72943111625c7e5a7">ad1b832bf1cf</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/40a34ec944732a2502ee67d92cc8c023355dfad4">40a34ec9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=dedd048b8a04c588">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11a2a898580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15a2a898580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=59f44ed25987c607">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b21be81de73f/disk-ad1b832b.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3af6a1f084c9/vmlinux-ad1b832b.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/354ff97d0dc4/bzImage-ad1b832b.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-badwrites-root</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/14 19:19</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="128c8f96eb8638c060cd3532dc394d046ce64fe1
+	2025/02/14 04:04"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=128c8f96eb8638c060cd3532dc394d046ce64fe1">128c8f96eb86</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d9a046cf66ed7650b10bc0e6a567e089644d9004">d9a046cf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=dedd048b8a04c588">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17fda7df980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1060ece4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=58d35ed50ddbbf5f">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/84e3fef05244/disk-128c8f96.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e51293bf3e77/vmlinux-128c8f96.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8c47422262d5/bzImage-128c8f96.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-badwrites-root</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/14 17:47</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="128c8f96eb8638c060cd3532dc394d046ce64fe1
+	2025/02/14 04:04"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=128c8f96eb8638c060cd3532dc394d046ce64fe1">128c8f96eb86</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d9a046cf66ed7650b10bc0e6a567e089644d9004">d9a046cf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c776e555cfbdb82d">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10c28bf8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=123987df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=61a358925afd7317">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ed96ecd98012/disk-128c8f96.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e06dedc34414/vmlinux-128c8f96.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/771935f325f0/bzImage-128c8f96.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/14 15:12</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="128c8f96eb8638c060cd3532dc394d046ce64fe1
+	2025/02/14 04:04"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=128c8f96eb8638c060cd3532dc394d046ce64fe1">128c8f96eb86</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d9a046cf66ed7650b10bc0e6a567e089644d9004">d9a046cf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c09dc55ba7f798e3">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12b08bf8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=157a87df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=8303afd5f1945606">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e0d6df1a3f16/disk-128c8f96.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/094e93798189/vmlinux-128c8f96.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a5b27a6f25af/bzImage-128c8f96.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-selinux-root</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/12 04:52</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="09fbf3d502050282bf47ab3babe1d4ed54dd1fd8
+	2025/02/11 18:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=09fbf3d502050282bf47ab3babe1d4ed54dd1fd8">09fbf3d50205</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2baddf5cfc118066483050e29627cea6b63bcfb">f2baddf5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=49b1e458e1cf8650">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11d04718580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15fac4e4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=69d2729d5572753a">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b5b4d092a3af/disk-09fbf3d5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c6b28942da2f/vmlinux-09fbf3d5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4878cf4ed5d8/bzImage-09fbf3d5.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-badwrites-root</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/12 04:52</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="09fbf3d502050282bf47ab3babe1d4ed54dd1fd8
+	2025/02/11 18:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=09fbf3d502050282bf47ab3babe1d4ed54dd1fd8">09fbf3d50205</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2baddf5cfc118066483050e29627cea6b63bcfb">f2baddf5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=49b1e458e1cf8650">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10f5dbdf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12d04718580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=20f0f4fc4f71607a">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b5b4d092a3af/disk-09fbf3d5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c6b28942da2f/vmlinux-09fbf3d5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4878cf4ed5d8/bzImage-09fbf3d5.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-badwrites-root</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/11 21:59</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="febbc555cf0fff895546ddb8ba2c9a523692fb55
+	2025/02/10 21:11"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=febbc555cf0fff895546ddb8ba2c9a523692fb55">febbc555cf0f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2baddf5cfc118066483050e29627cea6b63bcfb">f2baddf5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=3c2347dd6174fbe2">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11775bdf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12fc09b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=fb45fbeb99ce1d1e">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dc3843df5f8e/disk-febbc555.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d2479b1805b4/vmlinux-febbc555.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/376129ca3722/bzImage-febbc555.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/11 21:59</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="febbc555cf0fff895546ddb8ba2c9a523692fb55
+	2025/02/10 21:11"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=febbc555cf0fff895546ddb8ba2c9a523692fb55">febbc555cf0f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2baddf5cfc118066483050e29627cea6b63bcfb">f2baddf5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=3c2347dd6174fbe2">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12775bdf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12860aa4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=3bb95372b7954310">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dc3843df5f8e/disk-febbc555.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d2479b1805b4/vmlinux-febbc555.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/376129ca3722/bzImage-febbc555.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/11 21:38</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="febbc555cf0fff895546ddb8ba2c9a523692fb55
+	2025/02/10 21:11"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=febbc555cf0fff895546ddb8ba2c9a523692fb55">febbc555cf0f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2baddf5cfc118066483050e29627cea6b63bcfb">f2baddf5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c516b1c112a81e77">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13ec8718580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13875bdf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=38b456050da4ebbe">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d9e878d61350/disk-febbc555.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cd9558898766/vmlinux-febbc555.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/813d5973b87a/bzImage-febbc555.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-smack-root</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/11 21:38</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="febbc555cf0fff895546ddb8ba2c9a523692fb55
+	2025/02/10 21:11"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=febbc555cf0fff895546ddb8ba2c9a523692fb55">febbc555cf0f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2baddf5cfc118066483050e29627cea6b63bcfb">f2baddf5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c516b1c112a81e77">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=103323f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11ec09b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=88cca9596e2b4273">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d9e878d61350/disk-febbc555.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cd9558898766/vmlinux-febbc555.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/813d5973b87a/bzImage-febbc555.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-smack-root</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/11 21:25</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="febbc555cf0fff895546ddb8ba2c9a523692fb55
+	2025/02/10 21:11"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=febbc555cf0fff895546ddb8ba2c9a523692fb55">febbc555cf0f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2baddf5cfc118066483050e29627cea6b63bcfb">f2baddf5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=3c2347dd6174fbe2">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=159b5bdf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=144c09b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=c4936d8434b35">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d5dc11f86d2e/disk-febbc555.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c567a8ca046e/vmlinux-febbc555.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e3f2be4e9531/bzImage-febbc555.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/11 21:25</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="febbc555cf0fff895546ddb8ba2c9a523692fb55
+	2025/02/10 21:11"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=febbc555cf0fff895546ddb8ba2c9a523692fb55">febbc555cf0f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2baddf5cfc118066483050e29627cea6b63bcfb">f2baddf5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=3c2347dd6174fbe2">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=169b5bdf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16a323f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ba3d64bb2ca788c7">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d5dc11f86d2e/disk-febbc555.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c567a8ca046e/vmlinux-febbc555.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e3f2be4e9531/bzImage-febbc555.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/01 20:19</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="69e858e0b8b2ea07759e995aa383e8780d9d140c
+	2025/01/31 02:29"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=69e858e0b8b2ea07759e995aa383e8780d9d140c">69e858e0b8b2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0dff8567c67759be4a708acb57229945322c6c88">0dff8567</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d033b14aeef39158">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12c355f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1601cb24580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=a90ec92b9b8202b7">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/144a7468bf1b/disk-69e858e0.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/86d7d452eecc/vmlinux-69e858e0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f56e292b01f5/bzImage-69e858e0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/11 21:43</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="febbc555cf0fff895546ddb8ba2c9a523692fb55
+	2025/02/10 21:11"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=febbc555cf0fff895546ddb8ba2c9a523692fb55">febbc555cf0f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2baddf5cfc118066483050e29627cea6b63bcfb">f2baddf5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=3c2347dd6174fbe2">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=119c09b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12f323f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=d0e9030ac49c16ee">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a1f5046a8e7a/disk-febbc555.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2e06cdf22557/vmlinux-febbc555.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4c1962602030/bzImage-febbc555.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-386</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/11 21:43</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="febbc555cf0fff895546ddb8ba2c9a523692fb55
+	2025/02/10 21:11"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=febbc555cf0fff895546ddb8ba2c9a523692fb55">febbc555cf0f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2baddf5cfc118066483050e29627cea6b63bcfb">f2baddf5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=3c2347dd6174fbe2">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=115a0aa4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=125c8718580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=c9b084daf32ee145">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a1f5046a8e7a/disk-febbc555.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2e06cdf22557/vmlinux-febbc555.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4c1962602030/bzImage-febbc555.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-386</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/09 12:26</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="eea6e4b4dfb8859446177c32961c96726d0117be
+	2025/01/08 19:55"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=eea6e4b4dfb8859446177c32961c96726d0117be">eea6e4b4dfb8</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4ef22c4fce5135b4">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1026c218580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=101e2ef8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=62a1f9e177024e14">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2df5f82c97b6/disk-eea6e4b4.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/324368b225a0/vmlinux-eea6e4b4.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3129be5f4cb1/bzImage-eea6e4b4.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-386</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/07 16:52</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="fbfd64d25c7af3b8695201ebc85efe90be28c5a3
+	2025/01/06 18:26"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=fbfd64d25c7af3b8695201ebc85efe90be28c5a3">fbfd64d25c7a</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4ef22c4fce5135b4">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10a6f5c4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1489f6f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=121e644ce556b3b1">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/091eb8569da6/disk-fbfd64d2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c0fee718c87d/vmlinux-fbfd64d2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/390af5ceddb5/bzImage-fbfd64d2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-386</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/16 20:34</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ba643b6d84409e8a9057d5bdd6dd99255b1a88fe
+	2025/02/16 18:55"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ba643b6d84409e8a9057d5bdd6dd99255b1a88fe">ba643b6d8440</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/40a34ec944732a2502ee67d92cc8c023355dfad4">40a34ec9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c09dc55ba7f798e3">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13b72898580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=129345b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=a0f1759dcc73222b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-ba643b6d.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/bfe073e792ba/vmlinux-ba643b6d.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dc858d39cdaf/bzImage-ba643b6d.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/16 19:29</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ad1b832bf1cf2df9304f8eb72943111625c7e5a7
+	2025/02/16 01:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ad1b832bf1cf2df9304f8eb72943111625c7e5a7">ad1b832bf1cf</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/40a34ec944732a2502ee67d92cc8c023355dfad4">40a34ec9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c09dc55ba7f798e3">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14ac5bf8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=104857df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=efcf0dfaa70d9965">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-ad1b832b.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/feecb67e1cd2/vmlinux-ad1b832b.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0f74be058a06/bzImage-ad1b832b.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/16 17:30</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ad1b832bf1cf2df9304f8eb72943111625c7e5a7
+	2025/02/16 01:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ad1b832bf1cf2df9304f8eb72943111625c7e5a7">ad1b832bf1cf</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/40a34ec944732a2502ee67d92cc8c023355dfad4">40a34ec9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c09dc55ba7f798e3">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=177f9bf8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10ff9bf8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=69c6b960cdae7021">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-ad1b832b.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/feecb67e1cd2/vmlinux-ad1b832b.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0f74be058a06/bzImage-ad1b832b.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/16 16:27</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ad1b832bf1cf2df9304f8eb72943111625c7e5a7
+	2025/02/16 01:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ad1b832bf1cf2df9304f8eb72943111625c7e5a7">ad1b832bf1cf</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/40a34ec944732a2502ee67d92cc8c023355dfad4">40a34ec9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c09dc55ba7f798e3">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12c79bf8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15798898580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=38e8e40edb03e4f0">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-ad1b832b.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/feecb67e1cd2/vmlinux-ad1b832b.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0f74be058a06/bzImage-ad1b832b.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/14 14:06</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="128c8f96eb8638c060cd3532dc394d046ce64fe1
+	2025/02/14 04:04"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=128c8f96eb8638c060cd3532dc394d046ce64fe1">128c8f96eb86</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/fe17639fa01b8a1c521789ee8327604a75ca6b03">fe17639f</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c776e555cfbdb82d">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1285e9a4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15b28f18580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-128c8f96.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a97f78ac821e/vmlinux-128c8f96.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f451cf16fc9f/bzImage-128c8f96.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/14 14:06</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="128c8f96eb8638c060cd3532dc394d046ce64fe1
+	2025/02/14 04:04"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=128c8f96eb8638c060cd3532dc394d046ce64fe1">128c8f96eb86</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/fe17639fa01b8a1c521789ee8327604a75ca6b03">fe17639f</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c09dc55ba7f798e3">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1085e9a4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=136287df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=83e5551fde2b0c78">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-128c8f96.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c033076ee77d/vmlinux-128c8f96.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8c99501f79b3/bzImage-128c8f96.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/11 22:37</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="09fbf3d502050282bf47ab3babe1d4ed54dd1fd8
+	2025/02/11 18:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=09fbf3d502050282bf47ab3babe1d4ed54dd1fd8">09fbf3d50205</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2baddf5cfc118066483050e29627cea6b63bcfb">f2baddf5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=3c2347dd6174fbe2">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12f60aa4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=142a8718580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-09fbf3d5.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/835b3d29c46c/vmlinux-09fbf3d5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ff4bfd8a5d42/bzImage-09fbf3d5.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/10 19:45</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a64dcfb451e254085a7daee5fe51bf22959d52d3
+	2025/02/09 20:45"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a64dcfb451e254085a7daee5fe51bf22959d52d3">a64dcfb451e2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/43f51a00700e5960fc890e6c3d596846757bf29d">43f51a00</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e901a79468087007">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11381bdf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=115643f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=3f94597cf62c151e">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-a64dcfb4.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/86623367ef35/vmlinux-a64dcfb4.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3dd40a741931/bzImage-a64dcfb4.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/10 19:45</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a64dcfb451e254085a7daee5fe51bf22959d52d3
+	2025/02/09 20:45"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a64dcfb451e254085a7daee5fe51bf22959d52d3">a64dcfb451e2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/43f51a00700e5960fc890e6c3d596846757bf29d">43f51a00</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e901a79468087007">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=144e22a4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=165643f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=f373155e44bc9ca6">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-a64dcfb4.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/86623367ef35/vmlinux-a64dcfb4.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3dd40a741931/bzImage-a64dcfb4.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/09 07:53</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9946eaf552b194bb352c2945b54ff98c8193b3f1
+	2025/02/08 22:12"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9946eaf552b194bb352c2945b54ff98c8193b3f1">9946eaf552b1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ef44b750e8fab8d6d5cb84920680581b13e0d470">ef44b750</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a7ddf49cf33ba213">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13942bdf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=158711b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=4f69968df61547bf">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-9946eaf5.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9972ef6e3be4/vmlinux-9946eaf5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5fe1ac2ba6a7/bzImage-9946eaf5.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/04 06:24</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="63676eefb7a026d04b51dcb7aaf54f358517a2ec
+	2025/01/03 23:09"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=63676eefb7a026d04b51dcb7aaf54f358517a2ec">63676eefb7a0</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1c541fa8af5c9cc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15fb66f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=125f38b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-63676eef.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/599e1a07ba5c/vmlinux-63676eef.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b52f3534bdbe/bzImage-63676eef.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/01 07:27</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ccb98ccef0e543c2bd4ef1a72270461957f3d8d0
+	2024/12/30 19:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0">ccb98ccef0e5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1c541fa8af5c9cc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1039cd0f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11c2fac4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-ccb98cce.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/703c842459ce/vmlinux-ccb98cce.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1a8db4bb5dbb/bzImage-ccb98cce.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/22 06:47</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a3daad8215143340c0870c5489e599fd059037e9
+	2025/02/21 17:07"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a3daad8215143340c0870c5489e599fd059037e9">a3daad821514</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=61cbf5ac8a063ad4">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12fcfba4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=135517f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=e5c0e9dd516deacf">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-a3daad82.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e806cfe463d2/vmlinux-a3daad82.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6d0153b8137e/bzImage-a3daad82.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream-386</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/16 16:07</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ad1b832bf1cf2df9304f8eb72943111625c7e5a7
+	2025/02/16 01:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ad1b832bf1cf2df9304f8eb72943111625c7e5a7">ad1b832bf1cf</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/40a34ec944732a2502ee67d92cc8c023355dfad4">40a34ec9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=40c8b8384bc47ab0">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=126397df980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1707d5a4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=f9faa244e600f9d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-ad1b832b.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/518d1a7f7992/vmlinux-ad1b832b.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c5f8051efb40/bzImage-ad1b832b.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream-386</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/14 14:05</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="128c8f96eb8638c060cd3532dc394d046ce64fe1
+	2025/02/14 04:04"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=128c8f96eb8638c060cd3532dc394d046ce64fe1">128c8f96eb86</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/fe17639fa01b8a1c521789ee8327604a75ca6b03">fe17639f</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=40c8b8384bc47ab0">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13f9e9a4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14ef0bf8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=8a31c4cfb1f027fe">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-128c8f96.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/975351c893f2/vmlinux-128c8f96.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6df22081cf20/bzImage-128c8f96.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream-386</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/12 00:27</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="09fbf3d502050282bf47ab3babe1d4ed54dd1fd8
+	2025/02/11 18:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=09fbf3d502050282bf47ab3babe1d4ed54dd1fd8">09fbf3d50205</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2baddf5cfc118066483050e29627cea6b63bcfb">f2baddf5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1b4ba914aa7feffc">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11d0a3f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=141e09b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=69495b9b7c90990">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-09fbf3d5.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/85778c471b70/vmlinux-09fbf3d5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3aa80da992c2/bzImage-09fbf3d5.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream-386</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/12 00:27</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="09fbf3d502050282bf47ab3babe1d4ed54dd1fd8
+	2025/02/11 18:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=09fbf3d502050282bf47ab3babe1d4ed54dd1fd8">09fbf3d50205</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2baddf5cfc118066483050e29627cea6b63bcfb">f2baddf5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1b4ba914aa7feffc">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=163cdbdf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=101e09b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=96571449ad5246ec">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-09fbf3d5.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/85778c471b70/vmlinux-09fbf3d5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3aa80da992c2/bzImage-09fbf3d5.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream-386</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/11 22:47</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="09fbf3d502050282bf47ab3babe1d4ed54dd1fd8
+	2025/02/11 18:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=09fbf3d502050282bf47ab3babe1d4ed54dd1fd8">09fbf3d50205</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2baddf5cfc118066483050e29627cea6b63bcfb">f2baddf5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1b4ba914aa7feffc">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14f209b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10ce0aa4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=dcd8646ecf35830">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-09fbf3d5.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/85778c471b70/vmlinux-09fbf3d5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3aa80da992c2/bzImage-09fbf3d5.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream-386</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/11 22:47</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="09fbf3d502050282bf47ab3babe1d4ed54dd1fd8
+	2025/02/11 18:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=09fbf3d502050282bf47ab3babe1d4ed54dd1fd8">09fbf3d50205</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2baddf5cfc118066483050e29627cea6b63bcfb">f2baddf5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1b4ba914aa7feffc">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=174e0aa4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=101a8718580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=dcdbfb958db1cbc">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-09fbf3d5.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/85778c471b70/vmlinux-09fbf3d5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3aa80da992c2/bzImage-09fbf3d5.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream-386</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/11 22:47</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="09fbf3d502050282bf47ab3babe1d4ed54dd1fd8
+	2025/02/11 18:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=09fbf3d502050282bf47ab3babe1d4ed54dd1fd8">09fbf3d50205</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2baddf5cfc118066483050e29627cea6b63bcfb">f2baddf5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1b4ba914aa7feffc">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13ea8718580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1610dbdf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7fd8a73797e60907">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-09fbf3d5.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/85778c471b70/vmlinux-09fbf3d5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3aa80da992c2/bzImage-09fbf3d5.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream-386</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/11 22:47</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="09fbf3d502050282bf47ab3babe1d4ed54dd1fd8
+	2025/02/11 18:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=09fbf3d502050282bf47ab3babe1d4ed54dd1fd8">09fbf3d50205</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2baddf5cfc118066483050e29627cea6b63bcfb">f2baddf5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1b4ba914aa7feffc">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11ea8718580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1010dbdf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=4d2f223c0ab56226">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-09fbf3d5.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/85778c471b70/vmlinux-09fbf3d5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3aa80da992c2/bzImage-09fbf3d5.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream-386</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/11 22:46</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="09fbf3d502050282bf47ab3babe1d4ed54dd1fd8
+	2025/02/11 18:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=09fbf3d502050282bf47ab3babe1d4ed54dd1fd8">09fbf3d50205</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2baddf5cfc118066483050e29627cea6b63bcfb">f2baddf5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1b4ba914aa7feffc">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=144e0aa4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14ea8718580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=3ddf29bd6e3fe6f4">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-09fbf3d5.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/85778c471b70/vmlinux-09fbf3d5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3aa80da992c2/bzImage-09fbf3d5.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream-386</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/11 22:46</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="09fbf3d502050282bf47ab3babe1d4ed54dd1fd8
+	2025/02/11 18:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=09fbf3d502050282bf47ab3babe1d4ed54dd1fd8">09fbf3d50205</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2baddf5cfc118066483050e29627cea6b63bcfb">f2baddf5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1b4ba914aa7feffc">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14e0dbdf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12e0dbdf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b0d6ab2280c61d29">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-09fbf3d5.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/85778c471b70/vmlinux-09fbf3d5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3aa80da992c2/bzImage-09fbf3d5.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream-386</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/11 01:50</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a64dcfb451e254085a7daee5fe51bf22959d52d3
+	2025/02/09 20:45"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a64dcfb451e254085a7daee5fe51bf22959d52d3">a64dcfb451e2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/43f51a00700e5960fc890e6c3d596846757bf29d">43f51a00</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1851a0f99865bfef">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10a8fb18580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14b31bdf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7f57ce66ab1e1f20">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-a64dcfb4.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a7ba676dcb53/vmlinux-a64dcfb4.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/55f8cd36bbff/bzImage-a64dcfb4.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream-386</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/09 11:58</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9946eaf552b194bb352c2945b54ff98c8193b3f1
+	2025/02/08 22:12"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9946eaf552b194bb352c2945b54ff98c8193b3f1">9946eaf552b1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ef44b750e8fab8d6d5cb84920680581b13e0d470">ef44b750</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c48f582603dcb16c">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14275b18580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11492bdf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b70cc9260a9e1229">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-9946eaf5.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b2248ecb08ad/vmlinux-9946eaf5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d5496ad409cf/bzImage-9946eaf5.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream-386</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/09 01:11</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="8f6629c004b193d23612641c3607e785819e97ab
+	2025/02/08 03:49"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=8f6629c004b193d23612641c3607e785819e97ab">8f6629c004b1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ef44b750e8fab8d6d5cb84920680581b13e0d470">ef44b750</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c48f582603dcb16c">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12ca3df8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17ef2b18580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=79b286bed1d8248c">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-8f6629c0.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e10d568b0a7d/vmlinux-8f6629c0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/feea4e578ef4/bzImage-8f6629c0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream-386</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/02 09:23</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="56e6a3499e14716b9a28a307bb6d18c10e95301e
+	2025/01/01 19:22"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=56e6a3499e14716b9a28a307bb6d18c10e95301e">56e6a3499e14</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=86dd15278dbfe19f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=108cb6df980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=178abaf8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=f6c9ca1a17fe83cf">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-56e6a349.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cbea8e0b7b7d/vmlinux-56e6a349.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/68454f9ea01d/bzImage-56e6a349.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream-386</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/31 16:20</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ccb98ccef0e543c2bd4ef1a72270461957f3d8d0
+	2024/12/30 19:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0">ccb98ccef0e5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=86dd15278dbfe19f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15e348b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11b09af8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=69ea9b29da198df0">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-ccb98cce.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/75a6223b351c/vmlinux-ccb98cce.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/beea89d50f58/bzImage-ccb98cce.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream-386</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/31 12:15</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ccb98ccef0e543c2bd4ef1a72270461957f3d8d0
+	2024/12/30 19:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0">ccb98ccef0e5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=86dd15278dbfe19f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=104a48b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17c8f50f980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=134dd73448c84ffb">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-ccb98cce.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/75a6223b351c/vmlinux-ccb98cce.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/beea89d50f58/bzImage-ccb98cce.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream-386</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/31 12:15</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ccb98ccef0e543c2bd4ef1a72270461957f3d8d0
+	2024/12/30 19:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0">ccb98ccef0e5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=86dd15278dbfe19f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12e69818580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=144f3ac4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=6be513c287206075">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-ccb98cce.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/75a6223b351c/vmlinux-ccb98cce.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/beea89d50f58/bzImage-ccb98cce.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream-386</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/11 22:19</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="df5d6180169ae06a2eac57e33b077ad6f6252440
+	2025/02/10 04:23"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=df5d6180169ae06a2eac57e33b077ad6f6252440">df5d6180169a</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2baddf5cfc118066483050e29627cea6b63bcfb">f2baddf5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=2cd616b6e736ca7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=166209b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14328718580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7776349ed73b13f0">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/92495cf20271/disk-df5d6180.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4b3656161842/vmlinux-df5d6180.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7fbc4e7a0f5d/bzImage-df5d6180.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/11 22:19</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="df5d6180169ae06a2eac57e33b077ad6f6252440
+	2025/02/10 04:23"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=df5d6180169ae06a2eac57e33b077ad6f6252440">df5d6180169a</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2baddf5cfc118066483050e29627cea6b63bcfb">f2baddf5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=2cd616b6e736ca7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=157b23f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=159f5bdf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=16496d927c0d4b81">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/92495cf20271/disk-df5d6180.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4b3656161842/vmlinux-df5d6180.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7fbc4e7a0f5d/bzImage-df5d6180.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/09 12:03</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="ed58d103e6da15a442ff87567898768dc3a66987
+	2025/02/07 04:30"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=ed58d103e6da15a442ff87567898768dc3a66987">ed58d103e6da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ef44b750e8fab8d6d5cb84920680581b13e0d470">ef44b750</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=244a34ec1429746">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15e8a8e4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15292bdf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=4c7e5d42f8c83970">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ce459b7174dd/disk-ed58d103.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/60699733c0c8/vmlinux-ed58d103.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f589bce7c898/bzImage-ed58d103.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">kernel BUG in alloc_hugetlb_folio_reserve</td>
+		</tr>
+		
+		</tbody>
+</table>
+<i>* <s>Struck through</s> repros no longer work on HEAD.</i>
+
+
+</body>
+</html>

@@ -1,0 +1,697 @@
+
+
+<!doctype html>
+<html>
+<head>
+	
+	<link rel="stylesheet" href="/static/style.css"/>
+	<script src="/static/common.js"></script>
+	
+		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-116117799-1"></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag() { dataLayer.push(arguments); }
+			gtag('js', new Date());
+			gtag('config', 'UA-116117799-1');
+		</script>
+	
+
+	<title>BUG: bad usercopy in vfs_readlink</title>
+</head>
+<body>
+	
+	<header id="topbar">
+		<table class="position_table">
+			<tr>
+				<td>
+					<h1><a href="/upstream">syzbot</a></h1>
+				</td>
+				<td class="namespace_td">
+					<select class="namespace" onchange="window.location.href = '/' + this.value + '';">
+						
+							<option value="android-5-10" >Android 5.10</option>
+							<option value="android-5-15" >Android 5.15</option>
+							<option value="android-54" >Android 5.4</option>
+							<option value="android-6-1" >Android 6.1</option>
+							<option value="freebsd" >FreeBSD</option>
+							<option value="upstream" selected="1">Linux</option>
+							<option value="linux-5.15" >Linux 5.15</option>
+							<option value="linux-6.1" >Linux 6.1</option>
+							<option value="netbsd" >NetBSD</option>
+							<option value="openbsd" >OpenBSD</option>
+							<option value="gvisor" >gVisor</option></select>
+				</td>
+				<td class="search">
+					
+					
+						<a href="https://syzkaller.appspot.com/_ah/conflogin?continue=https://syzkaller.appspot.com/bug%3Fextid%3D48a99e426f29859818c0">sign-in</a> |
+					
+					<a href="https://groups.google.com/forum/#!forum/syzkaller" target="_blank">mailing list</a> |
+					<a href="https://github.com/google/syzkaller" target="_blank">source</a> |
+					<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md" target="_blank">docs</a>
+				</td>
+			</tr>
+		</table>
+		
+		<div class="navigation">
+			<div class="navigation_tab">
+				<a href='/upstream'><span style="color:DeepPink;">🐞</span> Open [1660]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/subsystems'><span style="color:DeepPink;">≡</span> Subsystems</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/fixed'><span style="color:ForestGreen;">🐞</span> Fixed [6081]</a>
+			</div>
+
+			<div class="navigation_tab" href='/upstream/invalid'>
+				<a href='/upstream/invalid'><span style="color:RoyalBlue;">🐞</span> Invalid [15100]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/backports'><span style="color:ForestGreen;">⬇</span> Missing Backports [157]</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/graph/crashes'><span style="color:ForestGreen;">≡</span> Crashes</a>
+			</div>
+
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Graphs</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href='/upstream/graph/bugs'>Kernel&nbsp;Health</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/found-bugs'>Bugs/Month</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/lifetimes'>Bug&nbsp;Lifetimes</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/fuzzing'>Fuzzing</a>
+				</div>
+			</div>
+
+			
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Coverage</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href="/upstream/graph/coverage?period=quarter">Total</a>
+					<a class="navigation_tab"
+						href="/upstream/coverage?period=month">Repo&nbsp;Heatmap</a>
+					
+						<a class="navigation_tab"
+							href="/upstream/coverage/subsystems?period=month">Subsystems&nbsp;Heatmap</a>
+					
+				</div>
+			</div>
+			
+			
+			<div class="navigation_tab navigation_right">
+				<a href='mailto:syzkaller@googlegroups.com'><span style="color:ForestGreen;">💬</span> Send us feedback</a>
+			</div>
+			
+		</div>
+		
+	</header>
+	<br>
+
+
+	<b>BUG: bad usercopy in vfs_readlink</b><br><br>
+	Status: <a href="https://groups.google.com/d/msgid/syzkaller-bugs/67a1e1f4.050a0220.163cdc.0063.GAE@google.com">upstream: reported C repro on 2025/02/04 09:46</a><br>
+	
+		
+			Subsystems: 
+				<span class="bug-label"><a href="/upstream/s/ext4">ext4</a></span>
+		<br>
+		
+	<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md#labels">[Documentation on labels]</a><br>
+	
+	
+	Reported-by: syzbot&#43;48a99e426f29859818c0@syzkaller.appspotmail.com<br>
+	
+	First crash: 30d, last: 5h10m<br>
+	
+	<div>
+		<div class="bug-bisection-info">
+
+	
+	
+	
+		
+			<b>Cause bisection: introduced by</b>
+		
+		<b>(<a href="https://syzkaller.appspot.com/x/bisect.txt?x=1248c3df980000">bisect log</a>)</b> <span class="bad"></span>:<br>
+		<span class="mono">
+		
+		commit bae80473f7b0b25772619e7692019b1549d4a82c<br>
+		Author: Mateusz Guzik &lt;mjguzik@gmail.com&gt;<br>
+		Date:   Wed Nov 20 11:20:35 2024 &#43;0000<br>
+		<br>
+		&nbsp;&nbsp;<a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=bae80473f7b0b25772619e7692019b1549d4a82c">ext4: use inode_set_cached_link()</a><br>
+		</span><br>
+	
+	
+		Crash: <a href="https://syzkaller.appspot.com/x/report.txt?x=1148c3df980000">BUG: bad usercopy in vfs_readlink</a> (<a href="https://syzkaller.appspot.com/x/log.txt?x=1648c3df980000">log</a>)<br>
+		Repro: <a href="/text?tag=ReproC&x=1658aeb0580000">C</a>
+		<a href="/text?tag=ReproSyz&x=15825724580000">syz</a>
+		<a href="/text?tag=KernelConfig&x=57ab43c279fa614d">.config</a><br>
+	
+
+	
+	&nbsp;&nbsp;
+	
+
+</div>
+		
+		<div class="bug-bisection-stop"></div>
+	</div>
+
+	
+	<div class="collapsible collapsible-show">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Discussions (3)</span>
+		</div>
+		<div class="content">
+			
+			
+			
+
+<table class="list_table">
+	<thead>
+	<tr>
+		<th>Title</th>
+		<th>Replies (including bot)</th>
+		<th>Last reply</th>
+	</tr>
+	</thead>
+	<tbody>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/20250206094454.20522-2-jack@suse.cz/T/">[PATCH] ext4: Verify fast symlink length</a></td>
+			<td class="stat">6 (6)</td>
+			<td class="stat">2025/02/10 13:50</td>
+		</tr>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/20250205162819.380864-1-mjguzik@gmail.com/T/">[PATCH] ext4: pass strlen() of the symlink instead of i_size to inode_set_cached_link()</a></td>
+			<td class="stat">7 (7)</td>
+			<td class="stat">2025/02/06 09:44</td>
+		</tr>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/67a1e1f4.050a0220.163cdc.0063.GAE@google.com/T/">[syzbot] [hardening?] [mm?] BUG: bad usercopy in vfs_readlink</a></td>
+			<td class="stat">13 (16)</td>
+			<td class="stat">2025/02/06 09:43</td>
+		</tr>
+	
+	</tbody>
+</table>
+
+
+			
+			
+		</div>
+	</div>
+	
+	<div class="collapsible collapsible-hide">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Last patch testing requests (5)</span>
+		</div>
+		<div class="content">
+			
+			
+
+	<table class="list_table">
+		<caption id="jobs"><a class="plain" href="#jobs"></a></caption>
+		<thead>
+		<tr>
+			
+			<th>Created</th>
+			<th>Duration</th>
+			<th>User</th>
+			<th>Patch</th>
+			<th>Repo</th>
+			
+			<th>Result</th>
+		</tr>
+		</thead>
+		<tbody>
+		
+			<tr>
+				
+				<td class="time">2025/02/17 07:27</td>
+				<td class="time" title="started: 2025/02/17 07:54&#013;finished: 2025/02/17 08:09">
+					14m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=0ad2507d5d93f39619fc42372c347d6006b64319">upstream</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=1734d7df980000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=1334d7df980000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/02/17 07:27</td>
+				<td class="time" title="started: 2025/02/17 07:41&#013;finished: 2025/02/17 07:54">
+					13m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=0ad2507d5d93f39619fc42372c347d6006b64319">upstream</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=164252e4580000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=124252e4580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/02/17 07:27</td>
+				<td class="time" title="started: 2025/02/17 07:27&#013;finished: 2025/02/17 07:41">
+					13m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=0ad2507d5d93f39619fc42372c347d6006b64319">upstream</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=15ea6898580000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=11ea6898580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/02/05 18:21</td>
+				<td class="time" title="started: 2025/02/05 18:31&#013;finished: 2025/02/05 18:52">
+					20m
+				</td>
+				<td>
+					
+						jack@suse.cz
+					
+				</td>
+				<td><a href="/text?tag=Patch&x=16dde318580000">patch</a></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=92514ef226f511f2ca1fb1b8752966097518edc0">upstream</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=1770beb0580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2025/02/05 12:26</td>
+				<td class="time" title="started: 2025/02/05 14:14&#013;finished: 2025/02/05 15:19">
+					1h04m
+				</td>
+				<td>
+					
+						mjguzik@gmail.com
+					
+				</td>
+				<td><a href="/text?tag=Patch&x=112ecdf8580000">patch</a></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=5c8c229261f14159b54b9a32f12e5fa89d88b905">upstream</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=108993df980000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+		</tbody>
+	</table>
+
+
+			
+			
+			
+		</div>
+	</div>
+	
+	<div class="collapsible collapsible-hide">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Fix bisection attempts (1)</span>
+		</div>
+		<div class="content">
+			
+			
+
+	<table class="list_table">
+		<caption id="jobs"><a class="plain" href="#jobs"></a></caption>
+		<thead>
+		<tr>
+			
+			<th>Created</th>
+			<th>Duration</th>
+			<th>User</th>
+			<th>Patch</th>
+			<th>Repo</th>
+			
+			<th>Result</th>
+		</tr>
+		</thead>
+		<tbody>
+		
+			<tr>
+				
+				<td class="time">2025/03/05 20:39</td>
+				<td class="time" title="started: 2025/03/05 20:39&#013;finished: 2025/03/05 21:55">
+					1h16m
+				</td>
+				<td>
+					
+						bisect fix
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=69b8923f5003664e3ffef102e73333edfa2abdcf">upstream</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+							(0)
+						
+					
+					
+						<a href="https://syzkaller.appspot.com/x/bisect.txt?x=14974078580000">job log</a>
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=12974078580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+		</tbody>
+	</table>
+
+
+			
+			
+			
+		</div>
+	</div>
+	
+
+	
+	<br><b>Sample crash report:</b><br>
+	<div id="crash_div"><pre>EXT4-fs (loop0): mounted filesystem 00000000-0000-0000-0000-000000000000 r/w without journal. Quota mode: writeback.
+usercopy: Kernel memory exposure attempt detected from SLUB object &#39;ext4_inode_cache&#39; (offset 0, size 176)!
+------------[ cut here ]------------
+kernel BUG at <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/usercopy.c?id=69b8923f5003664e3ffef102e73333edfa2abdcf#n102'>mm/usercopy.c:102</a>!
+Oops: invalid opcode: 0000 [#1] PREEMPT SMP KASAN PTI
+CPU: 1 UID: 0 PID: 5826 Comm: syz-executor349 Not tainted 6.13.0-syzkaller-09793-g69b8923f5003 #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 12/27/2024
+RIP: 0010:usercopy_abort+0x84/0x90 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/usercopy.c?id=69b8923f5003664e3ffef102e73333edfa2abdcf#n102'>mm/usercopy.c:102</a>
+Code: 49 89 ce 48 c7 c3 80 5f 18 8c 48 0f 44 de 48 c7 c7 20 5e 18 8c 4c 89 de 48 89 c1 41 52 41 56 53 e8 d1 3a f5 fe 48 83 c4 18 90 &lt;0f&gt; 0b 66 2e 0f 1f 84 00 00 00 00 00 90 90 90 90 90 90 90 90 90 90
+RSP: 0018:ffffc90003fa7c90 EFLAGS: 00010296
+RAX: 000000000000006b RBX: ffffffff8c185f80 RCX: ba71ae4bd9cf0200
+RDX: 0000000000000000 RSI: 0000000080000000 RDI: 0000000000000000
+RBP: 0000000000000000 R08: ffffffff819f1fbc R09: 1ffff920007f4f2c
+R10: dffffc0000000000 R11: fffff520007f4f2d R12: ffffea0001e70200
+R13: 00000000000000b0 R14: 0000000000000000 R15: 00000000000000b0
+FS:  00005555602a7380(0000) GS:ffff8880b8700000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 000000000066c7e0 CR3: 0000000078aac000 CR4: 00000000003526f0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+Call Trace:
+ &lt;TASK&gt;
+ __check_heap_object+0xb1/0x100 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/slub.c?id=69b8923f5003664e3ffef102e73333edfa2abdcf#n5818'>mm/slub.c:5818</a>
+ check_heap_object <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/usercopy.c?id=69b8923f5003664e3ffef102e73333edfa2abdcf#n196'>mm/usercopy.c:196</a> [inline]
+ __check_object_size+0x1da/0x730 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/usercopy.c?id=69b8923f5003664e3ffef102e73333edfa2abdcf#n251'>mm/usercopy.c:251</a>
+ check_object_size <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/thread_info.h?id=69b8923f5003664e3ffef102e73333edfa2abdcf#n228'>include/linux/thread_info.h:228</a> [inline]
+ check_copy_size <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/thread_info.h?id=69b8923f5003664e3ffef102e73333edfa2abdcf#n264'>include/linux/thread_info.h:264</a> [inline]
+ copy_to_user <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/uaccess.h?id=69b8923f5003664e3ffef102e73333edfa2abdcf#n219'>include/linux/uaccess.h:219</a> [inline]
+ readlink_copy <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namei.c?id=69b8923f5003664e3ffef102e73333edfa2abdcf#n5284'>fs/namei.c:5284</a> [inline]
+ vfs_readlink+0x1cf/0x550 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namei.c?id=69b8923f5003664e3ffef102e73333edfa2abdcf#n5307'>fs/namei.c:5307</a>
+ do_readlinkat+0x249/0x3a0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/stat.c?id=69b8923f5003664e3ffef102e73333edfa2abdcf#n576'>fs/stat.c:576</a>
+ __do_sys_readlinkat <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/stat.c?id=69b8923f5003664e3ffef102e73333edfa2abdcf#n593'>fs/stat.c:593</a> [inline]
+ __se_sys_readlinkat <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/stat.c?id=69b8923f5003664e3ffef102e73333edfa2abdcf#n590'>fs/stat.c:590</a> [inline]
+ __x64_sys_readlinkat+0x9a/0xb0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/stat.c?id=69b8923f5003664e3ffef102e73333edfa2abdcf#n590'>fs/stat.c:590</a>
+ do_syscall_x64 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=69b8923f5003664e3ffef102e73333edfa2abdcf#n52'>arch/x86/entry/common.c:52</a> [inline]
+ do_syscall_64+0xf3/0x230 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=69b8923f5003664e3ffef102e73333edfa2abdcf#n83'>arch/x86/entry/common.c:83</a>
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+RIP: 0033:0x7fdaffabc639
+Code: 28 00 00 00 75 05 48 83 c4 28 c3 e8 61 17 00 00 90 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 &lt;48&gt; 3d 01 f0 ff ff 73 01 c3 48 c7 c1 b8 ff ff ff f7 d8 64 89 01 48
+RSP: 002b:00007ffeb88c4948 EFLAGS: 00000246 ORIG_RAX: 000000000000010b
+RAX: ffffffffffffffda RBX: 0030656c69662f2e RCX: 00007fdaffabc639
+RDX: 00000000200002c0 RSI: 0000000020000240 RDI: 00000000ffffff9c
+RBP: 00007fdaffb30610 R08: 0000000000000000 R09: 0000000000000000
+R10: 00000000000000b0 R11: 0000000000000246 R12: 0000000000000001
+R13: 00007ffeb88c4b18 R14: 0000000000000001 R15: 0000000000000001
+ &lt;/TASK&gt;
+Modules linked in:
+---[ end trace 0000000000000000 ]---
+RIP: 0010:usercopy_abort+0x84/0x90 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/usercopy.c?id=69b8923f5003664e3ffef102e73333edfa2abdcf#n102'>mm/usercopy.c:102</a>
+Code: 49 89 ce 48 c7 c3 80 5f 18 8c 48 0f 44 de 48 c7 c7 20 5e 18 8c 4c 89 de 48 89 c1 41 52 41 56 53 e8 d1 3a f5 fe 48 83 c4 18 90 &lt;0f&gt; 0b 66 2e 0f 1f 84 00 00 00 00 00 90 90 90 90 90 90 90 90 90 90
+RSP: 0018:ffffc90003fa7c90 EFLAGS: 00010296
+RAX: 000000000000006b RBX: ffffffff8c185f80 RCX: ba71ae4bd9cf0200
+RDX: 0000000000000000 RSI: 0000000080000000 RDI: 0000000000000000
+RBP: 0000000000000000 R08: ffffffff819f1fbc R09: 1ffff920007f4f2c
+R10: dffffc0000000000 R11: fffff520007f4f2d R12: ffffea0001e70200
+R13: 00000000000000b0 R14: 0000000000000000 R15: 00000000000000b0
+FS:  00005555602a7380(0000) GS:ffff8880b8700000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 000055dd00353bf8 CR3: 0000000078aac000 CR4: 00000000003526f0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+</pre></div><br>
+	
+
+	
+
+<table class="list_table">
+	<caption>Crashes (5):</caption>
+		<thead>
+		<tr>
+			<th><a onclick="return sortTable(this, 'Time', textSort, true)" href="#">Time</a></th>
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+			<th><a onclick="return sortTable(this, 'Commit', textSort)" href="#">Commit</a></th>
+			<th><a onclick="return sortTable(this, 'Syzkaller', textSort)" href="#">Syzkaller</a></th>
+			<th><a onclick="return sortTable(this, 'Config', textSort)" href="#">Config</a></th>
+			<th><a onclick="return sortTable(this, 'Log', textSort)" href="#">Log</a></th>
+			<th><a onclick="return sortTable(this, 'Report', reproSort)" href="#">Report</a></th>
+			<th><a onclick="return sortTable(this, 'Syz repro', reproSort)" href="#">Syz repro</a></th>
+			<th><a onclick="return sortTable(this, 'C repro', textSort)" href="#">C repro</a></th>
+			<th><a onclick="return sortTable(this, 'VM info', textSort)" href="#">VM info</a></th>
+			<th><a onclick="return sortTable(this, 'Assets', textSort)" href="#">Assets</a> (<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot_assets.md">help?</a>)</th>
+			<th><a onclick="return sortTable(this, 'Manager', textSort)" href="#">Manager</a></th>
+			<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		</tr>
+		</thead>
+		<tbody>
+		
+		<tr>
+			<td class="time">2025/02/03 06:42</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="69b8923f5003664e3ffef102e73333edfa2abdcf
+	2025/01/31 17:40"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=69b8923f5003664e3ffef102e73333edfa2abdcf">69b8923f5003</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/568559e4e604140cecd9fc4835eaa0298a1cadcc">568559e4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=57ab43c279fa614d">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1258aeb0580000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=160db5f8580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=15825724580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=13825724580000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=1658aeb0580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ea84ac864e92/disk-69b8923f.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6a465997b4e0/vmlinux-69b8923f.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d72b67b2bd15/bzImage-69b8923f.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7c2919610764/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">BUG: bad usercopy in vfs_readlink</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/03 06:15</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="69b8923f5003664e3ffef102e73333edfa2abdcf
+	2025/01/31 17:40"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=69b8923f5003664e3ffef102e73333edfa2abdcf">69b8923f5003</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/568559e4e604140cecd9fc4835eaa0298a1cadcc">568559e4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=57ab43c279fa614d">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16c443df980000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=176c5724580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=11c443df980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=1208aeb0580000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=127eed18580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ea84ac864e92/disk-69b8923f.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6a465997b4e0/vmlinux-69b8923f.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d72b67b2bd15/bzImage-69b8923f.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c4e44c9e9022/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">BUG: bad usercopy in vfs_readlink</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/03 05:49</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="69b8923f5003664e3ffef102e73333edfa2abdcf
+	2025/01/31 17:40"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=69b8923f5003664e3ffef102e73333edfa2abdcf">69b8923f5003</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/568559e4e604140cecd9fc4835eaa0298a1cadcc">568559e4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=57ab43c279fa614d">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1079b5f8580000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10ceed18580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=131843df980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=1479b5f8580000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=14a0aeb0580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ea84ac864e92/disk-69b8923f.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6a465997b4e0/vmlinux-69b8923f.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d72b67b2bd15/bzImage-69b8923f.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7b4173a81576/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">BUG: bad usercopy in vfs_readlink</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/03 07:06</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="69b8923f5003664e3ffef102e73333edfa2abdcf
+	2025/01/31 17:40"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=69b8923f5003664e3ffef102e73333edfa2abdcf">69b8923f5003</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/568559e4e604140cecd9fc4835eaa0298a1cadcc">568559e4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=57ab43c279fa614d">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12411764580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=129c43df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=cd9685197f48c0b5">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ea84ac864e92/disk-69b8923f.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6a465997b4e0/vmlinux-69b8923f.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d72b67b2bd15/bzImage-69b8923f.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">BUG: bad usercopy in vfs_readlink</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/03 05:19</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="69b8923f5003664e3ffef102e73333edfa2abdcf
+	2025/01/31 17:40"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=69b8923f5003664e3ffef102e73333edfa2abdcf">69b8923f5003</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/568559e4e604140cecd9fc4835eaa0298a1cadcc">568559e4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=57ab43c279fa614d">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13045724580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=125f2eb0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=819762c8d9de05d9">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ea84ac864e92/disk-69b8923f.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6a465997b4e0/vmlinux-69b8923f.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d72b67b2bd15/bzImage-69b8923f.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">BUG: bad usercopy in vfs_readlink</td>
+		</tr>
+		
+		</tbody>
+</table>
+<i>* <s>Struck through</s> repros no longer work on HEAD.</i>
+
+
+</body>
+</html>

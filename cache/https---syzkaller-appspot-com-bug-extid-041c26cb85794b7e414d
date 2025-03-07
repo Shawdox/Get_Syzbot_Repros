@@ -1,0 +1,1954 @@
+
+
+<!doctype html>
+<html>
+<head>
+	
+	<link rel="stylesheet" href="/static/style.css"/>
+	<script src="/static/common.js"></script>
+	
+		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-116117799-1"></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag() { dataLayer.push(arguments); }
+			gtag('js', new Date());
+			gtag('config', 'UA-116117799-1');
+		</script>
+	
+
+	<title>KCSAN: data-race in pcpu_alloc / pcpu_free_area (3)</title>
+</head>
+<body>
+	
+	<header id="topbar">
+		<table class="position_table">
+			<tr>
+				<td>
+					<h1><a href="/upstream">syzbot</a></h1>
+				</td>
+				<td class="namespace_td">
+					<select class="namespace" onchange="window.location.href = '/' + this.value + '';">
+						
+							<option value="android-5-10" >Android 5.10</option>
+							<option value="android-5-15" >Android 5.15</option>
+							<option value="android-54" >Android 5.4</option>
+							<option value="android-6-1" >Android 6.1</option>
+							<option value="freebsd" >FreeBSD</option>
+							<option value="upstream" selected="1">Linux</option>
+							<option value="linux-5.15" >Linux 5.15</option>
+							<option value="linux-6.1" >Linux 6.1</option>
+							<option value="netbsd" >NetBSD</option>
+							<option value="openbsd" >OpenBSD</option>
+							<option value="gvisor" >gVisor</option></select>
+				</td>
+				<td class="search">
+					
+					
+						<a href="https://syzkaller.appspot.com/_ah/conflogin?continue=https://syzkaller.appspot.com/bug%3Fextid%3D041c26cb85794b7e414d">sign-in</a> |
+					
+					<a href="https://groups.google.com/forum/#!forum/syzkaller" target="_blank">mailing list</a> |
+					<a href="https://github.com/google/syzkaller" target="_blank">source</a> |
+					<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md" target="_blank">docs</a>
+				</td>
+			</tr>
+		</table>
+		
+		<div class="navigation">
+			<div class="navigation_tab">
+				<a href='/upstream'><span style="color:DeepPink;">🐞</span> Open [1658]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/subsystems'><span style="color:DeepPink;">≡</span> Subsystems</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/fixed'><span style="color:ForestGreen;">🐞</span> Fixed [6081]</a>
+			</div>
+
+			<div class="navigation_tab" href='/upstream/invalid'>
+				<a href='/upstream/invalid'><span style="color:RoyalBlue;">🐞</span> Invalid [15103]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/backports'><span style="color:ForestGreen;">⬇</span> Missing Backports [157]</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/graph/crashes'><span style="color:ForestGreen;">≡</span> Crashes</a>
+			</div>
+
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Graphs</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href='/upstream/graph/bugs'>Kernel&nbsp;Health</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/found-bugs'>Bugs/Month</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/lifetimes'>Bug&nbsp;Lifetimes</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/fuzzing'>Fuzzing</a>
+				</div>
+			</div>
+
+			
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Coverage</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href="/upstream/graph/coverage?period=quarter">Total</a>
+					<a class="navigation_tab"
+						href="/upstream/coverage?period=month">Repo&nbsp;Heatmap</a>
+					
+						<a class="navigation_tab"
+							href="/upstream/coverage/subsystems?period=month">Subsystems&nbsp;Heatmap</a>
+					
+				</div>
+			</div>
+			
+			
+			<div class="navigation_tab navigation_right">
+				<a href='mailto:syzkaller@googlegroups.com'><span style="color:ForestGreen;">💬</span> Send us feedback</a>
+			</div>
+			
+		</div>
+		
+	</header>
+	<br>
+
+
+	<b>KCSAN: data-race in pcpu_alloc / pcpu_free_area (3)</b><br><br>
+	Status: <a href="https://groups.google.com/d/msgid/syzkaller-upstream-moderation/0000000000003e54cc05d1f0b6fe%40google.com">moderation: reported syz repro on 2021/11/29 17:24</a><br>
+	
+		
+			Subsystems: 
+				<span class="bug-label"><a href="/upstream/s/netfilter">netfilter</a></span>
+		<br>
+		
+	<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md#labels">[Documentation on labels]</a><br>
+	
+	
+	Reported-by: syzbot&#43;041c26cb85794b7e414d@syzkaller.appspotmail.com<br>
+	
+	First crash: 1367d, last: 291d<br>
+	
+	<div>
+		
+		
+		<div class="bug-bisection-stop"></div>
+	</div>
+
+	
+	<div class="collapsible collapsible-hide">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Similar bugs (2)</span>
+		</div>
+		<div class="content">
+			
+
+
+<table class="list_table">
+	
+	<thead>
+	<tr>
+		
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+		
+		<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		<th><a onclick="return sortTable(this, 'Repro', reproSort)" href="#">Repro</a></th>
+		<th><a onclick="return sortTable(this, 'Cause bisect', textSort)" href="#">Cause bisect</a></th>
+		<th><a onclick="return sortTable(this, 'Fix bisect', textSort)" href="#">Fix bisect</a></th>
+		<th><a onclick="return sortTable(this, 'Count', numSort)" href="#">Count</a></th>
+		<th><a onclick="return sortTable(this, 'Last', timeSort)" href="#">Last</a></th>
+		<th><a onclick="return sortTable(this, 'Reported', timeSort)" href="#">Reported</a></th>
+		
+		
+		
+			<th><a onclick="return sortTable(this, 'Patched', patchedSort)" href="#">Patched</a></th>
+		
+		
+			<th><a onclick="return sortTable(this, 'Status', textSort)" href="#">Status</a></th>
+		
+		
+	</tr>
+	</thead>
+	<tbody>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=7400334fdff46fb15dc9fb5b2c2050ddcef654fb">KCSAN: data-race in pcpu_alloc / pcpu_free_area (2)</a>
+					<span class="bug-label"><a href="/upstream/s/netfilter">netfilter</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">574</td>
+			<td class="stat">1367d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-bugs/00000000000054e19d0596c63465%40google.com">1945d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-bugs/00000000000054e19d0596c63465%40google.com">closed as invalid on 2021/06/07 13:54</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>upstream</td>
+			<td class="title">
+				<a href="/bug?id=fa9e4159eb501c6153f68e97fdca5a95c9b88a35">KCSAN: data-race in pcpu_alloc / pcpu_free_area</a>
+					<span class="bug-label"><a href="/upstream/s/netfilter">netfilter</a></span>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">2</td>
+			<td class="stat">1970d</td>
+			<td class="stat">
+				
+					1979d
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/28</td>
+			
+			
+				<td class="status">
+					
+						closed as invalid on 2019/10/15 15:50
+					
+				</td>
+			
+			
+		</tr>
+	
+	</tbody>
+</table>
+
+
+
+			
+			
+			
+			
+		</div>
+	</div>
+	
+	<div class="collapsible collapsible-hide">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Last patch testing requests (10)</span>
+		</div>
+		<div class="content">
+			
+			
+
+	<table class="list_table">
+		<caption id="jobs"><a class="plain" href="#jobs"></a></caption>
+		<thead>
+		<tr>
+			
+			<th>Created</th>
+			<th>Duration</th>
+			<th>User</th>
+			<th>Patch</th>
+			<th>Repo</th>
+			
+			<th>Result</th>
+		</tr>
+		</thead>
+		<tbody>
+		
+			<tr>
+				
+				<td class="time">2024/12/30 10:51</td>
+				<td class="time" title="started: 2024/12/30 11:25&#013;finished: 2024/12/30 11:37">
+					12m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=fc033cf25e612e840e545f8d5ad2edd6ba613ed5">upstream</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=145c6af8580000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=105c6af8580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/12/30 10:51</td>
+				<td class="time" title="started: 2024/12/30 11:17&#013;finished: 2024/12/30 11:25">
+					7m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=fc033cf25e612e840e545f8d5ad2edd6ba613ed5">upstream</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=146c6af8580000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=106c6af8580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/12/30 10:51</td>
+				<td class="time" title="started: 2024/12/30 11:08&#013;finished: 2024/12/30 11:17">
+					8m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=fc033cf25e612e840e545f8d5ad2edd6ba613ed5">upstream</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=17cef0b0580000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=13cef0b0580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/12/30 10:51</td>
+				<td class="time" title="started: 2024/12/30 10:59&#013;finished: 2024/12/30 11:08">
+					9m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=fc033cf25e612e840e545f8d5ad2edd6ba613ed5">upstream</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=120ef0b0580000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=140ef0b0580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/12/30 10:51</td>
+				<td class="time" title="started: 2024/12/30 10:51&#013;finished: 2024/12/30 10:59">
+					8m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=fc033cf25e612e840e545f8d5ad2edd6ba613ed5">upstream</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=175caac4580000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=135caac4580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/10/20 09:00</td>
+				<td class="time" title="started: 2024/10/20 09:35&#013;finished: 2024/10/20 09:45">
+					9m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=715ca9dd687f89ddaac8ec8ccb3b5e5a30311a99">upstream</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=145f20a7980000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=105f20a7980000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/10/20 09:00</td>
+				<td class="time" title="started: 2024/10/20 09:29&#013;finished: 2024/10/20 09:41">
+					12m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=715ca9dd687f89ddaac8ec8ccb3b5e5a30311a99">upstream</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=11692430580000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=16692430580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/10/20 09:00</td>
+				<td class="time" title="started: 2024/10/20 09:26&#013;finished: 2024/10/20 09:35">
+					8m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=715ca9dd687f89ddaac8ec8ccb3b5e5a30311a99">upstream</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=121a7240580000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=141a7240580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/10/20 09:00</td>
+				<td class="time" title="started: 2024/10/20 09:15&#013;finished: 2024/10/20 09:29">
+					13m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=715ca9dd687f89ddaac8ec8ccb3b5e5a30311a99">upstream</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=1083825f980000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=1703825f980000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/10/20 09:00</td>
+				<td class="time" title="started: 2024/10/20 09:00&#013;finished: 2024/10/20 09:15">
+					15m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="upstream"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=715ca9dd687f89ddaac8ec8ccb3b5e5a30311a99">upstream</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=17912430580000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=13912430580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+		</tbody>
+	</table>
+
+
+			
+			
+			
+		</div>
+	</div>
+	
+
+	
+	<br><b>Sample crash report:</b><br>
+	<div id="crash_div"><pre>==================================================================
+BUG: KCSAN: data-race in pcpu_alloc / pcpu_free_area
+
+read-write to 0xffffffff86ef831c of 4 bytes by task 3104 on cpu 0:
+ pcpu_update_empty_pages <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/percpu.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n602'>mm/percpu.c:602</a> [inline]
+ pcpu_block_update_hint_free <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/percpu.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n1044'>mm/percpu.c:1044</a> [inline]
+ pcpu_free_area+0x4e2/0x570 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/percpu.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n1302'>mm/percpu.c:1302</a>
+ free_percpu+0x1c6/0xb20 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/percpu.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n2303'>mm/percpu.c:2303</a>
+ xt_percpu_counter_free+0x63/0x70 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/netfilter/x_tables.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n1950'>net/netfilter/x_tables.c:1950</a>
+ cleanup_entry+0x17b/0x1a0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/ipv4/netfilter/ip_tables.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n654'>net/ipv4/netfilter/ip_tables.c:654</a>
+ __do_replace+0x46a/0x570 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/ipv4/netfilter/ip_tables.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n1082'>net/ipv4/netfilter/ip_tables.c:1082</a>
+ do_replace <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/ipv4/netfilter/ip_tables.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n1137'>net/ipv4/netfilter/ip_tables.c:1137</a> [inline]
+ do_ipt_set_ctl+0x1440/0x1730 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/ipv4/netfilter/ip_tables.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n1627'>net/ipv4/netfilter/ip_tables.c:1627</a>
+ nf_setsockopt+0x18d/0x1b0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/netfilter/nf_sockopt.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n101'>net/netfilter/nf_sockopt.c:101</a>
+ ip_setsockopt+0xe6/0x100 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/ipv4/ip_sockglue.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n1426'>net/ipv4/ip_sockglue.c:1426</a>
+ tcp_setsockopt+0x90/0xa0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/ipv4/tcp.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n3704'>net/ipv4/tcp.c:3704</a>
+ sock_common_setsockopt+0x61/0x70 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/core/sock.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n3711'>net/core/sock.c:3711</a>
+ do_sock_setsockopt <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/socket.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n2311'>net/socket.c:2311</a> [inline]
+ __sys_setsockopt+0x1d4/0x240 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/socket.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n2334'>net/socket.c:2334</a>
+ __do_sys_setsockopt <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/socket.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n2343'>net/socket.c:2343</a> [inline]
+ __se_sys_setsockopt <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/socket.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n2340'>net/socket.c:2340</a> [inline]
+ __x64_sys_setsockopt+0x66/0x80 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/socket.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n2340'>net/socket.c:2340</a>
+ do_syscall_x64 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n51'>arch/x86/entry/common.c:51</a> [inline]
+ do_syscall_64+0x44/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n82'>arch/x86/entry/common.c:82</a>
+ entry_SYSCALL_64_after_hwframe+0x63/0x6b
+
+read to 0xffffffff86ef831c of 4 bytes by task 3111 on cpu 1:
+ pcpu_alloc+0x9bc/0x10b0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/percpu.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n1868'>mm/percpu.c:1868</a>
+ __alloc_percpu+0x24/0x30 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/mm/percpu.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n1943'>mm/percpu.c:1943</a>
+ xt_percpu_counter_alloc+0x72/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/netfilter/x_tables.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n1930'>net/netfilter/x_tables.c:1930</a>
+ find_check_entry <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/ipv4/netfilter/ip_tables.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n526'>net/ipv4/netfilter/ip_tables.c:526</a> [inline]
+ translate_table+0x90b/0xf60 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/ipv4/netfilter/ip_tables.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n716'>net/ipv4/netfilter/ip_tables.c:716</a>
+ do_replace <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/ipv4/netfilter/ip_tables.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n1133'>net/ipv4/netfilter/ip_tables.c:1133</a> [inline]
+ do_ipt_set_ctl+0x13f0/0x1730 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/ipv4/netfilter/ip_tables.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n1627'>net/ipv4/netfilter/ip_tables.c:1627</a>
+ nf_setsockopt+0x18d/0x1b0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/netfilter/nf_sockopt.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n101'>net/netfilter/nf_sockopt.c:101</a>
+ ip_setsockopt+0xe6/0x100 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/ipv4/ip_sockglue.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n1426'>net/ipv4/ip_sockglue.c:1426</a>
+ tcp_setsockopt+0x90/0xa0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/ipv4/tcp.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n3704'>net/ipv4/tcp.c:3704</a>
+ sock_common_setsockopt+0x61/0x70 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/core/sock.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n3711'>net/core/sock.c:3711</a>
+ do_sock_setsockopt <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/socket.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n2311'>net/socket.c:2311</a> [inline]
+ __sys_setsockopt+0x1d4/0x240 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/socket.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n2334'>net/socket.c:2334</a>
+ __do_sys_setsockopt <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/socket.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n2343'>net/socket.c:2343</a> [inline]
+ __se_sys_setsockopt <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/socket.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n2340'>net/socket.c:2340</a> [inline]
+ __x64_sys_setsockopt+0x66/0x80 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/socket.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n2340'>net/socket.c:2340</a>
+ do_syscall_x64 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n51'>arch/x86/entry/common.c:51</a> [inline]
+ do_syscall_64+0x44/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a#n82'>arch/x86/entry/common.c:82</a>
+ entry_SYSCALL_64_after_hwframe+0x63/0x6b
+
+value changed: 0x00000005 -&gt; 0x00000006
+
+Reported by Kernel Concurrency Sanitizer on:
+CPU: 1 PID: 3111 Comm: syz-executor.2 Not tainted 6.7.0-rc4-syzkaller #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 11/10/2023
+==================================================================
+</pre></div><br>
+	
+
+	
+
+<table class="list_table">
+	<caption>Crashes (1402):</caption>
+		<thead>
+		<tr>
+			<th><a onclick="return sortTable(this, 'Time', textSort, true)" href="#">Time</a></th>
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+			<th><a onclick="return sortTable(this, 'Commit', textSort)" href="#">Commit</a></th>
+			<th><a onclick="return sortTable(this, 'Syzkaller', textSort)" href="#">Syzkaller</a></th>
+			<th><a onclick="return sortTable(this, 'Config', textSort)" href="#">Config</a></th>
+			<th><a onclick="return sortTable(this, 'Log', textSort)" href="#">Log</a></th>
+			<th><a onclick="return sortTable(this, 'Report', reproSort)" href="#">Report</a></th>
+			<th><a onclick="return sortTable(this, 'Syz repro', reproSort)" href="#">Syz repro</a></th>
+			<th><a onclick="return sortTable(this, 'C repro', textSort)" href="#">C repro</a></th>
+			<th><a onclick="return sortTable(this, 'VM info', textSort)" href="#">VM info</a></th>
+			<th><a onclick="return sortTable(this, 'Assets', textSort)" href="#">Assets</a> (<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot_assets.md">help?</a>)</th>
+			<th><a onclick="return sortTable(this, 'Manager', textSort)" href="#">Manager</a></th>
+			<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		</tr>
+		</thead>
+		<tbody>
+		
+		<tr>
+			<td class="time">2023/12/04 08:36</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="33cc938e65a98f1d29d0a18403dbbee050dcad9a
+	2023/12/03 09:52"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a">33cc938e65a9</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f819d6f7cb99737851dcaaa51f11190138fd48d5">f819d6f7</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ac34c1f29a8029df">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1365a21ce80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15e62354e80000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=156b6ae2e80000">syz</a>
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6a0655688b57/disk-33cc938e.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/89a66df4cc89/vmlinux-33cc938e.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/621e82bbfa03/bzImage-33cc938e.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/12/04 00:57</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="33cc938e65a98f1d29d0a18403dbbee050dcad9a
+	2023/12/03 09:52"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=33cc938e65a98f1d29d0a18403dbbee050dcad9a">33cc938e65a9</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f819d6f7cb99737851dcaaa51f11190138fd48d5">f819d6f7</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ac34c1f29a8029df">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1284738ce80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=130ea04ae80000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=1495b46ae80000">syz</a>
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6a0655688b57/disk-33cc938e.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/89a66df4cc89/vmlinux-33cc938e.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/621e82bbfa03/bzImage-33cc938e.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/09/13 21:15</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="3669558bdf354cd352be955ef2764cde6a9bf5ec
+	2023/09/12 18:28"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=3669558bdf354cd352be955ef2764cde6a9bf5ec">3669558bdf35</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0b6a67ac4b0dc26f43030c5edd01c9175f13b784">0b6a67ac</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=60394d520e3d8e59">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=116c892c680000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=129a80ac680000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=1653f194680000">syz</a>
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/aa9b32ac2ceb/disk-3669558b.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/43ee4d9b70a9/vmlinux-3669558b.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/21a1cfc6ec47/bzImage-3669558b.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/08/25 07:34</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="4f9e7fabf8643003afefc172e62dd276686f016e
+	2023/08/25 02:39"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=4f9e7fabf8643003afefc172e62dd276686f016e">4f9e7fabf864</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/49be837e029feccab241a98641b01a146890b66f">49be837e</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=f12c32a009b80107">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12cec7a7a80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13d24c87a80000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=13813760680000">syz</a>
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/586c18cf5685/disk-4f9e7fab.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/26437f4b2bc8/vmlinux-4f9e7fab.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6be368a4b854/bzImage-4f9e7fab.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/05/21 17:04</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="3b5e1590a26713a8c76896f0f1b99f52ec24e72f
+	2022/05/20 18:26"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=3b5e1590a26713a8c76896f0f1b99f52ec24e72f">3b5e1590a267</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/7268fa62257981feeebc89e55b5ce45294beff8c">7268fa62</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=83a97198b5da3a53">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=130697adf00000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=154d5355f00000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=13cd0ad6f00000">syz</a>
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets"></td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/05/19 03:09</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="0450d2083be6bdcd18c9535ac50c55266499b2df
+	2024/05/18 21:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=0450d2083be6bdcd18c9535ac50c55266499b2df">0450d2083be6</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c0f1611a36d66bb0bb8e2f294b97fb685bfc5f9c">c0f1611a</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9cea9d6e22e152b5">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11b23df4980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15ffe97c980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/04c015715988/disk-0450d208.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/93f908c0c5bd/vmlinux-0450d208.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ead896346b5c/bzImage-0450d208.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/05/18 13:50</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="4b377b4868ef17b040065bd468668c707d2477a5
+	2024/05/18 02:17"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=4b377b4868ef17b040065bd468668c707d2477a5">4b377b4868ef</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c0f1611a36d66bb0bb8e2f294b97fb685bfc5f9c">c0f1611a</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7d11ad8b62a2732b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17716d92980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=170589cc980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=a8149c18a5ebfd">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b00dfd3398ba/disk-4b377b48.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7f2420fe2377/vmlinux-4b377b48.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4f4f0f25329f/bzImage-4b377b48.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/05/17 12:09</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ea5f6ad9ad9645733b72ab53a98e719b460d36a6
+	2024/05/16 16:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ea5f6ad9ad9645733b72ab53a98e719b460d36a6">ea5f6ad9ad96</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a12e99e74dfc7cbe54720d8383cec46aaf024a28">a12e99e7</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7d11ad8b62a2732b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=171c3598980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=100b2248980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/92ffd793960a/disk-ea5f6ad9.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a1f992e8f978/vmlinux-ea5f6ad9.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/38099d58c151/bzImage-ea5f6ad9.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/05/17 07:09</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ea5f6ad9ad9645733b72ab53a98e719b460d36a6
+	2024/05/16 16:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ea5f6ad9ad9645733b72ab53a98e719b460d36a6">ea5f6ad9ad96</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c2e0726105cc811a456d900c62443159acc29c32">c2e07261</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7d11ad8b62a2732b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1007c1d0980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12e9d884980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=d176a671131387bb">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/92ffd793960a/disk-ea5f6ad9.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a1f992e8f978/vmlinux-ea5f6ad9.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/38099d58c151/bzImage-ea5f6ad9.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/05/15 23:52</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="8c06da67d0bd3139a97f301b4aa9c482b9d4f29e
+	2024/05/15 20:07"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=8c06da67d0bd3139a97f301b4aa9c482b9d4f29e">8c06da67d0bd</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ef5d53ed7e3c7d30481a88301f680e37a5cc4775">ef5d53ed</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=def5b2117f9c6337">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=143f895c980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16261aa2980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9baa40605487/disk-8c06da67.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/06651cbaee3c/vmlinux-8c06da67.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/73eaed1f912d/bzImage-8c06da67.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/05/15 09:35</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="b850dc206a57ae272c639e31ac202ec0c2f46960
+	2024/05/15 01:57"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=b850dc206a57ae272c639e31ac202ec0c2f46960">b850dc206a57</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/94b087b1f1dce14942bc35bb35a8f58e57b1fc63">94b087b1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=73edb1d83ffa7e34">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10de6db8980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16c904f4980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=a39a6b2916ea4817">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/30d7605d7fd8/disk-b850dc20.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/aab977699473/vmlinux-b850dc20.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5122c56c1adf/bzImage-b850dc20.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/05/15 05:04</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="b850dc206a57ae272c639e31ac202ec0c2f46960
+	2024/05/15 01:57"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=b850dc206a57ae272c639e31ac202ec0c2f46960">b850dc206a57</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/fdb4c10ce6d49163d1f57463d7ca0ae22b71e765">fdb4c10c</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=73edb1d83ffa7e34">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=110003d4980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16b378f0980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=fb573c5867ab3dcc">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/30d7605d7fd8/disk-b850dc20.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/aab977699473/vmlinux-b850dc20.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5122c56c1adf/bzImage-b850dc20.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/05/14 14:27</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a5131c3fdf2608f1c15f3809e201cf540eb28489
+	2024/05/14 02:33"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a5131c3fdf2608f1c15f3809e201cf540eb28489">a5131c3fdf26</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/fdb4c10ce6d49163d1f57463d7ca0ae22b71e765">fdb4c10c</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9d5084c687a52d5f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12e47248980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=142248e0980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b21e22da1099db92">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b3b0db2bff49/disk-a5131c3f.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9f1d9b64dbeb/vmlinux-a5131c3f.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3f993d2dec77/bzImage-a5131c3f.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/05/14 00:08</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="8815da98e06a930ce7e6a1ffaf1b1590e79fd94f
+	2024/05/13 17:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=8815da98e06a930ce7e6a1ffaf1b1590e79fd94f">8815da98e06a</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/fdb4c10ce6d49163d1f57463d7ca0ae22b71e765">fdb4c10c</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=27871b01c5cdd85a">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11c74084980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1542596c980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ec613241ff4f4e7b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9eeb7afca32c/disk-8815da98.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/52dce8127653/vmlinux-8815da98.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8a6b301b959b/bzImage-8815da98.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/05/13 06:23</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a38297e3fb012ddfa7ce0321a7e5a8daeb1872b6
+	2024/05/12 21:12"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a38297e3fb012ddfa7ce0321a7e5a8daeb1872b6">a38297e3fb01</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9026e14289eaf45a00ddddb8730f2092b956d99a">9026e142</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=56ea61d3adba5373">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12b2a96c980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=120578f0980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d2698d5a0109/disk-a38297e3.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/262bbe2731ce/vmlinux-a38297e3.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3ba9d8ffc7f2/bzImage-a38297e3.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/05/12 17:29</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ba16c1cf11c9f264b5455cb7d57267b39925409a
+	2024/05/12 16:09"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ba16c1cf11c9f264b5455cb7d57267b39925409a">ba16c1cf11c9</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9026e14289eaf45a00ddddb8730f2092b956d99a">9026e142</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=168fab99759dff68">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1488596c980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11c35d24980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=60fe19786ccc7b82">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/12cd098adb5d/disk-ba16c1cf.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3aa3ad35ddbb/vmlinux-ba16c1cf.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cdae0ed7d4a3/bzImage-ba16c1cf.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/05/11 08:44</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="cf87f46fd34d6c19283d9625a7822f20d90b64a4
+	2024/05/10 21:37"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=cf87f46fd34d6c19283d9625a7822f20d90b64a4">cf87f46fd34d</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9026e14289eaf45a00ddddb8730f2092b956d99a">9026e142</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=168fab99759dff68">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=133b9600980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=160fc7a8980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/19ced7c04631/disk-cf87f46f.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5cc9ad64696b/vmlinux-cf87f46f.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/51408b47f6e5/bzImage-cf87f46f.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/05/11 07:26</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="cf87f46fd34d6c19283d9625a7822f20d90b64a4
+	2024/05/10 21:37"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=cf87f46fd34d6c19283d9625a7822f20d90b64a4">cf87f46fd34d</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f7c35481a0c97addb5af75de0cd96c4db8d6d4ac">f7c35481</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=168fab99759dff68">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1294c398980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17beb924980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=a39a6b2916ea4817">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/19ced7c04631/disk-cf87f46f.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5cc9ad64696b/vmlinux-cf87f46f.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/51408b47f6e5/bzImage-cf87f46f.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/05/10 18:14</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="f4345f05c0dfc73c617e66f3b809edb8ddd41075
+	2024/05/10 17:24"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=f4345f05c0dfc73c617e66f3b809edb8ddd41075">f4345f05c0df</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f7c35481a0c97addb5af75de0cd96c4db8d6d4ac">f7c35481</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=168fab99759dff68">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15a32020980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10eff504980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b98932ad16077116">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f15b07aa99c5/disk-f4345f05.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4ba2367edcbd/vmlinux-f4345f05.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/bffd58f2c9bb/bzImage-f4345f05.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/05/10 15:20</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="448b3fe5a0eab5b625a7e15c67c7972169e47ff8
+	2024/05/09 17:17"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=448b3fe5a0eab5b625a7e15c67c7972169e47ff8">448b3fe5a0ea</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f7c35481a0c97addb5af75de0cd96c4db8d6d4ac">f7c35481</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=168fab99759dff68">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13e1e750980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=169017c0980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2a9bd6ab04dd/disk-448b3fe5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3d2ac1ed19d2/vmlinux-448b3fe5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0ab4074112ed/bzImage-448b3fe5.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/05/10 00:43</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="448b3fe5a0eab5b625a7e15c67c7972169e47ff8
+	2024/05/09 17:17"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=448b3fe5a0eab5b625a7e15c67c7972169e47ff8">448b3fe5a0ea</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/de979bc20b2b73242b7d6fbbdf614a8cb4c574f4">de979bc2</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=168fab99759dff68">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=169383a8980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15a17048980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2a9bd6ab04dd/disk-448b3fe5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3d2ac1ed19d2/vmlinux-448b3fe5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0ab4074112ed/bzImage-448b3fe5.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/05/09 21:52</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="448b3fe5a0eab5b625a7e15c67c7972169e47ff8
+	2024/05/09 17:17"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=448b3fe5a0eab5b625a7e15c67c7972169e47ff8">448b3fe5a0ea</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0507966124891755bd4be06ca0420c8b7e908032">05079661</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=168fab99759dff68">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16c57c5c980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16dce998980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2a9bd6ab04dd/disk-448b3fe5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3d2ac1ed19d2/vmlinux-448b3fe5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0ab4074112ed/bzImage-448b3fe5.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/05/09 07:59</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="45db3ab70092637967967bfd8e6144017638563c
+	2024/05/08 17:39"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=45db3ab70092637967967bfd8e6144017638563c">45db3ab70092</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/20bf80e1d6eb340a35a841a099b8dca81e42ff5e">20bf80e1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=168fab99759dff68">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=122937c0980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=110eae04980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7631b1395ba6/disk-45db3ab7.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/98898f33b533/vmlinux-45db3ab7.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/81ed5667dded/bzImage-45db3ab7.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/05/09 07:46</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="45db3ab70092637967967bfd8e6144017638563c
+	2024/05/08 17:39"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=45db3ab70092637967967bfd8e6144017638563c">45db3ab70092</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/20bf80e1d6eb340a35a841a099b8dca81e42ff5e">20bf80e1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=168fab99759dff68">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1744705c980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1538afff180000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7631b1395ba6/disk-45db3ab7.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/98898f33b533/vmlinux-45db3ab7.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/81ed5667dded/bzImage-45db3ab7.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/05/08 18:26</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="6d7ddd805123e03db0a16c7dbc8509366432a630
+	2024/05/08 17:15"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=6d7ddd805123e03db0a16c7dbc8509366432a630">6d7ddd805123</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/20bf80e1d6eb340a35a841a099b8dca81e42ff5e">20bf80e1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=168fab99759dff68">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13b503c0980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=135c403f180000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2049777a494a/disk-6d7ddd80.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ff1e7cfdcdf6/vmlinux-6d7ddd80.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d755c672857b/bzImage-6d7ddd80.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/05/08 15:30</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dccb07f2914cdab2ac3a5b6c98406f765acab803
+	2024/05/06 20:43"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dccb07f2914cdab2ac3a5b6c98406f765acab803">dccb07f2914c</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/20bf80e1d6eb340a35a841a099b8dca81e42ff5e">20bf80e1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=168fab99759dff68">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15be6604980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13828970980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3c2d87fc08e4/disk-dccb07f2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2722c4f79b5b/vmlinux-dccb07f2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b652f5cb7bf8/bzImage-dccb07f2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/05/08 00:27</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dccb07f2914cdab2ac3a5b6c98406f765acab803
+	2024/05/06 20:43"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dccb07f2914cdab2ac3a5b6c98406f765acab803">dccb07f2914c</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/4cf3f9b3f15d248d052cd369d23308c953d657d9">4cf3f9b3</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=168fab99759dff68">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17951ea8980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=133e03c0980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3c2d87fc08e4/disk-dccb07f2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2722c4f79b5b/vmlinux-dccb07f2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b652f5cb7bf8/bzImage-dccb07f2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/05/07 12:01</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dccb07f2914cdab2ac3a5b6c98406f765acab803
+	2024/05/06 20:43"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dccb07f2914cdab2ac3a5b6c98406f765acab803">dccb07f2914c</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/cb2dcc0ecd47d23bd111a0ff629395ca0e10fe93">cb2dcc0e</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=168fab99759dff68">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=158a95a8980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13dcedbc980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3c2d87fc08e4/disk-dccb07f2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2722c4f79b5b/vmlinux-dccb07f2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b652f5cb7bf8/bzImage-dccb07f2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/05/06 10:26</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dd5a440a31fae6e459c0d6271dddd62825505361
+	2024/05/05 21:06"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dd5a440a31fae6e459c0d6271dddd62825505361">dd5a440a31fa</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d884b519ef74f7edf51f2c964162f0a2fe80846c">d884b519</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=168fab99759dff68">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10050b54980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=169728d4980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7f4fef47bdc1/disk-dd5a440a.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ddeb59f9b3ab/vmlinux-dd5a440a.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d47392e421d9/bzImage-dd5a440a.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/05/04 14:58</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="7367539ad4b0f8f9b396baf02110962333719a48
+	2024/05/03 23:21"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=7367539ad4b0f8f9b396baf02110962333719a48">7367539ad4b0</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/610f2a54d02f8cf4f2454c03bf679b602e6e59b6">610f2a54</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c3beef2aff822313">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14207450980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1630078b180000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/af3fe37f15df/disk-7367539a.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f3c9d96d17c8/vmlinux-7367539a.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2d3352d676d2/bzImage-7367539a.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/05/03 23:29</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ddb4c3f25b7b95df3d6932db0b379d768a6ebdf7
+	2024/05/03 19:10"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ddb4c3f25b7b95df3d6932db0b379d768a6ebdf7">ddb4c3f25b7b</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/dd26401e5ae3c1fe62beadcfb937ee5d06f304e2">dd26401e</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c3beef2aff822313">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=134fe960980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15e1d3c4980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3d645f06ab6c/disk-ddb4c3f2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7cc55089db0f/vmlinux-ddb4c3f2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0f90bd75f35d/bzImage-ddb4c3f2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/05/03 10:10</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="f03359bca01bf4372cf2c118cd9a987a5951b1c8
+	2024/05/02 17:49"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=f03359bca01bf4372cf2c118cd9a987a5951b1c8">f03359bca01b</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/dd26401e5ae3c1fe62beadcfb937ee5d06f304e2">dd26401e</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c3beef2aff822313">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11aad65b180000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=165e93a7180000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7f02c8b05997/disk-f03359bc.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6e4754c94ec3/vmlinux-f03359bc.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6da938ac63a4/bzImage-f03359bc.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/05/02 21:32</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="49a73b1652c58ef2a81776a12ad9ac0795f38de0
+	2024/05/02 16:05"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=49a73b1652c58ef2a81776a12ad9ac0795f38de0">49a73b1652c5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ddfc15a1555eaea52bb3186b2c53245cc91ac5d2">ddfc15a1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c3beef2aff822313">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1597697f180000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10b9978b180000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/869474934b87/disk-49a73b16.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d7e932324bfd/vmlinux-49a73b16.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c2aedff3b667/bzImage-49a73b16.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/05/02 17:03</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="49a73b1652c58ef2a81776a12ad9ac0795f38de0
+	2024/05/02 16:05"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=49a73b1652c58ef2a81776a12ad9ac0795f38de0">49a73b1652c5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/3ba885bcb66dec1678d8842ddeb6805786d32a3f">3ba885bc</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c3beef2aff822313">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=140235cf180000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11bc9128980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/869474934b87/disk-49a73b16.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d7e932324bfd/vmlinux-49a73b16.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c2aedff3b667/bzImage-49a73b16.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/05/01 00:16</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="18daea77cca626f590fb140fc11e3a43c5d41354
+	2024/04/30 19:40"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=18daea77cca626f590fb140fc11e3a43c5d41354">18daea77cca6</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/3ba885bcb66dec1678d8842ddeb6805786d32a3f">3ba885bc</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c3beef2aff822313">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=141dac40980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15288228980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=fe248449bba7bbe7">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/bf6a505db597/disk-18daea77.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/eca1bb0a1073/vmlinux-18daea77.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/71723d8f8875/bzImage-18daea77.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/04/30 09:36</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="98369dccd2f8e16bf4c6621053af7aa4821dcf8e
+	2024/04/29 22:57"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=98369dccd2f8e16bf4c6621053af7aa4821dcf8e">98369dccd2f8</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f10afd6936523834f5b3297e9771b19a8f0edcb5">f10afd69</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c3beef2aff822313">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=157b0c40980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1029ac40980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=3a62c1bc2efc89c6">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2b046e3e2fb0/disk-98369dcc.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/246891639260/vmlinux-98369dcc.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0bcfa7846f96/bzImage-98369dcc.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/04/29 20:45</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="b947cc5bf6d793101135265352e205aeb30b54f0
+	2024/04/29 15:52"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=b947cc5bf6d793101135265352e205aeb30b54f0">b947cc5bf6d7</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f10afd6936523834f5b3297e9771b19a8f0edcb5">f10afd69</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c3beef2aff822313">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=138732ef180000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=143ae17f180000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/58ae26742a96/disk-b947cc5b.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a80fe1fbf52b/vmlinux-b947cc5b.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9bbd6f18cade/bzImage-b947cc5b.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/04/29 16:43</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="b947cc5bf6d793101135265352e205aeb30b54f0
+	2024/04/29 15:52"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=b947cc5bf6d793101135265352e205aeb30b54f0">b947cc5bf6d7</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/27e33c581cd83538f39e159d6c7a5bdfba01f917">27e33c58</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c3beef2aff822313">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=162fa97f180000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=147d7af8980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=3a62c1bc2efc89c6">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/58ae26742a96/disk-b947cc5b.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a80fe1fbf52b/vmlinux-b947cc5b.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9bbd6f18cade/bzImage-b947cc5b.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/04/29 07:16</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="e67572cd2204894179d89bd7b984072f19313b03
+	2024/04/28 20:47"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=e67572cd2204894179d89bd7b984072f19313b03">e67572cd2204</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/27e33c581cd83538f39e159d6c7a5bdfba01f917">27e33c58</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c3beef2aff822313">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14be597f180000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13929937180000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7b20866b5f53/disk-e67572cd.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4c1441ce05e8/vmlinux-e67572cd.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/382a9e170b40/bzImage-e67572cd.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/04/27 19:54</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="5d12ed4bea4343ca3adbe3c23c8d149485de5010
+	2024/04/27 18:24"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=5d12ed4bea4343ca3adbe3c23c8d149485de5010">5d12ed4bea43</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/07b455f928ae5c2cd07f4d61c1b499f56ea3dd08">07b455f9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=566553eb991172d">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16b35517180000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1370ea40980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3aedbb9f245a/disk-5d12ed4b.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/25fd9f016651/vmlinux-5d12ed4b.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/088ee07a221e/bzImage-5d12ed4b.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/04/27 01:59</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="5eb4573ea63d0c83bf58fb7c243fc2c2b6966c02
+	2024/04/26 21:39"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=5eb4573ea63d0c83bf58fb7c243fc2c2b6966c02">5eb4573ea63d</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/059e99634d85e743d0e9fc4ca38805b8248a049f">059e9963</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=566553eb991172d">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=163b2c40980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13bd9c40980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/747237a31f17/disk-5eb4573e.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2264c7a1affc/vmlinux-5eb4573e.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/97a8b5a8c42f/bzImage-5eb4573e.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/04/26 12:43</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="c942a0cd3603e34dd2d7237e064d9318cb7f9654
+	2024/04/25 22:38"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=c942a0cd3603e34dd2d7237e064d9318cb7f9654">c942a0cd3603</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/059e99634d85e743d0e9fc4ca38805b8248a049f">059e9963</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4128b708dfac799b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=165db530980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1635c28b180000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7643043a379b8fc7">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0ccaed2938dd/disk-c942a0cd.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f45fb1a92144/vmlinux-c942a0cd.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9ff8e1609ba0/bzImage-c942a0cd.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/04/26 06:47</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="c942a0cd3603e34dd2d7237e064d9318cb7f9654
+	2024/04/25 22:38"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=c942a0cd3603e34dd2d7237e064d9318cb7f9654">c942a0cd3603</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/8bdc0f220628c9347b3581fead4c026272439799">8bdc0f22</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4128b708dfac799b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=160832ef180000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=171032a0980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=8dbe5c9bd02d163c">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0ccaed2938dd/disk-c942a0cd.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f45fb1a92144/vmlinux-c942a0cd.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9ff8e1609ba0/bzImage-c942a0cd.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/04/24 16:31</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9d1ddab261f3e2af7c384dc02238784ce0cf9f98
+	2024/04/23 16:37"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9d1ddab261f3e2af7c384dc02238784ce0cf9f98">9d1ddab261f3</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/8bdc0f220628c9347b3581fead4c026272439799">8bdc0f22</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4128b708dfac799b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17f1e808980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12aade80980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1c11f9cb6f5f/disk-9d1ddab2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a0f2c579e436/vmlinux-9d1ddab2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/33fadada308b/bzImage-9d1ddab2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/04/23 22:05</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9d1ddab261f3e2af7c384dc02238784ce0cf9f98
+	2024/04/23 16:37"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9d1ddab261f3e2af7c384dc02238784ce0cf9f98">9d1ddab261f3</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/21339d7b9986698282dce93709157dc36907fbf8">21339d7b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4128b708dfac799b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=169e4230980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12755280980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=14e07e744b1dab4d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1c11f9cb6f5f/disk-9d1ddab2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a0f2c579e436/vmlinux-9d1ddab2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/33fadada308b/bzImage-9d1ddab2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/04/23 09:11</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="71b1543c83d65af8215d7558d70fc2ecbee77dcf
+	2024/04/22 23:28"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=71b1543c83d65af8215d7558d70fc2ecbee77dcf">71b1543c83d6</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/21339d7b9986698282dce93709157dc36907fbf8">21339d7b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4128b708dfac799b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16739c27180000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14b12310980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8b58054f3198/disk-71b1543c.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/50c92527b69a/vmlinux-71b1543c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f9cb9354fd63/bzImage-71b1543c.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/04/23 00:34</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a2c63a3f3d687ac4f63bf4ffa04d7458a2db350b
+	2024/04/22 20:53"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a2c63a3f3d687ac4f63bf4ffa04d7458a2db350b">a2c63a3f3d68</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/36c961ad9dc0e5b72efc784a57717424a02bfa00">36c961ad</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4128b708dfac799b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14ee49bf180000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1340466f180000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9712850fe742/disk-a2c63a3f.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dca153a049bb/vmlinux-a2c63a3f.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fcd95ea8b530/bzImage-a2c63a3f.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/04/22 07:52</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ed30a4a51bb196781c8058073ea720133a65596f
+	2024/04/21 19:35"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ed30a4a51bb196781c8058073ea720133a65596f">ed30a4a51bb1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/af24b0505c748561efb50f1d03c824d6642f6c0b">af24b050</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4128b708dfac799b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=178c4230980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=122d971b180000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b98932ad16077116">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e80280ad9b3a/disk-ed30a4a5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0e43ed67c6b4/vmlinux-ed30a4a5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/166e846d4538/bzImage-ed30a4a5.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2021/11/29 14:18</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="d58071a8a76d779eedab38033ae4c821c30295a5
+	2021/11/28 22:09"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=d58071a8a76d779eedab38033ae4c821c30295a5">d58071a8a76d</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/63eeac0211717f83d52631540a150a4c5844e0f9">63eeac02</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=5308954916f6d362">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1095fff6b00000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=116c6e91b00000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b36e7d8aebd823">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2021/11/28 23:18</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="d06c942efea40e1701ade200477a7449008d9f24
+	2021/11/28 19:58"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=d06c942efea40e1701ade200477a7449008d9f24">d06c942efea4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/63eeac0211717f83d52631540a150a4c5844e0f9">63eeac02</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7ec344917a4453b0">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15484311b00000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14da4c09b00000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=49f2d839b0fa7b52">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2021/06/08 01:37</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="614124bea77e452aa6df7a8714e8bc820b489922
+	2021/06/06 22:47"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=614124bea77e452aa6df7a8714e8bc820b489922">614124bea77e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/b718257f456d456345e1129b27a9340c91c18f3b">b718257f</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=101636418334389a">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15c4b5afd00000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16c6c5afd00000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=15a9c25fb05c9b4e">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in pcpu_alloc / pcpu_free_area</td>
+		</tr>
+		
+		</tbody>
+</table>
+<i>* <s>Struck through</s> repros no longer work on HEAD.</i>
+
+
+</body>
+</html>

@@ -1,0 +1,1740 @@
+
+
+<!doctype html>
+<html>
+<head>
+	
+	<link rel="stylesheet" href="/static/style.css"/>
+	<script src="/static/common.js"></script>
+	
+		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-116117799-1"></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag() { dataLayer.push(arguments); }
+			gtag('js', new Date());
+			gtag('config', 'UA-116117799-1');
+		</script>
+	
+
+	<title>WARNING: locking bug in kvm_xen_set_evtchn_fast</title>
+</head>
+<body>
+	
+	<header id="topbar">
+		<table class="position_table">
+			<tr>
+				<td>
+					<h1><a href="/upstream">syzbot</a></h1>
+				</td>
+				<td class="namespace_td">
+					<select class="namespace" onchange="window.location.href = '/' + this.value + '';">
+						
+							<option value="android-5-10" >Android 5.10</option>
+							<option value="android-5-15" >Android 5.15</option>
+							<option value="android-54" >Android 5.4</option>
+							<option value="android-6-1" >Android 6.1</option>
+							<option value="freebsd" >FreeBSD</option>
+							<option value="upstream" selected="1">Linux</option>
+							<option value="linux-5.15" >Linux 5.15</option>
+							<option value="linux-6.1" >Linux 6.1</option>
+							<option value="netbsd" >NetBSD</option>
+							<option value="openbsd" >OpenBSD</option>
+							<option value="gvisor" >gVisor</option></select>
+				</td>
+				<td class="search">
+					
+					
+						<a href="https://syzkaller.appspot.com/_ah/conflogin?continue=https://syzkaller.appspot.com/bug%3Fextid%3D919877893c9d28162dc2">sign-in</a> |
+					
+					<a href="https://groups.google.com/forum/#!forum/syzkaller" target="_blank">mailing list</a> |
+					<a href="https://github.com/google/syzkaller" target="_blank">source</a> |
+					<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md" target="_blank">docs</a>
+				</td>
+			</tr>
+		</table>
+		
+		<div class="navigation">
+			<div class="navigation_tab">
+				<a href='/upstream'><span style="color:DeepPink;">🐞</span> Open [1659]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/subsystems'><span style="color:DeepPink;">≡</span> Subsystems</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/fixed'><span style="color:ForestGreen;">🐞</span> Fixed [6081]</a>
+			</div>
+
+			<div class="navigation_tab" href='/upstream/invalid'>
+				<a href='/upstream/invalid'><span style="color:RoyalBlue;">🐞</span> Invalid [15101]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/backports'><span style="color:ForestGreen;">⬇</span> Missing Backports [157]</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/graph/crashes'><span style="color:ForestGreen;">≡</span> Crashes</a>
+			</div>
+
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Graphs</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href='/upstream/graph/bugs'>Kernel&nbsp;Health</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/found-bugs'>Bugs/Month</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/lifetimes'>Bug&nbsp;Lifetimes</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/fuzzing'>Fuzzing</a>
+				</div>
+			</div>
+
+			
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Coverage</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href="/upstream/graph/coverage?period=quarter">Total</a>
+					<a class="navigation_tab"
+						href="/upstream/coverage?period=month">Repo&nbsp;Heatmap</a>
+					
+						<a class="navigation_tab"
+							href="/upstream/coverage/subsystems?period=month">Subsystems&nbsp;Heatmap</a>
+					
+				</div>
+			</div>
+			
+			
+			<div class="navigation_tab navigation_right">
+				<a href='mailto:syzkaller@googlegroups.com'><span style="color:ForestGreen;">💬</span> Send us feedback</a>
+			</div>
+			
+		</div>
+		
+	</header>
+	<br>
+
+
+	<b>WARNING: locking bug in kvm_xen_set_evtchn_fast</b><br><br>
+	Status: <a href="https://groups.google.com/d/msgid/syzkaller-bugs/673f4bbc.050a0220.3c9d61.0174.GAE@google.com">upstream: reported C repro on 2024/11/21 15:03</a><br>
+	
+		
+			Subsystems: 
+				<span class="bug-label"><a href="/upstream/s/kvm">kvm</a></span>
+		<br>
+		
+	<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md#labels">[Documentation on labels]</a><br>
+	
+	
+	Reported-by: syzbot&#43;919877893c9d28162dc2@syzkaller.appspotmail.com<br>
+	
+	First crash: 104d, last: 1d16h<br>
+	
+	<div>
+		<div class="bug-bisection-info">
+
+	
+	
+	
+		
+			<b>Cause bisection: introduced by</b>
+		
+		<b>(<a href="https://syzkaller.appspot.com/x/bisect.txt?x=162ef5c0580000">bisect log</a>)</b> <span class="bad"></span>:<br>
+		<span class="mono">
+		
+		commit 560af5dc839eef08a273908f390cfefefb82aa04<br>
+		Author: Sebastian Andrzej Siewior &lt;bigeasy@linutronix.de&gt;<br>
+		Date:   Wed Oct 9 15:45:03 2024 &#43;0000<br>
+		<br>
+		&nbsp;&nbsp;<a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=560af5dc839eef08a273908f390cfefefb82aa04">lockdep: Enable PROVE_RAW_LOCK_NESTING with PROVE_LOCKING.</a><br>
+		</span><br>
+	
+	
+		Crash: <a href="https://syzkaller.appspot.com/x/report.txt?x=152ef5c0580000">WARNING: locking bug in kvm_xen_set_evtchn_fast</a> (<a href="https://syzkaller.appspot.com/x/log.txt?x=112ef5c0580000">log</a>)<br>
+		Repro: <a href="/text?tag=ReproC&x=1371975f980000">C</a>
+		<a href="/text?tag=ReproSyz&x=142981c0580000">syz</a>
+		<a href="/text?tag=KernelConfig&x=95b76860fd16c857">.config</a><br>
+	
+
+	
+	&nbsp;&nbsp;
+	
+
+</div>
+		
+		<div class="bug-bisection-stop"></div>
+	</div>
+
+	
+	<div class="collapsible collapsible-show">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Discussions (4)</span>
+		</div>
+		<div class="content">
+			
+			
+			
+
+<table class="list_table">
+	<thead>
+	<tr>
+		<th>Title</th>
+		<th>Replies (including bot)</th>
+		<th>Last reply</th>
+	</tr>
+	</thead>
+	<tbody>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/67ab516a.050a0220.110943.003f.GAE@google.com/T/">[syzbot] Monthly kvm report (Feb 2025)</a></td>
+			<td class="stat">0 (1)</td>
+			<td class="stat">2025/02/11 13:32</td>
+		</tr>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/6784f0e0.050a0220.216c54.004e.GAE@google.com/T/">[syzbot] Monthly kvm report (Jan 2025)</a></td>
+			<td class="stat">0 (1)</td>
+			<td class="stat">2025/01/13 10:54</td>
+		</tr>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/67597722.050a0220.1ac542.000a.GAE@google.com/T/">[syzbot] Monthly kvm report (Dec 2024)</a></td>
+			<td class="stat">0 (1)</td>
+			<td class="stat">2024/12/11 11:27</td>
+		</tr>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/673f4bbc.050a0220.3c9d61.0174.GAE@google.com/T/">[syzbot] [kvm?] WARNING: locking bug in kvm_xen_set_evtchn_fast</a></td>
+			<td class="stat">4 (7)</td>
+			<td class="stat">2024/11/26 16:26</td>
+		</tr>
+	
+	</tbody>
+</table>
+
+
+			
+			
+		</div>
+	</div>
+	
+
+	
+	<br><b>Sample crash report:</b><br>
+	<div id="crash_div"><pre>=============================
+[ BUG: Invalid wait context ]
+6.12.0-syzkaller-07834-g06afb0f36106 #0 Not tainted
+-----------------------------
+kworker/0:1/9 is trying to lock:
+ffffc90003bca460 (&amp;gpc-&gt;lock){....}-{3:3}, at: kvm_xen_set_evtchn_fast+0x1ee/0xa00 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/kvm/xen.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n1755'>arch/x86/kvm/xen.c:1755</a>
+other info that might help us debug this:
+context-{2:2}
+6 locks held by kworker/0:1/9:
+ #0: ffff888144a92148 ((wq_completion)usb_hub_wq){+.+.}-{0:0}, at: process_one_work <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/workqueue.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n3204'>kernel/workqueue.c:3204</a> [inline]
+ #0: ffff888144a92148 ((wq_completion)usb_hub_wq){+.+.}-{0:0}, at: process_scheduled_works+0x93b/0x1850 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/workqueue.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n3310'>kernel/workqueue.c:3310</a>
+ #1: ffffc900000e7d00 ((work_completion)(&amp;hub-&gt;events)){+.+.}-{0:0}, at: process_one_work <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/workqueue.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n3205'>kernel/workqueue.c:3205</a> [inline]
+ #1: ffffc900000e7d00 ((work_completion)(&amp;hub-&gt;events)){+.+.}-{0:0}, at: process_scheduled_works+0x976/0x1850 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/workqueue.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n3310'>kernel/workqueue.c:3310</a>
+ #2: ffff888145711190 (&amp;dev-&gt;mutex){....}-{4:4}, at: device_lock <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/device.h?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n1014'>include/linux/device.h:1014</a> [inline]
+ #2: ffff888145711190 (&amp;dev-&gt;mutex){....}-{4:4}, at: hub_event+0x1fe/0x5150 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/usb/core/hub.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n5849'>drivers/usb/core/hub.c:5849</a>
+ #3: ffffffff8e817de0 (console_lock){+.+.}-{0:0}, at: dev_vprintk_emit+0x2ae/0x330 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/base/core.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n4942'>drivers/base/core.c:4942</a>
+ #4: ffffffff8e8179f0 (console_srcu){....}-{0:0}, at: rcu_try_lock_acquire <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/rcupdate.h?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n342'>include/linux/rcupdate.h:342</a> [inline]
+ #4: ffffffff8e8179f0 (console_srcu){....}-{0:0}, at: srcu_read_lock_nmisafe <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/srcu.h?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n297'>include/linux/srcu.h:297</a> [inline]
+ #4: ffffffff8e8179f0 (console_srcu){....}-{0:0}, at: console_srcu_read_lock <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/printk/printk.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n288'>kernel/printk/printk.c:288</a> [inline]
+ #4: ffffffff8e8179f0 (console_srcu){....}-{0:0}, at: console_flush_all+0x1a3/0xeb0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/printk/printk.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n3187'>kernel/printk/printk.c:3187</a>
+ #5: ffffc90003bca8c8 (&amp;kvm-&gt;srcu){.?.+}-{0:0}, at: srcu_lock_acquire <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/srcu.h?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n158'>include/linux/srcu.h:158</a> [inline]
+ #5: ffffc90003bca8c8 (&amp;kvm-&gt;srcu){.?.+}-{0:0}, at: srcu_read_lock <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/srcu.h?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n249'>include/linux/srcu.h:249</a> [inline]
+ #5: ffffc90003bca8c8 (&amp;kvm-&gt;srcu){.?.+}-{0:0}, at: kvm_xen_set_evtchn_fast+0x1bb/0xa00 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/kvm/xen.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n1753'>arch/x86/kvm/xen.c:1753</a>
+stack backtrace:
+CPU: 0 UID: 0 PID: 9 Comm: kworker/0:1 Not tainted 6.12.0-syzkaller-07834-g06afb0f36106 #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 09/13/2024
+Workqueue: usb_hub_wq hub_event
+Call Trace:
+ &lt;IRQ&gt;
+ __dump_stack <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/lib/dump_stack.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n94'>lib/dump_stack.c:94</a> [inline]
+ dump_stack_lvl+0x241/0x360 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/lib/dump_stack.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n120'>lib/dump_stack.c:120</a>
+ print_lock_invalid_wait_context <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/locking/lockdep.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n4826'>kernel/locking/lockdep.c:4826</a> [inline]
+ check_wait_context <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/locking/lockdep.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n4898'>kernel/locking/lockdep.c:4898</a> [inline]
+ __lock_acquire+0x15a8/0x2100 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/locking/lockdep.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n5176'>kernel/locking/lockdep.c:5176</a>
+ lock_acquire+0x1ed/0x550 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/locking/lockdep.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n5849'>kernel/locking/lockdep.c:5849</a>
+ __raw_read_lock_irqsave <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/rwlock_api_smp.h?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n160'>include/linux/rwlock_api_smp.h:160</a> [inline]
+ _raw_read_lock_irqsave+0xdd/0x130 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/locking/spinlock.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n236'>kernel/locking/spinlock.c:236</a>
+ kvm_xen_set_evtchn_fast+0x1ee/0xa00 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/kvm/xen.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n1755'>arch/x86/kvm/xen.c:1755</a>
+ xen_timer_callback+0x1a0/0x380 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/kvm/xen.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n140'>arch/x86/kvm/xen.c:140</a>
+ __run_hrtimer <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/time/hrtimer.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n1739'>kernel/time/hrtimer.c:1739</a> [inline]
+ __hrtimer_run_queues+0x551/0xd50 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/time/hrtimer.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n1803'>kernel/time/hrtimer.c:1803</a>
+ hrtimer_interrupt+0x403/0xa40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/time/hrtimer.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n1865'>kernel/time/hrtimer.c:1865</a>
+ local_apic_timer_interrupt <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/kernel/apic/apic.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n1038'>arch/x86/kernel/apic/apic.c:1038</a> [inline]
+ __sysvec_apic_timer_interrupt+0x110/0x420 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/kernel/apic/apic.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n1055'>arch/x86/kernel/apic/apic.c:1055</a>
+ instr_sysvec_apic_timer_interrupt <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/kernel/apic/apic.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n1049'>arch/x86/kernel/apic/apic.c:1049</a> [inline]
+ sysvec_apic_timer_interrupt+0xa1/0xc0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/kernel/apic/apic.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n1049'>arch/x86/kernel/apic/apic.c:1049</a>
+ &lt;/IRQ&gt;
+ &lt;TASK&gt;
+ asm_sysvec_apic_timer_interrupt+0x1a/0x20 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/include/asm/idtentry.h?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n702'>arch/x86/include/asm/idtentry.h:702</a>
+RIP: 0010:console_flush_all+0x996/0xeb0
+Code: 48 21 c3 0f 85 16 02 00 00 e8 66 aa 20 00 4c 8b 7c 24 10 4d 85 f6 75 07 e8 57 aa 20 00 eb 06 e8 50 aa 20 00 fb 48 8b 5c 24 18 &lt;48&gt; 8b 44 24 30 42 80 3c 28 00 74 08 48 89 df e8 76 61 8b 00 4c 8b
+RSP: 0018:ffffc900000e7000 EFLAGS: 00000293
+RAX: ffffffff8174a2e0 RBX: ffffffff8f17fa58 RCX: ffff88801bef8000
+RDX: 0000000000000000 RSI: 0000000000000000 RDI: 0000000000000000
+RBP: ffffc900000e71b0 R08: ffffffff8174a2b7 R09: 1ffffffff285cb10
+R10: dffffc0000000000 R11: fffffbfff285cb11 R12: ffffffff8f17fa00
+R13: dffffc0000000000 R14: 0000000000000200 R15: ffffc900000e7200
+ __console_flush_and_unlock <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/printk/printk.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n3269'>kernel/printk/printk.c:3269</a> [inline]
+ console_unlock+0x14f/0x3b0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/printk/printk.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n3309'>kernel/printk/printk.c:3309</a>
+ vprintk_emit+0x730/0xa10 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/printk/printk.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n2432'>kernel/printk/printk.c:2432</a>
+ dev_vprintk_emit+0x2ae/0x330 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/base/core.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n4942'>drivers/base/core.c:4942</a>
+ dev_printk_emit+0xdd/0x120 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/base/core.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n4953'>drivers/base/core.c:4953</a>
+ _dev_info+0x122/0x170 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/base/core.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n5011'>drivers/base/core.c:5011</a>
+ show_string <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/usb/core/hub.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n2357'>drivers/usb/core/hub.c:2357</a> [inline]
+ announce_device <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/usb/core/hub.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n2375'>drivers/usb/core/hub.c:2375</a> [inline]
+ usb_new_device+0xd02/0x19a0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/usb/core/hub.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n2632'>drivers/usb/core/hub.c:2632</a>
+ hub_port_connect <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/usb/core/hub.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n5521'>drivers/usb/core/hub.c:5521</a> [inline]
+ hub_port_connect_change <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/usb/core/hub.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n5661'>drivers/usb/core/hub.c:5661</a> [inline]
+ port_event <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/usb/core/hub.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n5821'>drivers/usb/core/hub.c:5821</a> [inline]
+ hub_event+0x2d6d/0x5150 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/usb/core/hub.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n5903'>drivers/usb/core/hub.c:5903</a>
+ process_one_work <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/workqueue.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n3229'>kernel/workqueue.c:3229</a> [inline]
+ process_scheduled_works+0xa63/0x1850 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/workqueue.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n3310'>kernel/workqueue.c:3310</a>
+ worker_thread+0x870/0xd30 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/workqueue.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n3391'>kernel/workqueue.c:3391</a>
+ kthread+0x2f0/0x390 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/kernel/kthread.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n389'>kernel/kthread.c:389</a>
+ ret_from_fork+0x4b/0x80 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/kernel/process.c?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n147'>arch/x86/kernel/process.c:147</a>
+ ret_from_fork_asm+0x1a/0x30 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/entry_64.S?id=06afb0f36106ecb839c5e2509905e68c1e2677de#n244'>arch/x86/entry/entry_64.S:244</a>
+ &lt;/TASK&gt;
+----------------
+Code disassembly (best guess):
+   0:	48 21 c3             	and    %rax,%rbx
+   3:	0f 85 16 02 00 00    	jne    0x21f
+   9:	e8 66 aa 20 00       	call   0x20aa74
+   e:	4c 8b 7c 24 10       	mov    0x10(%rsp),%r15
+  13:	4d 85 f6             	test   %r14,%r14
+  16:	75 07                	jne    0x1f
+  18:	e8 57 aa 20 00       	call   0x20aa74
+  1d:	eb 06                	jmp    0x25
+  1f:	e8 50 aa 20 00       	call   0x20aa74
+  24:	fb                   	sti
+  25:	48 8b 5c 24 18       	mov    0x18(%rsp),%rbx
+* 2a:	48 8b 44 24 30       	mov    0x30(%rsp),%rax &lt;-- trapping instruction
+  2f:	42 80 3c 28 00       	cmpb   $0x0,(%rax,%r13,1)
+  34:	74 08                	je     0x3e
+  36:	48 89 df             	mov    %rbx,%rdi
+  39:	e8 76 61 8b 00       	call   0x8b61b4
+  3e:	4c                   	rex.WR
+  3f:	8b                   	.byte 0x8b
+</pre></div><br>
+	
+
+	
+
+<table class="list_table">
+	<caption>Crashes (293):</caption>
+		<thead>
+		<tr>
+			<th><a onclick="return sortTable(this, 'Time', textSort, true)" href="#">Time</a></th>
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+			<th><a onclick="return sortTable(this, 'Commit', textSort)" href="#">Commit</a></th>
+			<th><a onclick="return sortTable(this, 'Syzkaller', textSort)" href="#">Syzkaller</a></th>
+			<th><a onclick="return sortTable(this, 'Config', textSort)" href="#">Config</a></th>
+			<th><a onclick="return sortTable(this, 'Log', textSort)" href="#">Log</a></th>
+			<th><a onclick="return sortTable(this, 'Report', reproSort)" href="#">Report</a></th>
+			<th><a onclick="return sortTable(this, 'Syz repro', reproSort)" href="#">Syz repro</a></th>
+			<th><a onclick="return sortTable(this, 'C repro', textSort)" href="#">C repro</a></th>
+			<th><a onclick="return sortTable(this, 'VM info', textSort)" href="#">VM info</a></th>
+			<th><a onclick="return sortTable(this, 'Assets', textSort)" href="#">Assets</a> (<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot_assets.md">help?</a>)</th>
+			<th><a onclick="return sortTable(this, 'Manager', textSort)" href="#">Manager</a></th>
+			<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		</tr>
+		</thead>
+		<tbody>
+		
+		<tr>
+			<td class="time">2024/11/23 13:17</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="06afb0f36106ecb839c5e2509905e68c1e2677de
+	2024/11/22 21:27"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=06afb0f36106ecb839c5e2509905e68c1e2677de">06afb0f36106</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/68da6d951a345757b69b764ceb8dda1e9d65b038">68da6d95</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=95b76860fd16c857">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17ff7930580000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12c8b6e8580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=142981c0580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=1000f930580000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=1371975f980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/49111529582a/disk-06afb0f3.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f04577ad9add/vmlinux-06afb0f3.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b352b4fae995/bzImage-06afb0f3.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/03/04 11:39</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="99fa936e8e4f117d62f229003c9799686f74cebc
+	2025/03/03 17:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=99fa936e8e4f117d62f229003c9799686f74cebc">99fa936e8e4f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c3901742785ff25afdc6f470af7b25b69d7c4f2f">c3901742</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=2040405600e83619">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14f158b7980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=114d97a0580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=16b10078580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=11091464580000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=17eafc54580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-99fa936e.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef04f83d96f6/vmlinux-99fa936e.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/583a7eea5c8e/bzImage-99fa936e.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/25 03:20</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="d082ecbc71e9e0bf49883ee4afd435a77a5101b6
+	2025/02/23 20:32"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=d082ecbc71e9e0bf49883ee4afd435a77a5101b6">d082ecbc71e9</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=8f2f8fb6ad08b539">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17658c98580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10ddbfdf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=a9818fbf121d0ed2">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c79b06456d14/disk-d082ecbc.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9c4cc4443033/vmlinux-d082ecbc.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2b049b424b62/bzImage-d082ecbc.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-selinux-root</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/10 01:36</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9946eaf552b194bb352c2945b54ff98c8193b3f1
+	2025/02/08 22:12"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9946eaf552b194bb352c2945b54ff98c8193b3f1">9946eaf552b1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ef44b750e8fab8d6d5cb84920680581b13e0d470">ef44b750</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1909f2f0d8e641ce">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16663b18580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12c46bdf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=f26cff97f7bdb3d7">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/920cd58f70c1/disk-9946eaf5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f7f8bdfac318/vmlinux-9946eaf5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/10eaaefbce34/bzImage-9946eaf5.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/09 20:38</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9946eaf552b194bb352c2945b54ff98c8193b3f1
+	2025/02/08 22:12"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9946eaf552b194bb352c2945b54ff98c8193b3f1">9946eaf552b1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ef44b750e8fab8d6d5cb84920680581b13e0d470">ef44b750</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1909f2f0d8e641ce">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=179bdb18580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15a27df8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7989a5b215a520a5">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/920cd58f70c1/disk-9946eaf5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f7f8bdfac318/vmlinux-9946eaf5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/10eaaefbce34/bzImage-9946eaf5.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/09 19:37</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9946eaf552b194bb352c2945b54ff98c8193b3f1
+	2025/02/08 22:12"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9946eaf552b194bb352c2945b54ff98c8193b3f1">9946eaf552b1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ef44b750e8fab8d6d5cb84920680581b13e0d470">ef44b750</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1909f2f0d8e641ce">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=141eabdf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17af91b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=2e42cfd004197802">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/920cd58f70c1/disk-9946eaf5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f7f8bdfac318/vmlinux-9946eaf5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/10eaaefbce34/bzImage-9946eaf5.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/09 18:19</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9946eaf552b194bb352c2945b54ff98c8193b3f1
+	2025/02/08 22:12"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9946eaf552b194bb352c2945b54ff98c8193b3f1">9946eaf552b1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ef44b750e8fab8d6d5cb84920680581b13e0d470">ef44b750</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1909f2f0d8e641ce">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17c07df8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16e9db18580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=34998f74cdbaa430">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/920cd58f70c1/disk-9946eaf5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f7f8bdfac318/vmlinux-9946eaf5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/10eaaefbce34/bzImage-9946eaf5.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/09 16:57</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9946eaf552b194bb352c2945b54ff98c8193b3f1
+	2025/02/08 22:12"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9946eaf552b194bb352c2945b54ff98c8193b3f1">9946eaf552b1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ef44b750e8fab8d6d5cb84920680581b13e0d470">ef44b750</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1909f2f0d8e641ce">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17d6db18580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=155bbdf8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=5a3b9add264ea02b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/920cd58f70c1/disk-9946eaf5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f7f8bdfac318/vmlinux-9946eaf5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/10eaaefbce34/bzImage-9946eaf5.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/09 10:02</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="595ab66f1becea80c4182b2d2660f357c17db2a9
+	2025/02/08 20:22"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=595ab66f1becea80c4182b2d2660f357c17db2a9">595ab66f1bec</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ef44b750e8fab8d6d5cb84920680581b13e0d470">ef44b750</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1909f2f0d8e641ce">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15cd5b18580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16f4bdf8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=2f907f96b3dac26b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/292ca0907db9/disk-595ab66f.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9d9c37def0c8/vmlinux-595ab66f.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/87295198542b/bzImage-595ab66f.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/09 08:50</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="595ab66f1becea80c4182b2d2660f357c17db2a9
+	2025/02/08 20:22"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=595ab66f1becea80c4182b2d2660f357c17db2a9">595ab66f1bec</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ef44b750e8fab8d6d5cb84920680581b13e0d470">ef44b750</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1909f2f0d8e641ce">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16a8bdf8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11c22bdf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b99d6d521cc40e19">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/292ca0907db9/disk-595ab66f.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9d9c37def0c8/vmlinux-595ab66f.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/87295198542b/bzImage-595ab66f.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/09 07:42</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="595ab66f1becea80c4182b2d2660f357c17db2a9
+	2025/02/08 20:22"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=595ab66f1becea80c4182b2d2660f357c17db2a9">595ab66f1bec</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ef44b750e8fab8d6d5cb84920680581b13e0d470">ef44b750</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1909f2f0d8e641ce">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11bf3df8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12815b18580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=f24446c7e8814d37">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/292ca0907db9/disk-595ab66f.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9d9c37def0c8/vmlinux-595ab66f.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/87295198542b/bzImage-595ab66f.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/09 06:42</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="595ab66f1becea80c4182b2d2660f357c17db2a9
+	2025/02/08 20:22"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=595ab66f1becea80c4182b2d2660f357c17db2a9">595ab66f1bec</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ef44b750e8fab8d6d5cb84920680581b13e0d470">ef44b750</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1909f2f0d8e641ce">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=144e28e4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=133482a4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=95906ea83b1f79dc">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/292ca0907db9/disk-595ab66f.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9d9c37def0c8/vmlinux-595ab66f.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/87295198542b/bzImage-595ab66f.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/04 07:45</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="0de63bb7d91975e73338300a57c54b93d3cc151c
+	2025/02/03 21:39"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=0de63bb7d91975e73338300a57c54b93d3cc151c">0de63bb7d919</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/8f267cefd3660f9d5640ebbbd42e295a61774469">8f267cef</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1909f2f0d8e641ce">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13e7f5f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11b05d18580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7ef8e30273fbf82d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/43a403044da2/disk-0de63bb7.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b65aa975fa68/vmlinux-0de63bb7.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c04822633af7/bzImage-0de63bb7.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/04 01:09</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="2014c95afecee3e76ca4a56956a936e23283f05b
+	2025/02/02 23:39"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=2014c95afecee3e76ca4a56956a936e23283f05b">2014c95afece</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a21a8419b67b5ef8ebc3d6dd834d065e6860c41f">a21a8419</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=144e205a3f53e3bf">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=170fd724580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=164a9d18580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=5f97bd3226f1aaf4">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dcf64016ec35/disk-2014c95a.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/94c60f20c7b6/vmlinux-2014c95a.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/283246f87d47/bzImage-2014c95a.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-selinux-root</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/03 10:31</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="69e858e0b8b2ea07759e995aa383e8780d9d140c
+	2025/01/31 02:29"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=69e858e0b8b2ea07759e995aa383e8780d9d140c">69e858e0b8b2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/568559e4e604140cecd9fc4835eaa0298a1cadcc">568559e4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=36c931489897af84">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17595724580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10d95724580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=44cf451772c7a7bc">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2ed318e5efa5/disk-69e858e0.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8002a1e89099/vmlinux-69e858e0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d228768d8514/bzImage-69e858e0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-selinux-root</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/03 06:27</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="69e858e0b8b2ea07759e995aa383e8780d9d140c
+	2025/01/31 02:29"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=69e858e0b8b2ea07759e995aa383e8780d9d140c">69e858e0b8b2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/568559e4e604140cecd9fc4835eaa0298a1cadcc">568559e4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=36c931489897af84">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=103c5724580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1428aeb0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=cffbf1e71a9f8bc0">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2ed318e5efa5/disk-69e858e0.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8002a1e89099/vmlinux-69e858e0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d228768d8514/bzImage-69e858e0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-selinux-root</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/03 02:03</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="69e858e0b8b2ea07759e995aa383e8780d9d140c
+	2025/01/31 02:29"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=69e858e0b8b2ea07759e995aa383e8780d9d140c">69e858e0b8b2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/568559e4e604140cecd9fc4835eaa0298a1cadcc">568559e4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=36c931489897af84">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10e2b5f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10b0ed18580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=42efc2f5e1a8f05f">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2ed318e5efa5/disk-69e858e0.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8002a1e89099/vmlinux-69e858e0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d228768d8514/bzImage-69e858e0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-selinux-root</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/02 15:32</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="69e858e0b8b2ea07759e995aa383e8780d9d140c
+	2025/01/31 02:29"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=69e858e0b8b2ea07759e995aa383e8780d9d140c">69e858e0b8b2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/568559e4e604140cecd9fc4835eaa0298a1cadcc">568559e4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=36c931489897af84">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15abad18580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=138d1724580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=abb24205c3a085c6">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2ed318e5efa5/disk-69e858e0.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8002a1e89099/vmlinux-69e858e0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d228768d8514/bzImage-69e858e0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-selinux-root</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/02 07:50</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="69e858e0b8b2ea07759e995aa383e8780d9d140c
+	2025/01/31 02:29"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=69e858e0b8b2ea07759e995aa383e8780d9d140c">69e858e0b8b2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0dff8567c67759be4a708acb57229945322c6c88">0dff8567</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=36c931489897af84">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12d81724580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1568ceb0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=1310868b0b86178e">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2ed318e5efa5/disk-69e858e0.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8002a1e89099/vmlinux-69e858e0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d228768d8514/bzImage-69e858e0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-selinux-root</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/01 23:08</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="69e858e0b8b2ea07759e995aa383e8780d9d140c
+	2025/01/31 02:29"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=69e858e0b8b2ea07759e995aa383e8780d9d140c">69e858e0b8b2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0dff8567c67759be4a708acb57229945322c6c88">0dff8567</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d033b14aeef39158">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1390d5f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17724eb0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7da8c4f7bb5f383c">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/144a7468bf1b/disk-69e858e0.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/86d7d452eecc/vmlinux-69e858e0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f56e292b01f5/bzImage-69e858e0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/01 05:20</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="69e858e0b8b2ea07759e995aa383e8780d9d140c
+	2025/01/31 02:29"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=69e858e0b8b2ea07759e995aa383e8780d9d140c">69e858e0b8b2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/aa47157c8ec3df5a6d16e3866b095c8f91026465">aa47157c</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=36c931489897af84">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16cc4b24580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11c50eb0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=852ebefc7ef98953">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2ed318e5efa5/disk-69e858e0.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8002a1e89099/vmlinux-69e858e0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d228768d8514/bzImage-69e858e0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-selinux-root</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/01 03:25</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="69e858e0b8b2ea07759e995aa383e8780d9d140c
+	2025/01/31 02:29"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=69e858e0b8b2ea07759e995aa383e8780d9d140c">69e858e0b8b2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/aa47157c8ec3df5a6d16e3866b095c8f91026465">aa47157c</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=36c931489897af84">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=124e0eb0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13c695f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=8de2e5c8a87385d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2ed318e5efa5/disk-69e858e0.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8002a1e89099/vmlinux-69e858e0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d228768d8514/bzImage-69e858e0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-selinux-root</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/31 22:53</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="69e858e0b8b2ea07759e995aa383e8780d9d140c
+	2025/01/31 02:29"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=69e858e0b8b2ea07759e995aa383e8780d9d140c">69e858e0b8b2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/aa47157c8ec3df5a6d16e3866b095c8f91026465">aa47157c</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=36c931489897af84">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=109edddf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15800eb0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=97078ac775d49096">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2ed318e5efa5/disk-69e858e0.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8002a1e89099/vmlinux-69e858e0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d228768d8514/bzImage-69e858e0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-selinux-root</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/30 09:45</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="4099a71718b056d16af5ba095c91016c3b107862
+	2024/12/29 18:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=4099a71718b056d16af5ba095c91016c3b107862">4099a71718b0</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4c4096b0d467a682">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12c86af8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10cd6818580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=bb0ecfbb1874f34f">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/26a8126adcd1/disk-4099a717.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dbf9ae124831/vmlinux-4099a717.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/27702a6c5bd3/bzImage-4099a717.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-smack-root</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/02 19:15</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="69e858e0b8b2ea07759e995aa383e8780d9d140c
+	2025/01/31 02:29"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=69e858e0b8b2ea07759e995aa383e8780d9d140c">69e858e0b8b2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/568559e4e604140cecd9fc4835eaa0298a1cadcc">568559e4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d033b14aeef39158">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10ffceb0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10e535f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=70564d3a0b9cd02f">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5f2516f5e757/disk-69e858e0.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9608cf390213/vmlinux-69e858e0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/598e97f14fb8/bzImage-69e858e0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-386</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/01 10:25</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="69e858e0b8b2ea07759e995aa383e8780d9d140c
+	2025/01/31 02:29"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=69e858e0b8b2ea07759e995aa383e8780d9d140c">69e858e0b8b2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/aa47157c8ec3df5a6d16e3866b095c8f91026465">aa47157c</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d033b14aeef39158">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11813ddf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17688eb0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=e7c9c6e439f137d0">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5f2516f5e757/disk-69e858e0.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9608cf390213/vmlinux-69e858e0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/598e97f14fb8/bzImage-69e858e0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-386</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/03/04 10:39</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="99fa936e8e4f117d62f229003c9799686f74cebc
+	2025/03/03 17:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=99fa936e8e4f117d62f229003c9799686f74cebc">99fa936e8e4f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c3901742785ff25afdc6f470af7b25b69d7c4f2f">c3901742</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=2040405600e83619">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10ef35a8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1022fc54580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-99fa936e.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef04f83d96f6/vmlinux-99fa936e.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/583a7eea5c8e/bzImage-99fa936e.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/03/02 13:31</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ece144f151ac7bf8bb5b98f7d4aeeda7a2eed02a
+	2025/03/02 00:10"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ece144f151ac7bf8bb5b98f7d4aeeda7a2eed02a">ece144f151ac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c3901742785ff25afdc6f470af7b25b69d7c4f2f">c3901742</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=8f2f8fb6ad08b539">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=156fa5a8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1350ba97980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=91016978cfd3ba1e">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-ece144f1.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dadc6b02aecf/vmlinux-ece144f1.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/89680a786250/bzImage-ece144f1.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/03/02 05:10</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ece144f151ac7bf8bb5b98f7d4aeeda7a2eed02a
+	2025/03/02 00:10"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ece144f151ac7bf8bb5b98f7d4aeeda7a2eed02a">ece144f151ac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c3901742785ff25afdc6f470af7b25b69d7c4f2f">c3901742</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=8f2f8fb6ad08b539">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16123a97980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1362a8b7980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=812796dccaaf3be">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-ece144f1.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dadc6b02aecf/vmlinux-ece144f1.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/89680a786250/bzImage-ece144f1.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/03/02 01:57</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="03d38806a902b36bf364cae8de6f1183c0a35a67
+	2025/03/01 02:02"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=03d38806a902b36bf364cae8de6f1183c0a35a67">03d38806a902</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c3901742785ff25afdc6f470af7b25b69d7c4f2f">c3901742</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=5b4c41bdaeea1964">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12e38fb8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13cfa864580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-03d38806.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/67cb2018261a/vmlinux-03d38806.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a6169e75b74a/bzImage-03d38806.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/26 20:56</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ac9c34d1e45a4c25174ced4fc0cfc33ff3ed08c7
+	2025/02/25 21:43"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ac9c34d1e45a4c25174ced4fc0cfc33ff3ed08c7">ac9c34d1e45a</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6a8fcbc4a6172c831c89c507007f59fba13408aa">6a8fcbc4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=5b4c41bdaeea1964">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14748ff8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=142766e4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-ac9c34d1.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dea9497ecc60/vmlinux-ac9c34d1.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c58b5c0dce6b/bzImage-ac9c34d1.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/25 23:02</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="2a1944bff54907a4e68f167dcdf772b1e4c3ce6d
+	2025/02/25 00:40"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=2a1944bff54907a4e68f167dcdf772b1e4c3ce6d">2a1944bff549</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=5b4c41bdaeea1964">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1471edb0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16e81c98580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-2a1944bf.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/55cab1eab779/vmlinux-2a1944bf.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/54e689976766/bzImage-2a1944bf.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/22 16:44</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ff202c5028a195c07b16e1a2fbb8ca6b7ba11a1c
+	2025/02/21 21:16"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ff202c5028a195c07b16e1a2fbb8ca6b7ba11a1c">ff202c5028a1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=635cd601ddc51632">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17237ae4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16b2b498580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=460f8e835effa7ac">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-ff202c50.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/00085527a960/vmlinux-ff202c50.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/21d378b9956d/bzImage-ff202c50.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/22 07:47</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a3daad8215143340c0870c5489e599fd059037e9
+	2025/02/21 17:07"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a3daad8215143340c0870c5489e599fd059037e9">a3daad821514</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=f4f6914bcba459be">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12147ae4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11c33498580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=cc8f8011fd04ac96">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-a3daad82.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cff81a06d945/vmlinux-a3daad82.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/edf1171e2a46/bzImage-a3daad82.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/20 12:33</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="87a132e73910e8689902aed7f2fc229d6908383b
+	2025/02/20 02:11"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=87a132e73910e8689902aed7f2fc229d6908383b">87a132e73910</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/506687987fc2f8f40b2918782fc2943285fdc602">50668798</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b7bde34acd8f53b1">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12485498580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=161ba7f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-87a132e7.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ad82ed47c765/vmlinux-87a132e7.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4461f54cc0ef/bzImage-87a132e7.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/19 01:19</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="6537cfb395f352782918d8ee7b7f10ba2cc3cbf2
+	2025/02/18 17:00"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=6537cfb395f352782918d8ee7b7f10ba2cc3cbf2">6537cfb395f3</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9a14138f4fc02e412262b751acdc4dd70665a726">9a14138f</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=f4f6914bcba459be">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1539e5b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=111777df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=fdc0bbe1cfb3bf5a">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-6537cfb3.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c6f2faba4c42/vmlinux-6537cfb3.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/16fc32b66fc0/bzImage-6537cfb3.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/14 21:56</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="128c8f96eb8638c060cd3532dc394d046ce64fe1
+	2025/02/14 04:04"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=128c8f96eb8638c060cd3532dc394d046ce64fe1">128c8f96eb86</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/fe17639fa01b8a1c521789ee8327604a75ca6b03">fe17639f</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c09dc55ba7f798e3">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14efa7df980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17a4d9b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=5d802e37e5afb382">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-128c8f96.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c033076ee77d/vmlinux-128c8f96.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8c99501f79b3/bzImage-128c8f96.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/14 15:12</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="128c8f96eb8638c060cd3532dc394d046ce64fe1
+	2025/02/14 04:04"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=128c8f96eb8638c060cd3532dc394d046ce64fe1">128c8f96eb86</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/fe17639fa01b8a1c521789ee8327604a75ca6b03">fe17639f</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c09dc55ba7f798e3">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14b08bf8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=167a87df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=fca34d0999b8c411">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-128c8f96.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c033076ee77d/vmlinux-128c8f96.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8c99501f79b3/bzImage-128c8f96.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/12 03:29</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="09fbf3d502050282bf47ab3babe1d4ed54dd1fd8
+	2025/02/11 18:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=09fbf3d502050282bf47ab3babe1d4ed54dd1fd8">09fbf3d50205</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2baddf5cfc118066483050e29627cea6b63bcfb">f2baddf5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=3c2347dd6174fbe2">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1742c4e4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13678718580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-09fbf3d5.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/835b3d29c46c/vmlinux-09fbf3d5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ff4bfd8a5d42/bzImage-09fbf3d5.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/11 11:30</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="febbc555cf0fff895546ddb8ba2c9a523692fb55
+	2025/02/10 21:11"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=febbc555cf0fff895546ddb8ba2c9a523692fb55">febbc555cf0f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/43f51a00700e5960fc890e6c3d596846757bf29d">43f51a00</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=641fe3e3cfee64bb">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15d6f1b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16b978e4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=fc77e3a43dad3fcd">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-febbc555.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5cb1b1375c77/vmlinux-febbc555.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/55dc53a64edc/bzImage-febbc555.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/10 08:09</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="69b54314c975f4dfd3a29d6b9211ab68fff46682
+	2025/02/09 18:05"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=69b54314c975f4dfd3a29d6b9211ab68fff46682">69b54314c975</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ef44b750e8fab8d6d5cb84920680581b13e0d470">ef44b750</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a7ddf49cf33ba213">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1024bb18580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1442d1b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b22a97767c876d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-69b54314.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2d0a58d1d655/vmlinux-69b54314.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b99949b40299/bzImage-69b54314.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/09 15:31</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9946eaf552b194bb352c2945b54ff98c8193b3f1
+	2025/02/08 22:12"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9946eaf552b194bb352c2945b54ff98c8193b3f1">9946eaf552b1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ef44b750e8fab8d6d5cb84920680581b13e0d470">ef44b750</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1909f2f0d8e641ce">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=150dbdf8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17ef2bdf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-9946eaf5.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4b61ede6be0c/vmlinux-9946eaf5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0493329f401a/bzImage-9946eaf5.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/08 10:28</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="7ee983c850b40043ac4751836fbd9a2b4d0c5937
+	2025/02/07 20:21"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=7ee983c850b40043ac4751836fbd9a2b4d0c5937">7ee983c850b4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ef44b750e8fab8d6d5cb84920680581b13e0d470">ef44b750</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a7ddf49cf33ba213">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1678cca4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=147ecb18580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=55616b143c9e51c8">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-7ee983c8.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/79e631ca79b7/vmlinux-7ee983c8.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d1690714d9de/bzImage-7ee983c8.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/08 06:49</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="7ee983c850b40043ac4751836fbd9a2b4d0c5937
+	2025/02/07 20:21"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=7ee983c850b40043ac4751836fbd9a2b4d0c5937">7ee983c850b4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ef44b750e8fab8d6d5cb84920680581b13e0d470">ef44b750</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1909f2f0d8e641ce">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12dccb18580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13ba8bdf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-7ee983c8.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f2f78699fc41/vmlinux-7ee983c8.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ca55e6e8dd01/bzImage-7ee983c8.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/06 16:00</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="92514ef226f511f2ca1fb1b8752966097518edc0
+	2025/02/05 16:13"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=92514ef226f511f2ca1fb1b8752966097518edc0">92514ef226f5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/1e1faf2705f7fd87052f97256d394c63a7073393">1e1faf27</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1909f2f0d8e641ce">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16316df8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=122a5318580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-92514ef2.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c4d8b91f8769/vmlinux-92514ef2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c24ec4365966/bzImage-92514ef2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/03 16:57</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="2014c95afecee3e76ca4a56956a936e23283f05b
+	2025/02/02 23:39"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=2014c95afecee3e76ca4a56956a936e23283f05b">2014c95afece</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a21a8419b67b5ef8ebc3d6dd834d065e6860c41f">a21a8419</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=144e205a3f53e3bf">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16c975f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17c11d18580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=de28a290372025de">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-2014c95a.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6e28a4ae8856/vmlinux-2014c95a.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c0d60cf49b2e/bzImage-2014c95a.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/02 22:47</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="69e858e0b8b2ea07759e995aa383e8780d9d140c
+	2025/01/31 02:29"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=69e858e0b8b2ea07759e995aa383e8780d9d140c">69e858e0b8b2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/568559e4e604140cecd9fc4835eaa0298a1cadcc">568559e4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=36c931489897af84">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17956d18580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=166e9724580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=dfb746a69c796f4b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-69e858e0.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5c6679b95774/vmlinux-69e858e0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c1e328257cca/bzImage-69e858e0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/01 01:56</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="69e858e0b8b2ea07759e995aa383e8780d9d140c
+	2025/01/31 02:29"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=69e858e0b8b2ea07759e995aa383e8780d9d140c">69e858e0b8b2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/aa47157c8ec3df5a6d16e3866b095c8f91026465">aa47157c</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d033b14aeef39158">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=133b8b24580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=124295f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-69e858e0.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a53b888c1f3f/vmlinux-69e858e0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6b5e17edafc0/bzImage-69e858e0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/21 10:38</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="8f7c8b88bda4988f44e595a760438febf51c92c8
+	2024/11/20 18:08"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=8f7c8b88bda4988f44e595a760438febf51c92c8">8f7c8b88bda4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/4b25d554e5643186ba6a09429089ac0275f7573b">4b25d554</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=8b2ddebc25a60ddb">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=103d275f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12239930580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=37bd2185f858ccb">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-8f7c8b88.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a91bdc4cdb5d/vmlinux-8f7c8b88.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/35264fa8c070/bzImage-8f7c8b88.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/21 04:53</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="8f7c8b88bda4988f44e595a760438febf51c92c8
+	2024/11/20 18:08"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=8f7c8b88bda4988f44e595a760438febf51c92c8">8f7c8b88bda4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/4b25d554e5643186ba6a09429089ac0275f7573b">4b25d554</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=8b2ddebc25a60ddb">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=151c7ae8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=165af6c0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=6d1edd5697123c2c">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-8f7c8b88.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a91bdc4cdb5d/vmlinux-8f7c8b88.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/35264fa8c070/bzImage-8f7c8b88.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/17 18:07</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="0ad2507d5d93f39619fc42372c347d6006b64319
+	2025/02/16 22:02"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=0ad2507d5d93f39619fc42372c347d6006b64319">0ad2507d5d93</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9be4ace34ffed29b36f379311c49249a457dabf3">9be4ace3</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=61cbf5ac8a063ad4">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=119c3bf8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=168fd7df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=29f2599641df2340">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-0ad2507d.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ad50b30781a2/vmlinux-0ad2507d.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3bc699ebfa4b/bzImage-0ad2507d.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream-386</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/16 12:17</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ad1b832bf1cf2df9304f8eb72943111625c7e5a7
+	2025/02/16 01:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ad1b832bf1cf2df9304f8eb72943111625c7e5a7">ad1b832bf1cf</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/40a34ec944732a2502ee67d92cc8c023355dfad4">40a34ec9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=40c8b8384bc47ab0">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1256d5a4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=141702e4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=112c8aa50aa3af0b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-ad1b832b.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/518d1a7f7992/vmlinux-ad1b832b.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c5f8051efb40/bzImage-ad1b832b.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream-386</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/04 06:09</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="0de63bb7d91975e73338300a57c54b93d3cc151c
+	2025/02/03 21:39"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=0de63bb7d91975e73338300a57c54b93d3cc151c">0de63bb7d919</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/8f267cefd3660f9d5640ebbbd42e295a61774469">8f267cef</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c48f582603dcb16c">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14279d18580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=101e3724580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=d0c16ce1e5d61c3b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-0de63bb7.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4dd046669a28/vmlinux-0de63bb7.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4d33e4954ef0/bzImage-0de63bb7.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream-386</td>
+			<td class="manager">WARNING: locking bug in kvm_xen_set_evtchn_fast</td>
+		</tr>
+		
+		</tbody>
+</table>
+<i>* <s>Struck through</s> repros no longer work on HEAD.</i>
+
+
+</body>
+</html>

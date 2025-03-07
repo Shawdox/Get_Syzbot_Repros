@@ -1,0 +1,1540 @@
+
+
+<!doctype html>
+<html>
+<head>
+	
+	<link rel="stylesheet" href="/static/style.css"/>
+	<script src="/static/common.js"></script>
+	
+		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-116117799-1"></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag() { dataLayer.push(arguments); }
+			gtag('js', new Date());
+			gtag('config', 'UA-116117799-1');
+		</script>
+	
+
+	<title>KCSAN: data-race in dentry_unlink_inode / step_into</title>
+</head>
+<body>
+	
+	<header id="topbar">
+		<table class="position_table">
+			<tr>
+				<td>
+					<h1><a href="/upstream">syzbot</a></h1>
+				</td>
+				<td class="namespace_td">
+					<select class="namespace" onchange="window.location.href = '/' + this.value + '';">
+						
+							<option value="android-5-10" >Android 5.10</option>
+							<option value="android-5-15" >Android 5.15</option>
+							<option value="android-54" >Android 5.4</option>
+							<option value="android-6-1" >Android 6.1</option>
+							<option value="freebsd" >FreeBSD</option>
+							<option value="upstream" selected="1">Linux</option>
+							<option value="linux-5.15" >Linux 5.15</option>
+							<option value="linux-6.1" >Linux 6.1</option>
+							<option value="netbsd" >NetBSD</option>
+							<option value="openbsd" >OpenBSD</option>
+							<option value="gvisor" >gVisor</option></select>
+				</td>
+				<td class="search">
+					
+					
+						<a href="https://syzkaller.appspot.com/_ah/conflogin?continue=https://syzkaller.appspot.com/bug%3Fextid%3D10935029822fbc89bbfa">sign-in</a> |
+					
+					<a href="https://groups.google.com/forum/#!forum/syzkaller" target="_blank">mailing list</a> |
+					<a href="https://github.com/google/syzkaller" target="_blank">source</a> |
+					<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md" target="_blank">docs</a>
+				</td>
+			</tr>
+		</table>
+		
+		<div class="navigation">
+			<div class="navigation_tab">
+				<a href='/upstream'><span style="color:DeepPink;">🐞</span> Open [1658]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/subsystems'><span style="color:DeepPink;">≡</span> Subsystems</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/fixed'><span style="color:ForestGreen;">🐞</span> Fixed [6081]</a>
+			</div>
+
+			<div class="navigation_tab" href='/upstream/invalid'>
+				<a href='/upstream/invalid'><span style="color:RoyalBlue;">🐞</span> Invalid [15103]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/backports'><span style="color:ForestGreen;">⬇</span> Missing Backports [157]</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/graph/crashes'><span style="color:ForestGreen;">≡</span> Crashes</a>
+			</div>
+
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Graphs</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href='/upstream/graph/bugs'>Kernel&nbsp;Health</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/found-bugs'>Bugs/Month</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/lifetimes'>Bug&nbsp;Lifetimes</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/fuzzing'>Fuzzing</a>
+				</div>
+			</div>
+
+			
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Coverage</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href="/upstream/graph/coverage?period=quarter">Total</a>
+					<a class="navigation_tab"
+						href="/upstream/coverage?period=month">Repo&nbsp;Heatmap</a>
+					
+						<a class="navigation_tab"
+							href="/upstream/coverage/subsystems?period=month">Subsystems&nbsp;Heatmap</a>
+					
+				</div>
+			</div>
+			
+			
+			<div class="navigation_tab navigation_right">
+				<a href='mailto:syzkaller@googlegroups.com'><span style="color:ForestGreen;">💬</span> Send us feedback</a>
+			</div>
+			
+		</div>
+		
+	</header>
+	<br>
+
+
+	<b>KCSAN: data-race in dentry_unlink_inode / step_into</b><br><br>
+	Status: <a href="https://groups.google.com/d/msgid/syzkaller-upstream-moderation/000000000000a90a91060bf445b4%40google.com">moderation: reported syz repro on 2023/12/08 00:00</a><br>
+	
+		
+			Subsystems: 
+				<span class="bug-label"><a href="/upstream/s/fs">fs</a></span>
+		<br>
+		
+	<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md#labels">[Documentation on labels]</a><br>
+	
+	
+	Reported-by: syzbot&#43;10935029822fbc89bbfa@syzkaller.appspotmail.com<br>
+	
+	First crash: 945d, last: 10h27m<br>
+	
+	<div>
+		
+		
+		<div class="bug-bisection-stop"></div>
+	</div>
+
+	
+
+	
+	<br><b>Sample crash report:</b><br>
+	<div id="crash_div"><pre>==================================================================
+BUG: KCSAN: data-race in dentry_unlink_inode / step_into
+
+write to 0xffff88810acf5930 of 8 bytes by task 3114 on cpu 1:
+ __d_clear_type_and_inode <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/dcache.c?id=6feb57c2fd7c787aecf2846a535248899e7b70fa#n358'>fs/dcache.c:358</a> [inline]
+ dentry_unlink_inode+0x65/0x240 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/dcache.c?id=6feb57c2fd7c787aecf2846a535248899e7b70fa#n391'>fs/dcache.c:391</a>
+ d_delete+0x70/0xa0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/dcache.c?id=6feb57c2fd7c787aecf2846a535248899e7b70fa#n2565'>fs/dcache.c:2565</a>
+ d_delete_notify+0x30/0xe0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/linux/fsnotify.h?id=6feb57c2fd7c787aecf2846a535248899e7b70fa#n259'>include/linux/fsnotify.h:259</a>
+ vfs_unlink+0x306/0x3e0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namei.c?id=6feb57c2fd7c787aecf2846a535248899e7b70fa#n4267'>fs/namei.c:4267</a>
+ do_unlinkat+0x258/0x510 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namei.c?id=6feb57c2fd7c787aecf2846a535248899e7b70fa#n4320'>fs/namei.c:4320</a>
+ __do_sys_unlink <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namei.c?id=6feb57c2fd7c787aecf2846a535248899e7b70fa#n4368'>fs/namei.c:4368</a> [inline]
+ __se_sys_unlink <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namei.c?id=6feb57c2fd7c787aecf2846a535248899e7b70fa#n4366'>fs/namei.c:4366</a> [inline]
+ __x64_sys_unlink+0x2c/0x30 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namei.c?id=6feb57c2fd7c787aecf2846a535248899e7b70fa#n4366'>fs/namei.c:4366</a>
+ do_syscall_x64 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=6feb57c2fd7c787aecf2846a535248899e7b70fa#n50'>arch/x86/entry/common.c:50</a> [inline]
+ do_syscall_64+0x2b/0x70 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=6feb57c2fd7c787aecf2846a535248899e7b70fa#n80'>arch/x86/entry/common.c:80</a>
+ entry_SYSCALL_64_after_hwframe+0x63/0xcd
+
+read to 0xffff88810acf5930 of 8 bytes by task 2737 on cpu 0:
+ step_into+0x115/0x7d0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namei.c?id=6feb57c2fd7c787aecf2846a535248899e7b70fa#n1835'>fs/namei.c:1835</a>
+ walk_component+0x164/0x230 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namei.c?id=6feb57c2fd7c787aecf2846a535248899e7b70fa#n1999'>fs/namei.c:1999</a>
+ lookup_last <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namei.c?id=6feb57c2fd7c787aecf2846a535248899e7b70fa#n2450'>fs/namei.c:2450</a> [inline]
+ path_lookupat+0x11d/0x2b0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namei.c?id=6feb57c2fd7c787aecf2846a535248899e7b70fa#n2474'>fs/namei.c:2474</a>
+ filename_lookup+0x133/0x310 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namei.c?id=6feb57c2fd7c787aecf2846a535248899e7b70fa#n2503'>fs/namei.c:2503</a>
+ user_path_at_empty+0x3e/0x110 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namei.c?id=6feb57c2fd7c787aecf2846a535248899e7b70fa#n2876'>fs/namei.c:2876</a>
+ do_readlinkat+0x98/0x210 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/stat.c?id=6feb57c2fd7c787aecf2846a535248899e7b70fa#n471'>fs/stat.c:471</a>
+ __do_sys_readlink <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/stat.c?id=6feb57c2fd7c787aecf2846a535248899e7b70fa#n504'>fs/stat.c:504</a> [inline]
+ __se_sys_readlink <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/stat.c?id=6feb57c2fd7c787aecf2846a535248899e7b70fa#n501'>fs/stat.c:501</a> [inline]
+ __x64_sys_readlink+0x43/0x50 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/stat.c?id=6feb57c2fd7c787aecf2846a535248899e7b70fa#n501'>fs/stat.c:501</a>
+ do_syscall_x64 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=6feb57c2fd7c787aecf2846a535248899e7b70fa#n50'>arch/x86/entry/common.c:50</a> [inline]
+ do_syscall_64+0x2b/0x70 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=6feb57c2fd7c787aecf2846a535248899e7b70fa#n80'>arch/x86/entry/common.c:80</a>
+ entry_SYSCALL_64_after_hwframe+0x63/0xcd
+
+value changed: 0xffff88810bc26a58 -&gt; 0x0000000000000000
+
+Reported by Kernel Concurrency Sanitizer on:
+CPU: 0 PID: 2737 Comm: udevd Not tainted 6.1.0-syzkaller-13822-g6feb57c2fd7c-dirty #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 10/26/2022
+==================================================================
+</pre></div><br>
+	
+
+	
+
+<table class="list_table">
+	<caption>Crashes (1716):</caption>
+		<thead>
+		<tr>
+			<th><a onclick="return sortTable(this, 'Time', textSort, true)" href="#">Time</a></th>
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+			<th><a onclick="return sortTable(this, 'Commit', textSort)" href="#">Commit</a></th>
+			<th><a onclick="return sortTable(this, 'Syzkaller', textSort)" href="#">Syzkaller</a></th>
+			<th><a onclick="return sortTable(this, 'Config', textSort)" href="#">Config</a></th>
+			<th><a onclick="return sortTable(this, 'Log', textSort)" href="#">Log</a></th>
+			<th><a onclick="return sortTable(this, 'Report', reproSort)" href="#">Report</a></th>
+			<th><a onclick="return sortTable(this, 'Syz repro', reproSort)" href="#">Syz repro</a></th>
+			<th><a onclick="return sortTable(this, 'C repro', textSort)" href="#">C repro</a></th>
+			<th><a onclick="return sortTable(this, 'VM info', textSort)" href="#">VM info</a></th>
+			<th><a onclick="return sortTable(this, 'Assets', textSort)" href="#">Assets</a> (<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot_assets.md">help?</a>)</th>
+			<th><a onclick="return sortTable(this, 'Manager', textSort)" href="#">Manager</a></th>
+			<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		</tr>
+		</thead>
+		<tbody>
+		
+		<tr>
+			<td class="time">2022/12/21 03:28</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="6feb57c2fd7c787aecf2846a535248899e7b70fa
+	2022/12/19 18:33"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=6feb57c2fd7c787aecf2846a535248899e7b70fa">6feb57c2fd7c</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3e76707bdc63efba0c6f891212c658a0690003c">d3e76707</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=636e09e08afda718">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12a1a04f880000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15c68c5d880000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=1442914f880000">syz</a>
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fd871ab7a8c2/disk-6feb57c2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a5d644541dd0/vmlinux-6feb57c2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b02a70523453/bzImage-6feb57c2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/12/15 08:56</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="e2ca6ba6ba0152361aa4fcbf6067db71b2c7a770
+	2022/12/14 03:29"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=e2ca6ba6ba0152361aa4fcbf6067db71b2c7a770">e2ca6ba6ba01</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/b18f0a64c547e066dca1eba82a3ada7ef5e54741">b18f0a64</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=841cd743118991fe">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16eeb98b880000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1084f820480000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=108f62ab880000">syz</a>
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9d44cff729ca/disk-e2ca6ba6.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0efc384b9282/vmlinux-e2ca6ba6.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3ce600b78ccd/bzImage-e2ca6ba6.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/03/05 22:13</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="bb2281fb05e50108ce95c43ab7e701ee564565c8
+	2025/03/05 05:05"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=bb2281fb05e50108ce95c43ab7e701ee564565c8">bb2281fb05e5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/831e3629115be4f5e68e6e0df3a5b07eed26daa4">831e3629</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=523b0e2f15224775">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15a337a0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=141e0264580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=52f9ee212d18eac">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cea6d1628c9b/disk-bb2281fb.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/607784819c4e/vmlinux-bb2281fb.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3fa23daeb70c/bzImage-bb2281fb.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/03/05 18:53</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="bb2281fb05e50108ce95c43ab7e701ee564565c8
+	2025/03/05 05:05"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=bb2281fb05e50108ce95c43ab7e701ee564565c8">bb2281fb05e5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/60f5d8d97d382f0194c04552c3c2b5d5c1597548">60f5d8d9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=523b0e2f15224775">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13bf75a8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16098254580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cea6d1628c9b/disk-bb2281fb.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/607784819c4e/vmlinux-bb2281fb.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3fa23daeb70c/bzImage-bb2281fb.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/03/05 14:12</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="48a5eed9ad584315c30ed35204510536235ce402
+	2025/03/04 19:04"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=48a5eed9ad584315c30ed35204510536235ce402">48a5eed9ad58</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/60f5d8d97d382f0194c04552c3c2b5d5c1597548">60f5d8d9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=523b0e2f15224775">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=104338b7980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15f037a0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/877a63ac53f2/disk-48a5eed9.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7b3a614d4df6/vmlinux-48a5eed9.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2ce987fd9e0c/bzImage-48a5eed9.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/03/05 04:38</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="48a5eed9ad584315c30ed35204510536235ce402
+	2025/03/04 19:04"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=48a5eed9ad584315c30ed35204510536235ce402">48a5eed9ad58</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c3901742785ff25afdc6f470af7b25b69d7c4f2f">c3901742</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=523b0e2f15224775">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16538078580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15c67c64580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/877a63ac53f2/disk-48a5eed9.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7b3a614d4df6/vmlinux-48a5eed9.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2ce987fd9e0c/bzImage-48a5eed9.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/03/03 22:13</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="99fa936e8e4f117d62f229003c9799686f74cebc
+	2025/03/03 17:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=99fa936e8e4f117d62f229003c9799686f74cebc">99fa936e8e4f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c3901742785ff25afdc6f470af7b25b69d7c4f2f">c3901742</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=523b0e2f15224775">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12d56464580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=111a98b7980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a28c1cb92a01/disk-99fa936e.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/229349d043c8/vmlinux-99fa936e.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/49768322c46d/bzImage-99fa936e.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/03/03 16:16</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="7eb172143d5508b4da468ed59ee857c6e5e01da6
+	2025/03/02 19:48"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=7eb172143d5508b4da468ed59ee857c6e5e01da6">7eb172143d55</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c3901742785ff25afdc6f470af7b25b69d7c4f2f">c3901742</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=523b0e2f15224775">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1529a7a0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1329a7a0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1964b2dbc342/disk-7eb17214.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/71f35b51ca30/vmlinux-7eb17214.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b0402b5476d8/bzImage-7eb17214.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/03/02 22:57</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="b91872c56940950a6a0852e499d249c3091d4284
+	2025/03/02 18:08"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=b91872c56940950a6a0852e499d249c3091d4284">b91872c56940</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c3901742785ff25afdc6f470af7b25b69d7c4f2f">c3901742</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e9dd6c7eeba2114e">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10adcfb8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=173e9864580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ec613241ff4f4e7b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dab260f9165c/disk-b91872c5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b30983a6134a/vmlinux-b91872c5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4c731c46f0ce/bzImage-b91872c5.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/03/02 11:40</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ece144f151ac7bf8bb5b98f7d4aeeda7a2eed02a
+	2025/03/02 00:10"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ece144f151ac7bf8bb5b98f7d4aeeda7a2eed02a">ece144f151ac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c3901742785ff25afdc6f470af7b25b69d7c4f2f">c3901742</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e9dd6c7eeba2114e">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1197a8b7980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1585e864580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b321de875943/disk-ece144f1.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f636ac7c1a34/vmlinux-ece144f1.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/923ac8ca329a/bzImage-ece144f1.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/03/01 03:48</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="7a5668899f54f6c9fe8619ecec23fb682d463f4a
+	2025/03/01 01:05"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=7a5668899f54f6c9fe8619ecec23fb682d463f4a">7a5668899f54</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/67cf53451a9e04583ca8397b8a2eba399e4fae22">67cf5345</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e9dd6c7eeba2114e">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13024864580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13c757b8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=c4c998483a52ca98">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8ab125b8bd03/disk-7a566889.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ba777f233fa3/vmlinux-7a566889.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7e7b838b96e2/bzImage-7a566889.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/28 15:31</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="76544811c850a1f4c055aa182b513b7a843868ea
+	2025/02/28 05:17"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=76544811c850a1f4c055aa182b513b7a843868ea">76544811c850</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/67cf53451a9e04583ca8397b8a2eba399e4fae22">67cf5345</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e9dd6c7eeba2114e">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10f988b7980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12090864580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=155fc9bc53b0a7f2">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6e7d9ea533b5/disk-76544811.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/192716197327/vmlinux-76544811.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cf6112e92bb9/bzImage-76544811.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/28 02:32</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="1e15510b71c99c6e49134d756df91069f7d18141
+	2025/02/27 17:32"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=1e15510b71c99c6e49134d756df91069f7d18141">1e15510b71c9</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6a8fcbc4a6172c831c89c507007f59fba13408aa">6a8fcbc4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e9dd6c7eeba2114e">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=147b17b8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10f97064580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e29e02b61dc2/disk-1e15510b.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d062759f3619/vmlinux-1e15510b.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/21d415531a75/bzImage-1e15510b.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/27 13:40</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="dd83757f6e686a2188997cb58b5975f744bb7786
+	2025/02/27 00:55"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=dd83757f6e686a2188997cb58b5975f744bb7786">dd83757f6e68</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6a8fcbc4a6172c831c89c507007f59fba13408aa">6a8fcbc4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e9dd6c7eeba2114e">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1243ffa4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17fec064580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/78c8e496637a/disk-dd83757f.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/78ac62bb1dbf/vmlinux-dd83757f.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e562ef8264d9/bzImage-dd83757f.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/27 01:28</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="5394eea106517d5b0d4a372f00e63d5db8cb0370
+	2025/02/26 20:57"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=5394eea106517d5b0d4a372f00e63d5db8cb0370">5394eea10651</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6a8fcbc4a6172c831c89c507007f59fba13408aa">6a8fcbc4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e9dd6c7eeba2114e">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14b8803f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10c2e6e4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/bf64570823da/disk-5394eea1.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/58afd2b620d5/vmlinux-5394eea1.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7241bf9cf7a3/bzImage-5394eea1.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/26 18:57</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ac9c34d1e45a4c25174ced4fc0cfc33ff3ed08c7
+	2025/02/25 21:43"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ac9c34d1e45a4c25174ced4fc0cfc33ff3ed08c7">ac9c34d1e45a</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e9dd6c7eeba2114e">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14c5003f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12f45fa4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9907ca88411d/disk-ac9c34d1.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fc6855e487f2/vmlinux-ac9c34d1.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8d0b0372f2af/bzImage-ac9c34d1.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/25 23:06</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="2a1944bff54907a4e68f167dcdf772b1e4c3ce6d
+	2025/02/25 00:40"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=2a1944bff54907a4e68f167dcdf772b1e4c3ce6d">2a1944bff549</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e9dd6c7eeba2114e">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1209edb0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=157157a4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c4e0a45c9e28/disk-2a1944bf.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/18ea09cf4435/vmlinux-2a1944bf.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/82c76bceaa0f/bzImage-2a1944bf.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/24 02:40</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="d082ecbc71e9e0bf49883ee4afd435a77a5101b6
+	2025/02/23 20:32"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=d082ecbc71e9e0bf49883ee4afd435a77a5101b6">d082ecbc71e9</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e9dd6c7eeba2114e">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=178df498580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=102c2db0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2b352c2abb77/disk-d082ecbc.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c5f4a062a264/vmlinux-d082ecbc.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c3a86625df5a/bzImage-d082ecbc.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/23 14:54</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="27102b38b8ca7ffb1622f27bcb41475d121fb67f
+	2025/02/23 01:32"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=27102b38b8ca7ffb1622f27bcb41475d121fb67f">27102b38b8ca</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e4bb91ef214703b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1178dfdf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=108e06e4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/380836a668b1/disk-27102b38.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5a61ecb19311/vmlinux-27102b38.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dafdda94e604/bzImage-27102b38.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/23 02:35</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="5cf80612d3f72c46ad53ef5042b4c609c393122f
+	2025/02/22 18:45"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=5cf80612d3f72c46ad53ef5042b4c609c393122f">5cf80612d3f7</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e4bb91ef214703b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14f747a4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1341fae4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e90f876a0414/disk-5cf80612.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a3c92b5e3e92/vmlinux-5cf80612.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5233480c215f/bzImage-5cf80612.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/22 14:42</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ff202c5028a195c07b16e1a2fbb8ca6b7ba11a1c
+	2025/02/21 21:16"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ff202c5028a195c07b16e1a2fbb8ca6b7ba11a1c">ff202c5028a1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e4bb91ef214703b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15fd8db0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11ac97f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=c4c998483a52ca98">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/64954521e6fa/disk-ff202c50.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/82e57879ecc8/vmlinux-ff202c50.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ebc2cefa2ce0/bzImage-ff202c50.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/21 22:31</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="8a61cb6e150ea907b580a1b5e705decb0a3ffc86
+	2025/02/21 17:36"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=8a61cb6e150ea907b580a1b5e705decb0a3ffc86">8a61cb6e150e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ce4e433ac2a58cc2">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13f017f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13c707a4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/94c3e119a25b/disk-8a61cb6e.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/45837c39668c/vmlinux-8a61cb6e.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/70bd9130d791/bzImage-8a61cb6e.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/21 12:53</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="334426094588f8179fe175a09ecc887ff0c75758
+	2025/02/21 02:07"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=334426094588f8179fe175a09ecc887ff0c75758">334426094588</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0808a665bc75ab0845906bfeca0d12fb520ae6eb">0808a665</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ce4e433ac2a58cc2">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15201fdf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=106883b8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/87b82cb1c11a/disk-33442609.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a947d851daae/vmlinux-33442609.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/136718076367/bzImage-33442609.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/20 16:34</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="87a132e73910e8689902aed7f2fc229d6908383b
+	2025/02/20 02:11"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=87a132e73910e8689902aed7f2fc229d6908383b">87a132e73910</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/506687987fc2f8f40b2918782fc2943285fdc602">50668798</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ce4e433ac2a58cc2">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=104b75b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15e6dae4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9b9e85cfddf6/disk-87a132e7.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6199597ac06c/vmlinux-87a132e7.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/80e28e7cab63/bzImage-87a132e7.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/19 10:47</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="6537cfb395f352782918d8ee7b7f10ba2cc3cbf2
+	2025/02/18 17:00"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=6537cfb395f352782918d8ee7b7f10ba2cc3cbf2">6537cfb395f3</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9a14138f4fc02e412262b751acdc4dd70665a726">9a14138f</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ce4e433ac2a58cc2">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=142f1ae4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=150d35b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a486bd4f9ce1/disk-6537cfb3.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6b6efb477de2/vmlinux-6537cfb3.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3a4c3dd86651/bzImage-6537cfb3.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/18 22:11</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="6537cfb395f352782918d8ee7b7f10ba2cc3cbf2
+	2025/02/18 17:00"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=6537cfb395f352782918d8ee7b7f10ba2cc3cbf2">6537cfb395f3</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9a14138f4fc02e412262b751acdc4dd70665a726">9a14138f</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ce4e433ac2a58cc2">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1460a498580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=101303a4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=fb573c5867ab3dcc">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a486bd4f9ce1/disk-6537cfb3.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6b6efb477de2/vmlinux-6537cfb3.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3a4c3dd86651/bzImage-6537cfb3.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/18 13:36</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="2408a807bfc3f738850ef5ad5e3fd59d66168996
+	2025/02/17 18:38"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=2408a807bfc3f738850ef5ad5e3fd59d66168996">2408a807bfc3</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c37c724966f290881c3123580e5e708f620086bf">c37c7249</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ce4e433ac2a58cc2">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=164bc498580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11bbbbf8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=cf6616f2a4ce24d6">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2b5bc36288cc/disk-2408a807.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/75982289b311/vmlinux-2408a807.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c94f6df111e0/bzImage-2408a807.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/18 05:11</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="2408a807bfc3f738850ef5ad5e3fd59d66168996
+	2025/02/17 18:38"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=2408a807bfc3f738850ef5ad5e3fd59d66168996">2408a807bfc3</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/429ea00719313e5b518a2093a9f48c79bb7b5f52">429ea007</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ce4e433ac2a58cc2">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11ccbbf8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1760b7df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2b5bc36288cc/disk-2408a807.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/75982289b311/vmlinux-2408a807.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c94f6df111e0/bzImage-2408a807.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/16 21:43</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="224e74511041c2d33dcf24adf54d447eb72399c8
+	2025/02/16 20:58"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=224e74511041c2d33dcf24adf54d447eb72399c8">224e74511041</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/40a34ec944732a2502ee67d92cc8c023355dfad4">40a34ec9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c8889d5a0d6060f3">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1188a898580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=158745b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/471bcb918ff7/disk-224e7451.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c5b42d9d164a/vmlinux-224e7451.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f2d29932f69b/bzImage-224e7451.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/16 08:26</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ad1b832bf1cf2df9304f8eb72943111625c7e5a7
+	2025/02/16 01:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ad1b832bf1cf2df9304f8eb72943111625c7e5a7">ad1b832bf1cf</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/40a34ec944732a2502ee67d92cc8c023355dfad4">40a34ec9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c8889d5a0d6060f3">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=147102e4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=167fb9b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/97569278b52d/disk-ad1b832b.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/92ff2900c3e3/vmlinux-ad1b832b.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3ece26955a52/bzImage-ad1b832b.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/15 20:55</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="496659003dac5d08ea292c44fce9dfb36fa34691
+	2025/02/15 18:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=496659003dac5d08ea292c44fce9dfb36fa34691">496659003dac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/40a34ec944732a2502ee67d92cc8c023355dfad4">40a34ec9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c8889d5a0d6060f3">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1500d9a4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12dff098580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b98932ad16077116">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a1f9c776cf71/disk-49665900.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0020d014b0f0/vmlinux-49665900.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1834a60b06c7/bzImage-49665900.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/14 16:10</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="128c8f96eb8638c060cd3532dc394d046ce64fe1
+	2025/02/14 04:04"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=128c8f96eb8638c060cd3532dc394d046ce64fe1">128c8f96eb86</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/1022af749615bfc4e3a305b891449d95d5fc050a">1022af74</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c8889d5a0d6060f3">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=104be9a4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10436ce4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7971b93d4c841788">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/bbf7e527966e/disk-128c8f96.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7b968fc47406/vmlinux-128c8f96.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1b3ab90aa562/bzImage-128c8f96.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/14 05:58</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="68763b29e0a6441f57f9ee652bbf8e7bc59183e5
+	2025/02/13 21:13"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=68763b29e0a6441f57f9ee652bbf8e7bc59183e5">68763b29e0a6</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d9a046cf66ed7650b10bc0e6a567e089644d9004">d9a046cf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c8889d5a0d6060f3">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14d7a1a4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=110f99b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c16c0ea5c802/disk-68763b29.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/01c9fd28dc40/vmlinux-68763b29.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/85508704f500/bzImage-68763b29.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/14 01:05</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ab68d7eb7b1a64f3f4710da46cc5f93c6c154942
+	2025/02/13 16:43"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ab68d7eb7b1a64f3f4710da46cc5f93c6c154942">ab68d7eb7b1a</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a98a8417f2c0dfdab1e8d3d49e8a7605340ada89">a98a8417</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7722a092753bcf03">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=153199b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1501a1a4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/773aaa923033/disk-ab68d7eb.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2c7f22a806e3/vmlinux-ab68d7eb.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5670116700ec/bzImage-ab68d7eb.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/13 12:52</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="4dc1d1bec89864d8076e5ab314f86f46442bfb02
+	2025/02/12 22:22"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=4dc1d1bec89864d8076e5ab314f86f46442bfb02">4dc1d1bec898</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a98a8417f2c0dfdab1e8d3d49e8a7605340ada89">a98a8417</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7722a092753bcf03">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15cdc9b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=162621a4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a0443329ef49/disk-4dc1d1be.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2b7fb56eb001/vmlinux-4dc1d1be.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c82e4ef10fa3/bzImage-4dc1d1be.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/12 23:30</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="4dc1d1bec89864d8076e5ab314f86f46442bfb02
+	2025/02/12 22:22"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=4dc1d1bec89864d8076e5ab314f86f46442bfb02">4dc1d1bec898</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/b27c24029033bbfb41289458ca671507a01cb784">b27c2402</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7722a092753bcf03">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16e8e3f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11e8e3f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=60fe19786ccc7b82">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a0443329ef49/disk-4dc1d1be.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2b7fb56eb001/vmlinux-4dc1d1be.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c82e4ef10fa3/bzImage-4dc1d1be.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/12 10:23</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="09fbf3d502050282bf47ab3babe1d4ed54dd1fd8
+	2025/02/11 18:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=09fbf3d502050282bf47ab3babe1d4ed54dd1fd8">09fbf3d50205</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/b27c24029033bbfb41289458ca671507a01cb784">b27c2402</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7722a092753bcf03">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16d94718580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16330ea4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/416ab4bb8fb0/disk-09fbf3d5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9b6aae2eed48/vmlinux-09fbf3d5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b3d50f4968d9/bzImage-09fbf3d5.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/11 21:11</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="09fbf3d502050282bf47ab3babe1d4ed54dd1fd8
+	2025/02/11 18:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=09fbf3d502050282bf47ab3babe1d4ed54dd1fd8">09fbf3d50205</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2baddf5cfc118066483050e29627cea6b63bcfb">f2baddf5</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7722a092753bcf03">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=177409b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12720aa4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=bbfce346bc7e4743">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/416ab4bb8fb0/disk-09fbf3d5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9b6aae2eed48/vmlinux-09fbf3d5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b3d50f4968d9/bzImage-09fbf3d5.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/11 04:00</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="febbc555cf0fff895546ddb8ba2c9a523692fb55
+	2025/02/10 21:11"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=febbc555cf0fff895546ddb8ba2c9a523692fb55">febbc555cf0f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/43f51a00700e5960fc890e6c3d596846757bf29d">43f51a00</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7722a092753bcf03">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12c2c3f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14b09bdf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/34e7d4c83286/disk-febbc555.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/483282168b02/vmlinux-febbc555.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/510fcf6f96a7/bzImage-febbc555.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/11 00:35</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a64dcfb451e254085a7daee5fe51bf22959d52d3
+	2025/02/09 20:45"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a64dcfb451e254085a7daee5fe51bf22959d52d3">a64dcfb451e2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/43f51a00700e5960fc890e6c3d596846757bf29d">43f51a00</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=cc209331bf8c042">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=101572a4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10d51bdf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/816c99f7236e/disk-a64dcfb4.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/64047b84d539/vmlinux-a64dcfb4.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fcb824c1a7ca/bzImage-a64dcfb4.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/10 03:46</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="69b54314c975f4dfd3a29d6b9211ab68fff46682
+	2025/02/09 18:05"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=69b54314c975f4dfd3a29d6b9211ab68fff46682">69b54314c975</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ef44b750e8fab8d6d5cb84920680581b13e0d470">ef44b750</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9e757e3762bd630b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15e53b18580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1408fdf8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2b7567096e2a/disk-69b54314.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2676ba455ec2/vmlinux-69b54314.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f886f31e555f/bzImage-69b54314.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/09 04:57</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9946eaf552b194bb352c2945b54ff98c8193b3f1
+	2025/02/08 22:12"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9946eaf552b194bb352c2945b54ff98c8193b3f1">9946eaf552b1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ef44b750e8fab8d6d5cb84920680581b13e0d470">ef44b750</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9e757e3762bd630b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=166d3df8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11bc5b18580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f8a295bc0113/disk-9946eaf5.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9bf127abb398/vmlinux-9946eaf5.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/22a6d155000c/bzImage-9946eaf5.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/08 18:16</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="8f6629c004b193d23612641c3607e785819e97ab
+	2025/02/08 03:49"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=8f6629c004b193d23612641c3607e785819e97ab">8f6629c004b1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ef44b750e8fab8d6d5cb84920680581b13e0d470">ef44b750</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9e757e3762bd630b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=116c2b18580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11a9ddf8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7d860da6ce30/disk-8f6629c0.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c08a5c60f5c9/vmlinux-8f6629c0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c42cbf0eb13e/bzImage-8f6629c0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/07 23:40</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="7ee983c850b40043ac4751836fbd9a2b4d0c5937
+	2025/02/07 20:21"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=7ee983c850b40043ac4751836fbd9a2b4d0c5937">7ee983c850b4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ef44b750e8fab8d6d5cb84920680581b13e0d470">ef44b750</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9e757e3762bd630b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17439df8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12510bdf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/68665ce6fb2f/disk-7ee983c8.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/701936f0efe1/vmlinux-7ee983c8.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e64b9ef70fb0/bzImage-7ee983c8.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/07 19:33</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="bb066fe812d6fb3a9d01c073d9f1e2fd5a63403b
+	2025/02/06 20:32"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=bb066fe812d6fb3a9d01c073d9f1e2fd5a63403b">bb066fe812d6</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ef44b750e8fab8d6d5cb84920680581b13e0d470">ef44b750</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9e757e3762bd630b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=156a9df8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15138ca4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/96c2fa324092/disk-bb066fe8.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d0c48f9198dc/vmlinux-bb066fe8.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a9ae4ace7c1c/bzImage-bb066fe8.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/07 07:03</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="bb066fe812d6fb3a9d01c073d9f1e2fd5a63403b
+	2025/02/06 20:32"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=bb066fe812d6fb3a9d01c073d9f1e2fd5a63403b">bb066fe812d6</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/53657d1b81777d8a70ed2f356ea6b185ee268555">53657d1b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9e757e3762bd630b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=170ba0e4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12a41df8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/96c2fa324092/disk-bb066fe8.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d0c48f9198dc/vmlinux-bb066fe8.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a9ae4ace7c1c/bzImage-bb066fe8.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/07 05:21</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="bb066fe812d6fb3a9d01c073d9f1e2fd5a63403b
+	2025/02/06 20:32"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=bb066fe812d6fb3a9d01c073d9f1e2fd5a63403b">bb066fe812d6</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/8002dd28a72e5a753c56cd580ac5ee3058eae726">8002dd28</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9e757e3762bd630b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11f021b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10bfedf8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/96c2fa324092/disk-bb066fe8.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d0c48f9198dc/vmlinux-bb066fe8.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a9ae4ace7c1c/bzImage-bb066fe8.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/06 21:13</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="92514ef226f511f2ca1fb1b8752966097518edc0
+	2025/02/05 16:13"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=92514ef226f511f2ca1fb1b8752966097518edc0">92514ef226f5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/8002dd28a72e5a753c56cd580ac5ee3058eae726">8002dd28</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9e757e3762bd630b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1575b3df980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12cf5318580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=60fe19786ccc7b82">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/51c17e48f9e6/disk-92514ef2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/886793feee1e/vmlinux-92514ef2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/237330dbc118/bzImage-92514ef2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/06 03:10</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="92514ef226f511f2ca1fb1b8752966097518edc0
+	2025/02/05 16:13"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=92514ef226f511f2ca1fb1b8752966097518edc0">92514ef226f5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/577d049b4ea56e459da6e49f4b92fc1981c92440">577d049b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9e757e3762bd630b">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1780d3df980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=137d1318580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=ce4e5c5dd9683426">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/51c17e48f9e6/disk-92514ef2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/886793feee1e/vmlinux-92514ef2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/237330dbc118/bzImage-92514ef2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2023/12/04 23:21</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="bee0e7762ad2c6025b9f5245c040fcc36ef2bde8
+	2023/12/04 21:54"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=bee0e7762ad2c6025b9f5245c040fcc36ef2bde8">bee0e7762ad2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f819d6f7cb99737851dcaaa51f11190138fd48d5">f819d6f7</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ac34c1f29a8029df">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16f9ee3ce80000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17ab1c86e80000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=8292f414057ebd83">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/233be5f65dd2/disk-bee0e776.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/94423738a289/vmlinux-bee0e776.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0b977463fa9a/bzImage-bee0e776.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2022/08/03 23:23</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ff89dd08c0f0a3fd330c9ef9d775e880f82c291e
+	2022/08/03 21:03"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ff89dd08c0f0a3fd330c9ef9d775e880f82c291e">ff89dd08c0f0</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/1c9013acc70de325dbb554c8c40c17ed02eff33f">1c9013ac</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=dff68c251c74468c">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16ee6d36080000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1261202e080000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=a99f8665f6cccb78">info</a></td>
+			<td class="assets"></td>
+			<td class="manager">ci2-upstream-kcsan-gce</td>
+			<td class="manager">KCSAN: data-race in dentry_unlink_inode / step_into</td>
+		</tr>
+		
+		</tbody>
+</table>
+<i>* <s>Struck through</s> repros no longer work on HEAD.</i>
+
+
+</body>
+</html>

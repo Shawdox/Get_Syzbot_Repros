@@ -1,0 +1,1889 @@
+
+
+<!doctype html>
+<html>
+<head>
+	
+	<link rel="stylesheet" href="/static/style.css"/>
+	<script src="/static/common.js"></script>
+	
+		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-116117799-1"></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag() { dataLayer.push(arguments); }
+			gtag('js', new Date());
+			gtag('config', 'UA-116117799-1');
+		</script>
+	
+
+	<title>KASAN: slab-use-after-free Write in dtSplitPage</title>
+</head>
+<body>
+	
+	<header id="topbar">
+		<table class="position_table">
+			<tr>
+				<td>
+					<h1><a href="/upstream">syzbot</a></h1>
+				</td>
+				<td class="namespace_td">
+					<select class="namespace" onchange="window.location.href = '/' + this.value + '';">
+						
+							<option value="android-5-10" >Android 5.10</option>
+							<option value="android-5-15" >Android 5.15</option>
+							<option value="android-54" >Android 5.4</option>
+							<option value="android-6-1" >Android 6.1</option>
+							<option value="freebsd" >FreeBSD</option>
+							<option value="upstream" selected="1">Linux</option>
+							<option value="linux-5.15" >Linux 5.15</option>
+							<option value="linux-6.1" >Linux 6.1</option>
+							<option value="netbsd" >NetBSD</option>
+							<option value="openbsd" >OpenBSD</option>
+							<option value="gvisor" >gVisor</option></select>
+				</td>
+				<td class="search">
+					
+					
+						<a href="https://syzkaller.appspot.com/_ah/conflogin?continue=https://syzkaller.appspot.com/bug%3Fextid%3Da939a1121380d3212940">sign-in</a> |
+					
+					<a href="https://groups.google.com/forum/#!forum/syzkaller" target="_blank">mailing list</a> |
+					<a href="https://github.com/google/syzkaller" target="_blank">source</a> |
+					<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md" target="_blank">docs</a>
+				</td>
+			</tr>
+		</table>
+		
+		<div class="navigation">
+			<div class="navigation_tab">
+				<a href='/upstream'><span style="color:DeepPink;">🐞</span> Open [1659]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/subsystems'><span style="color:DeepPink;">≡</span> Subsystems</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/fixed'><span style="color:ForestGreen;">🐞</span> Fixed [6081]</a>
+			</div>
+
+			<div class="navigation_tab" href='/upstream/invalid'>
+				<a href='/upstream/invalid'><span style="color:RoyalBlue;">🐞</span> Invalid [15101]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/backports'><span style="color:ForestGreen;">⬇</span> Missing Backports [157]</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/graph/crashes'><span style="color:ForestGreen;">≡</span> Crashes</a>
+			</div>
+
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Graphs</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href='/upstream/graph/bugs'>Kernel&nbsp;Health</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/found-bugs'>Bugs/Month</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/lifetimes'>Bug&nbsp;Lifetimes</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/fuzzing'>Fuzzing</a>
+				</div>
+			</div>
+
+			
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Coverage</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href="/upstream/graph/coverage?period=quarter">Total</a>
+					<a class="navigation_tab"
+						href="/upstream/coverage?period=month">Repo&nbsp;Heatmap</a>
+					
+						<a class="navigation_tab"
+							href="/upstream/coverage/subsystems?period=month">Subsystems&nbsp;Heatmap</a>
+					
+				</div>
+			</div>
+			
+			
+			<div class="navigation_tab navigation_right">
+				<a href='mailto:syzkaller@googlegroups.com'><span style="color:ForestGreen;">💬</span> Send us feedback</a>
+			</div>
+			
+		</div>
+		
+	</header>
+	<br>
+
+
+	<b>KASAN: slab-use-after-free Write in dtSplitPage</b><br><br>
+	Status: <a href="https://groups.google.com/d/msgid/syzkaller-bugs/675f6309.050a0220.37aaf.0109.GAE@google.com">upstream: reported C repro on 2024/12/15 23:15</a><br>
+	
+		
+			Subsystems: 
+				<span class="bug-label"><a href="/upstream/s/jfs">jfs</a></span>
+		<br>
+		
+	<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md#labels">[Documentation on labels]</a><br>
+	
+	
+	Reported-by: syzbot&#43;a939a1121380d3212940@syzkaller.appspotmail.com<br>
+	
+	First crash: 140d, last: 1d09h<br>
+	
+	<div>
+		<div class="bug-bisection-info">
+
+	
+	
+	
+		
+			<b>Cause bisection: the cause commit could be any of</b>
+		
+		<b>(<a href="https://syzkaller.appspot.com/x/bisect.txt?x=13f5fadf980000">bisect log</a>):</b><br>
+		<span class="mono">
+		
+			&nbsp;&nbsp;781773e3b680 <a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=781773e3b68031bd001c0c18aa72e8470c225ebd">sched/fair: Implement ENQUEUE_DELAYED</a><br>
+		
+			&nbsp;&nbsp;a1c446611e31 <a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=a1c446611e31ca5363d4db51e398271da1dce0af">sched,freezer: Mark TASK_FROZEN special</a><br>
+		
+			&nbsp;&nbsp;e1459a50ba31 <a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=e1459a50ba31831efdfc35278023d959e4ba775b">sched: Teach dequeue_task() about special task states</a><br>
+		
+			&nbsp;&nbsp;f12e148892ed <a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=f12e148892ede8d9ee82bcd3e469e6d01fc077ac">sched/fair: Prepare pick_next_task() for delayed dequeue</a><br>
+		
+			&nbsp;&nbsp;152e11f6df29 <a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=152e11f6df293e816a6a37c69757033cdc72667d">sched/fair: Implement delayed dequeue</a><br>
+		
+			&nbsp;&nbsp;2e0199df252a <a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=2e0199df252a536a03f4cb0810324dff523d1e79">sched/fair: Prepare exit/cleanup paths for delayed_dequeue</a><br>
+		
+			&nbsp;&nbsp;54a58a787791 <a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=54a58a78779169f9c92a51facf6de7ce94962328">sched/fair: Implement DELAY_ZERO</a><br>
+		
+		</span>
+	
+	
+
+	
+	&nbsp;&nbsp;
+	
+
+</div>
+		
+		<div class="bug-bisection-stop"></div>
+	</div>
+
+	
+	<div class="collapsible collapsible-show">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Discussions (1)</span>
+		</div>
+		<div class="content">
+			
+			
+			
+
+<table class="list_table">
+	<thead>
+	<tr>
+		<th>Title</th>
+		<th>Replies (including bot)</th>
+		<th>Last reply</th>
+	</tr>
+	</thead>
+	<tbody>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/675f6309.050a0220.37aaf.0109.GAE@google.com/T/">[syzbot] [jfs?] KASAN: slab-use-after-free Write in dtSplitPage</a></td>
+			<td class="stat">0 (3)</td>
+			<td class="stat">2025/01/03 12:54</td>
+		</tr>
+	
+	</tbody>
+</table>
+
+
+			
+			
+		</div>
+	</div>
+	
+	<div class="collapsible collapsible-hide">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Similar bugs (2)</span>
+		</div>
+		<div class="content">
+			
+
+
+<table class="list_table">
+	
+	<thead>
+	<tr>
+		
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+		
+		<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		<th><a onclick="return sortTable(this, 'Repro', reproSort)" href="#">Repro</a></th>
+		<th><a onclick="return sortTable(this, 'Cause bisect', textSort)" href="#">Cause bisect</a></th>
+		<th><a onclick="return sortTable(this, 'Fix bisect', textSort)" href="#">Fix bisect</a></th>
+		<th><a onclick="return sortTable(this, 'Count', numSort)" href="#">Count</a></th>
+		<th><a onclick="return sortTable(this, 'Last', timeSort)" href="#">Last</a></th>
+		<th><a onclick="return sortTable(this, 'Reported', timeSort)" href="#">Reported</a></th>
+		
+		
+		
+			<th><a onclick="return sortTable(this, 'Patched', patchedSort)" href="#">Patched</a></th>
+		
+		
+			<th><a onclick="return sortTable(this, 'Status', textSort)" href="#">Status</a></th>
+		
+		
+	</tr>
+	</thead>
+	<tbody>
+	
+		<tr>
+			<td>linux-6.1</td>
+			<td class="title">
+				<a href="/bug?extid=a0acccd8e6068831fd3b">UBSAN: array-index-out-of-bounds in dtSplitPage</a>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">4</td>
+			<td class="stat">61d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/67724f8f.050a0220.226966.00d0.GAE@google.com">65d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/3</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/67724f8f.050a0220.226966.00d0.GAE@google.com">upstream: reported on 2024/12/30 07:45</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+		<tr>
+			<td>linux-5.15</td>
+			<td class="title">
+				<a href="/bug?extid=63c40a3ef45fce944739">UBSAN: array-index-out-of-bounds in dtSplitPage</a>
+			</td>
+			<td class="stat"></td>
+			<td class="bisect_status"></td>
+			<td class="bisect_status"></td>
+			<td class="stat ">1</td>
+			<td class="stat">66d</td>
+			<td class="stat">
+				
+					<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/6770f2ce.050a0220.2f3838.04a7.GAE@google.com">66d</a>
+				
+			</td>
+			
+			
+			
+				<td class="patched" >0/3</td>
+			
+			
+				<td class="status">
+					
+						<a href="https://groups.google.com/d/msgid/syzkaller-lts-bugs/6770f2ce.050a0220.2f3838.04a7.GAE@google.com">upstream: reported on 2024/12/29 06:57</a>
+					
+				</td>
+			
+			
+		</tr>
+	
+	</tbody>
+</table>
+
+
+
+			
+			
+			
+			
+		</div>
+	</div>
+	
+
+	
+	<br><b>Sample crash report:</b><br>
+	<div id="crash_div"><pre>------------[ cut here ]------------
+UBSAN: array-index-out-of-bounds in fs/jfs/jfs_dtree.c:1600:11
+index 22 is out of range for type &#39;struct lv[20]&#39;
+CPU: 1 UID: 0 PID: 5819 Comm: syz-executor559 Not tainted 6.13.0-rc5-syzkaller-00012-g0bc21e701a6f #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 09/13/2024
+Call Trace:
+ &lt;TASK&gt;
+ __dump_stack <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/lib/dump_stack.c?id=0bc21e701a6ffacfdde7f04f87d664d82e8a13bf#n94'>lib/dump_stack.c:94</a> [inline]
+ dump_stack_lvl+0x241/0x360 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/lib/dump_stack.c?id=0bc21e701a6ffacfdde7f04f87d664d82e8a13bf#n120'>lib/dump_stack.c:120</a>
+ ubsan_epilogue <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/lib/ubsan.c?id=0bc21e701a6ffacfdde7f04f87d664d82e8a13bf#n231'>lib/ubsan.c:231</a> [inline]
+ __ubsan_handle_out_of_bounds+0x121/0x150 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/lib/ubsan.c?id=0bc21e701a6ffacfdde7f04f87d664d82e8a13bf#n429'>lib/ubsan.c:429</a>
+ dtSplitPage+0x3e5e/0x3ed0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/jfs/jfs_dtree.c?id=0bc21e701a6ffacfdde7f04f87d664d82e8a13bf#n1600'>fs/jfs/jfs_dtree.c:1600</a>
+ dtSplitUp <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/jfs/jfs_dtree.c?id=0bc21e701a6ffacfdde7f04f87d664d82e8a13bf#n1091'>fs/jfs/jfs_dtree.c:1091</a> [inline]
+ dtInsert+0x14bd/0x6c10 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/jfs/jfs_dtree.c?id=0bc21e701a6ffacfdde7f04f87d664d82e8a13bf#n870'>fs/jfs/jfs_dtree.c:870</a>
+ jfs_rename+0xafe/0x1bf0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/jfs/namei.c?id=0bc21e701a6ffacfdde7f04f87d664d82e8a13bf#n1225'>fs/jfs/namei.c:1225</a>
+ vfs_rename+0xbdb/0xf00 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namei.c?id=0bc21e701a6ffacfdde7f04f87d664d82e8a13bf#n5067'>fs/namei.c:5067</a>
+ do_renameat2+0xd94/0x13f0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namei.c?id=0bc21e701a6ffacfdde7f04f87d664d82e8a13bf#n5224'>fs/namei.c:5224</a>
+ __do_sys_rename <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namei.c?id=0bc21e701a6ffacfdde7f04f87d664d82e8a13bf#n5271'>fs/namei.c:5271</a> [inline]
+ __se_sys_rename <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namei.c?id=0bc21e701a6ffacfdde7f04f87d664d82e8a13bf#n5269'>fs/namei.c:5269</a> [inline]
+ __x64_sys_rename+0x82/0x90 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/namei.c?id=0bc21e701a6ffacfdde7f04f87d664d82e8a13bf#n5269'>fs/namei.c:5269</a>
+ do_syscall_x64 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=0bc21e701a6ffacfdde7f04f87d664d82e8a13bf#n52'>arch/x86/entry/common.c:52</a> [inline]
+ do_syscall_64+0xf3/0x230 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/entry/common.c?id=0bc21e701a6ffacfdde7f04f87d664d82e8a13bf#n83'>arch/x86/entry/common.c:83</a>
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+RIP: 0033:0x7f57df948b79
+Code: 28 00 00 00 75 05 48 83 c4 28 c3 e8 61 17 00 00 90 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 &lt;48&gt; 3d 01 f0 ff ff 73 01 c3 48 c7 c1 b8 ff ff ff f7 d8 64 89 01 48
+RSP: 002b:00007ffc55072638 EFLAGS: 00000246 ORIG_RAX: 0000000000000052
+RAX: ffffffffffffffda RBX: 0030656c69662f2e RCX: 00007f57df948b79
+RDX: 00007f57df948b79 RSI: 0000000020000f40 RDI: 0000000020000300
+RBP: 00007f57df9c1610 R08: 00007ffc55072808 R09: 00007ffc55072808
+R10: 00007ffc55072808 R11: 0000000000000246 R12: 0000000000000001
+R13: 00007ffc550727f8 R14: 0000000000000001 R15: 0000000000000001
+ &lt;/TASK&gt;
+---[ end trace ]---
+</pre></div><br>
+	
+
+	
+
+<table class="list_table">
+	<caption>Crashes (96):</caption>
+		<thead>
+		<tr>
+			<th><a onclick="return sortTable(this, 'Time', textSort, true)" href="#">Time</a></th>
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+			<th><a onclick="return sortTable(this, 'Commit', textSort)" href="#">Commit</a></th>
+			<th><a onclick="return sortTable(this, 'Syzkaller', textSort)" href="#">Syzkaller</a></th>
+			<th><a onclick="return sortTable(this, 'Config', textSort)" href="#">Config</a></th>
+			<th><a onclick="return sortTable(this, 'Log', textSort)" href="#">Log</a></th>
+			<th><a onclick="return sortTable(this, 'Report', reproSort)" href="#">Report</a></th>
+			<th><a onclick="return sortTable(this, 'Syz repro', reproSort)" href="#">Syz repro</a></th>
+			<th><a onclick="return sortTable(this, 'C repro', textSort)" href="#">C repro</a></th>
+			<th><a onclick="return sortTable(this, 'VM info', textSort)" href="#">VM info</a></th>
+			<th><a onclick="return sortTable(this, 'Assets', textSort)" href="#">Assets</a> (<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot_assets.md">help?</a>)</th>
+			<th><a onclick="return sortTable(this, 'Manager', textSort)" href="#">Manager</a></th>
+			<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		</tr>
+		</thead>
+		<tbody>
+		
+		<tr>
+			<td class="time">2025/01/03 12:53</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="0bc21e701a6ffacfdde7f04f87d664d82e8a13bf
+	2025/01/02 18:43"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=0bc21e701a6ffacfdde7f04f87d664d82e8a13bf">0bc21e701a6f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ba7cde9482d6bb6">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=132bbd0f980000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12f796c4580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=10c758b0580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=173da418580000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=17d726f8580000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/858bb9b76ee5/disk-0bc21e70.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f3c83ca1ab45/vmlinux-0bc21e70.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/813f2115e026/bzImage-0bc21e70.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dfe2948d3efd/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/01 01:54</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ccb98ccef0e543c2bd4ef1a72270461957f3d8d0
+	2024/12/30 19:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0">ccb98ccef0e5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ba7cde9482d6bb6">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10175818580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16197ac4580000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=11085af8580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=175e96df980000">log</a>
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5813aeeed683/disk-ccb98cce.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5f3cc0826092/vmlinux-ccb98cce.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2a0638b228fb/bzImage-ccb98cce.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/06068d7f441a/mount_0.gz">mounted in repro #1</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/454248945719/mount_1.gz">mounted in repro #2</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/43f62009c887/mount_2.gz">mounted in repro #3</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b0a8bb56946a/mount_7.gz">mounted in repro #4</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c91745984d6a/mount_11.gz">mounted in repro #5</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/27 12:50</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="d6ef8b40d075c425f548002d2f35ae3f06e9cf96
+	2024/12/26 18:49"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=d6ef8b40d075c425f548002d2f35ae3f06e9cf96">d6ef8b40d075</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=743927383a52aa3d">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16ddd90f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1542badf980000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=1346e0b0580000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=1342badf980000">log</a>
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fbe05b4b2f4e/disk-d6ef8b40.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cd60b8a08817/vmlinux-d6ef8b40.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d8b74baeeae9/bzImage-d6ef8b40.xz">kernel image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a8b14cacf8f6/mount_0.gz">mounted in repro</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-badwrites-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/05 16:49</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ab75170520d4964f3acf8bb1f91d34cbc650688e
+	2025/01/04 18:59"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ab75170520d4964f3acf8bb1f91d34cbc650688e">ab75170520d4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ba7cde9482d6bb6">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=172b89c4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=120e6edf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=eabf315611262d32">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/205ade41622a/disk-ab751705.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/39aa1b893dfc/vmlinux-ab751705.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c741f4e4b082/bzImage-ab751705.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">KASAN: slab-use-after-free Write in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/16 07:37</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="2f87d0916ce0d2925cedbc9e8f5d6291ba2ac7b2
+	2024/10/15 18:18"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=2f87d0916ce0d2925cedbc9e8f5d6291ba2ac7b2">2f87d0916ce0</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/bde2d81c291a93fb9eb33717672427393206c208">bde2d81c</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=164d2822debd8b0d">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13fb2c40580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=161ed887980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=c5a203f94c19051a">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f487443bc3bb/disk-2f87d091.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c5cebceae528/vmlinux-2f87d091.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e9c1ca67e7e7/bzImage-2f87d091.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">KASAN: slab-use-after-free Write in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/24 04:14</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="d082ecbc71e9e0bf49883ee4afd435a77a5101b6
+	2025/02/23 20:32"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=d082ecbc71e9e0bf49883ee4afd435a77a5101b6">d082ecbc71e9</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=5b4c41bdaeea1964">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=178a2db0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=128fd7f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-d082ecbc.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c5299c562b1f/vmlinux-d082ecbc.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c0bed38fa342/bzImage-d082ecbc.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: slab-use-after-free Write in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/11 01:13</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="2144da25584eb10b84252230319b5783f6a83041
+	2025/01/10 02:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=2144da25584eb10b84252230319b5783f6a83041">2144da25584e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d9381135675fbad30ded99c88b61ac76c3ffc110">d9381135</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4ef22c4fce5135b4">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13d33218580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11ba91df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-2144da25.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/54c448d2fbe6/vmlinux-2144da25.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8d0f93dc0979/bzImage-2144da25.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: slab-use-after-free Write in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/20 12:12</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ffd294d346d185b70e28b1a28abe367bbfe53c04
+	2025/01/19 23:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ffd294d346d185b70e28b1a28abe367bbfe53c04">ffd294d346d1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2cb035c8f931efff4a020b164e657f16f51934b">f2cb035c</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=88da85736adb8c92">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=128639df980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1201ac38580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=6a7b85ce3bbb7d65">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9df46e913186/disk-ffd294d3.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c5e1887173fd/vmlinux-ffd294d3.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/207b2b378a5c/bzImage-ffd294d3.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/18 01:37</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9bffa1ad25b8b3b95d8f463e5c24dabe3c87d54d
+	2025/01/17 03:49"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9bffa1ad25b8b3b95d8f463e5c24dabe3c87d54d">9bffa1ad25b8</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/953d1c45a16b7284725e337b47369a8ab111bab4">953d1c45</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=aadf89e2f6db86cc">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=124a22b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1429e1f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=223b287b6e3ee2ec">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7e10cf2b9c4c/disk-9bffa1ad.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6af926e59ecd/vmlinux-9bffa1ad.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/775d5a5d888a/bzImage-9bffa1ad.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/15 22:57</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="619f0b6fad524f08d493a98d55bac9ab8895e3a6
+	2025/01/14 22:10"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=619f0b6fad524f08d493a98d55bac9ab8895e3a6">619f0b6fad52</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/968edaf491504462b98e794257533160d7087792">968edaf4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=aadf89e2f6db86cc">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17081a18580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17c0c9df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=fbde4dfbfbca9e0d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/820c5fcece46/disk-619f0b6f.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/22a2cbc89593/vmlinux-619f0b6f.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/09df72182529/bzImage-619f0b6f.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/13 00:03</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="be548645527a131a097fdc884b7fca40c8b86231
+	2025/01/12 20:04"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=be548645527a131a097fdc884b7fca40c8b86231">be548645527a</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6dbc6a9bc76e06852841ed5c5bdbb78409b17f53">6dbc6a9b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=10cb4f23d3e0f104">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16d8bef8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1434b1df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b1103800c819a664">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1524eb608284/disk-be548645.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/514ad5fc5808/vmlinux-be548645.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7ac97890f0cc/bzImage-be548645.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-badwrites-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/10 05:02</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="643e2e259c2b25a2af0ae4c23c6e16586d9fd19c
+	2025/01/09 18:16"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=643e2e259c2b25a2af0ae4c23c6e16586d9fd19c">643e2e259c2b</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/40f469132918c1122058244e85c86f7ec6d033aa">40f46913</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4ef22c4fce5135b4">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1461b4b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14ab93c4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=92b3002aaca6ea60">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/187aeae8732e/disk-643e2e25.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/daa4212482e0/vmlinux-643e2e25.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f151c6dfbcdb/bzImage-643e2e25.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/06 11:25</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ab75170520d4964f3acf8bb1f91d34cbc650688e
+	2025/01/04 18:59"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ab75170520d4964f3acf8bb1f91d34cbc650688e">ab75170520d4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ba7cde9482d6bb6">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11851edf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15851edf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=d7722cb1bf48c20">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/205ade41622a/disk-ab751705.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/39aa1b893dfc/vmlinux-ab751705.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c741f4e4b082/bzImage-ab751705.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/03 14:27</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="0bc21e701a6ffacfdde7f04f87d664d82e8a13bf
+	2025/01/02 18:43"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=0bc21e701a6ffacfdde7f04f87d664d82e8a13bf">0bc21e701a6f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ba7cde9482d6bb6">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13d0d8b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13f0a6f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=1bc097713633372">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/858bb9b76ee5/disk-0bc21e70.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f3c83ca1ab45/vmlinux-0bc21e70.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/813f2115e026/bzImage-0bc21e70.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/03 11:13</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="0bc21e701a6ffacfdde7f04f87d664d82e8a13bf
+	2025/01/02 18:43"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=0bc21e701a6ffacfdde7f04f87d664d82e8a13bf">0bc21e701a6f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ba7cde9482d6bb6">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17e326f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16d9a418580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=530511804980506f">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/858bb9b76ee5/disk-0bc21e70.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f3c83ca1ab45/vmlinux-0bc21e70.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/813f2115e026/bzImage-0bc21e70.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci2-upstream-fs</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/03/04 18:12</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="99fa936e8e4f117d62f229003c9799686f74cebc
+	2025/03/03 17:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=99fa936e8e4f117d62f229003c9799686f74cebc">99fa936e8e4f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c3901742785ff25afdc6f470af7b25b69d7c4f2f">c3901742</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=2040405600e83619">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1621b5a8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17acd8b7980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-99fa936e.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ef04f83d96f6/vmlinux-99fa936e.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/583a7eea5c8e/bzImage-99fa936e.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/03/03 13:02</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="7eb172143d5508b4da468ed59ee857c6e5e01da6
+	2025/03/02 19:48"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=7eb172143d5508b4da468ed59ee857c6e5e01da6">7eb172143d55</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c3901742785ff25afdc6f470af7b25b69d7c4f2f">c3901742</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=2040405600e83619">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=119918b7980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1500afb8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-7eb17214.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c523e9304d89/vmlinux-7eb17214.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c4095fcd8582/bzImage-7eb17214.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/26 04:55</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="2a1944bff54907a4e68f167dcdf772b1e4c3ce6d
+	2025/02/25 00:40"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=2a1944bff54907a4e68f167dcdf772b1e4c3ce6d">2a1944bff549</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=5b4c41bdaeea1964">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11a7f7f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=137477a4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-2a1944bf.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/55cab1eab779/vmlinux-2a1944bf.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/54e689976766/bzImage-2a1944bf.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/23 22:28</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="27102b38b8ca7ffb1622f27bcb41475d121fb67f
+	2025/02/23 01:32"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=27102b38b8ca7ffb1622f27bcb41475d121fb67f">27102b38b8ca</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d34966d146f584d390b49f213d1fccd59548dc6d">d34966d1</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b50606b738b9b4cc">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=167ed3b8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13d627a4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-27102b38.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2bbaa17976ce/vmlinux-27102b38.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/15cb1d99a1a4/bzImage-27102b38.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/20 03:04</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="6537cfb395f352782918d8ee7b7f10ba2cc3cbf2
+	2025/02/18 17:00"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=6537cfb395f352782918d8ee7b7f10ba2cc3cbf2">6537cfb395f3</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/506687987fc2f8f40b2918782fc2943285fdc602">50668798</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b7bde34acd8f53b1">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14afb5b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=157fcba4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-6537cfb3.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1f0fee59b531/vmlinux-6537cfb3.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ebf361d1fa57/bzImage-6537cfb3.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Write in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/15 21:56</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="7ff71e6d923969d933e1ba7e0db857782d36cd19
+	2025/02/15 03:56"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=7ff71e6d923969d933e1ba7e0db857782d36cd19">7ff71e6d9239</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/40a34ec944732a2502ee67d92cc8c023355dfad4">40a34ec9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c776e555cfbdb82d">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17680898580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1694b9b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-7ff71e6d.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fd3ab8248fc7/vmlinux-7ff71e6d.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/78a957463e92/bzImage-7ff71e6d.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/15 01:57</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="04f41cbf03ec7221ab0b179e336f4c805ee55520
+	2025/02/14 19:14"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=04f41cbf03ec7221ab0b179e336f4c805ee55520">04f41cbf03ec</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/40a34ec944732a2502ee67d92cc8c023355dfad4">40a34ec9</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c776e555cfbdb82d">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16f319a4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16a06098580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-04f41cbf.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/04aaec67f85e/vmlinux-04f41cbf.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0b8db5fac3a6/bzImage-04f41cbf.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/10 17:55</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="a64dcfb451e254085a7daee5fe51bf22959d52d3
+	2025/02/09 20:45"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=a64dcfb451e254085a7daee5fe51bf22959d52d3">a64dcfb451e2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/43f51a00700e5960fc890e6c3d596846757bf29d">43f51a00</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7f246b548ed0635a">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=155c43f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1257ebdf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-a64dcfb4.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6a816640d31b/vmlinux-a64dcfb4.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b5cb42ffa4f6/bzImage-a64dcfb4.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/10 01:03</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="69b54314c975f4dfd3a29d6b9211ab68fff46682
+	2025/02/09 18:05"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=69b54314c975f4dfd3a29d6b9211ab68fff46682">69b54314c975</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ef44b750e8fab8d6d5cb84920680581b13e0d470">ef44b750</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1909f2f0d8e641ce">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17d151b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=113b42a4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-69b54314.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e32e396b49c9/vmlinux-69b54314.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/30d7fe7e4148/bzImage-69b54314.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/08 21:11</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="8f6629c004b193d23612641c3607e785819e97ab
+	2025/02/08 03:49"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=8f6629c004b193d23612641c3607e785819e97ab">8f6629c004b1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/ef44b750e8fab8d6d5cb84920680581b13e0d470">ef44b750</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1909f2f0d8e641ce">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10274bdf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=171be1b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-8f6629c0.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/724f74b00059/vmlinux-8f6629c0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b5ebc37d2728/bzImage-8f6629c0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/05 08:24</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="5c8c229261f14159b54b9a32f12e5fa89d88b905
+	2025/02/04 19:01"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=5c8c229261f14159b54b9a32f12e5fa89d88b905">5c8c229261f1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/5896748e7b42c8f1b0cc2ceca4ba3dba2bed2618">5896748e</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1909f2f0d8e641ce">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=144eef64580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10a713df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-5c8c2292.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fc7bd0937147/vmlinux-5c8c2292.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/55fb37b08731/bzImage-5c8c2292.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/03 15:46</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="2014c95afecee3e76ca4a56956a936e23283f05b
+	2025/02/02 23:39"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=2014c95afecee3e76ca4a56956a936e23283f05b">2014c95afece</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/a21a8419b67b5ef8ebc3d6dd834d065e6860c41f">a21a8419</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=19886416c83671c4">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16c8d724580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1318c3df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-2014c95a.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9ed833163083/vmlinux-2014c95a.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/cc1b852e642c/bzImage-2014c95a.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/01 22:52</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="69e858e0b8b2ea07759e995aa383e8780d9d140c
+	2025/01/31 02:29"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=69e858e0b8b2ea07759e995aa383e8780d9d140c">69e858e0b8b2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0dff8567c67759be4a708acb57229945322c6c88">0dff8567</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d033b14aeef39158">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14524eb0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14a0d5f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-69e858e0.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a53b888c1f3f/vmlinux-69e858e0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6b5e17edafc0/bzImage-69e858e0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/02/01 08:02</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="69e858e0b8b2ea07759e995aa383e8780d9d140c
+	2025/01/31 02:29"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=69e858e0b8b2ea07759e995aa383e8780d9d140c">69e858e0b8b2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/aa47157c8ec3df5a6d16e3866b095c8f91026465">aa47157c</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d033b14aeef39158">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10334d18580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17f37b64580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-69e858e0.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a53b888c1f3f/vmlinux-69e858e0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6b5e17edafc0/bzImage-69e858e0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/29 18:05</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="805ba04cb7ccfc7d72e834ebd796e043142156ba
+	2025/01/27 17:00"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=805ba04cb7ccfc7d72e834ebd796e043142156ba">805ba04cb7cc</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d03b0c97faf4610981228dd69f6f9a94ab9f693b">d03b0c97</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=7d796da73b2f708c">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=119fb918580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10356924580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-805ba04c.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/85ee30d862e7/vmlinux-805ba04c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0fcbe505a48e/bzImage-805ba04c.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/27 02:40</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="c2da8b3f914f83fb9089d26a692eb8f22146ddb9
+	2025/01/26 04:03"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=c2da8b3f914f83fb9089d26a692eb8f22146ddb9">c2da8b3f914f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9fbd772e8b64ff0c8c90bdfb86237aefa530a06c">9fbd772e</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ba866aed9d46ef97">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10234e24580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15c479f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-c2da8b3f.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f2428991645b/vmlinux-c2da8b3f.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1ff3e80357ca/bzImage-c2da8b3f.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/25 12:38</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="b46c89c08f4146e7987fc355941a93b12e2c03ef
+	2025/01/25 00:12"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=b46c89c08f4146e7987fc355941a93b12e2c03ef">b46c89c08f41</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9fbd772e8b64ff0c8c90bdfb86237aefa530a06c">9fbd772e</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ba866aed9d46ef97">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=176d9e18580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=132ed5df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-b46c89c0.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/36e45b7469b5/vmlinux-b46c89c0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/30a6cef10ce8/bzImage-b46c89c0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/24 17:44</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="bc8198dc7ebc492ec3e9fa1617dcdfbe98e73b17
+	2025/01/24 02:49"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=bc8198dc7ebc492ec3e9fa1617dcdfbe98e73b17">bc8198dc7ebc</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/1293872ddc4eb3b11697a1d21008f7e99fcbba1f">1293872d</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=f9e008bfc27b14db">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12ed4e18580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1571bab0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-bc8198dc.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f2449d4155b6/vmlinux-bc8198dc.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b8a79128b834/bzImage-bc8198dc.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/21 11:56</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="3d3a9c8b89d4f8a3785e06ffd15405c670696f02
+	2025/01/20 22:26"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=3d3a9c8b89d4f8a3785e06ffd15405c670696f02">3d3a9c8b89d4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6e87cfa299c98d36e79e8b8718a4126899a3ba2f">6e87cfa2</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=88da85736adb8c92">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10ce5618580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=125ba964580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-3d3a9c8b.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e3e59d52398c/vmlinux-3d3a9c8b.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2cd5680cc455/bzImage-3d3a9c8b.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/20 02:35</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9528d418de4d83c7ada69314ddd8d4427b1f703a
+	2025/01/19 17:33"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9528d418de4d83c7ada69314ddd8d4427b1f703a">9528d418de4d</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2cb035c8f931efff4a020b164e657f16f51934b">f2cb035c</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=dcee3f28e1eddf64">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=152592b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=132592b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-9528d418.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/48ac7a91105b/vmlinux-9528d418.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2bc8684d69d3/bzImage-9528d418.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/18 03:43</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ad26fc09dabfa6a33ad5baee80479f518370b316
+	2025/01/17 05:24"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ad26fc09dabfa6a33ad5baee80479f518370b316">ad26fc09dabf</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2cb035c8f931efff4a020b164e657f16f51934b">f2cb035c</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=aadf89e2f6db86cc">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=154cba18580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12e122b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-ad26fc09.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e8c59e9a573f/vmlinux-ad26fc09.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8bfa2df81410/bzImage-ad26fc09.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/16 12:33</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="619f0b6fad524f08d493a98d55bac9ab8895e3a6
+	2025/01/14 22:10"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=619f0b6fad524f08d493a98d55bac9ab8895e3a6">619f0b6fad52</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/968edaf491504462b98e794257533160d7087792">968edaf4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=aadf89e2f6db86cc">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14b11e64580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=153a9a18580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-619f0b6f.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f181fafa1b35/vmlinux-619f0b6f.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/174e5d6e6837/bzImage-619f0b6f.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/14 14:26</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="c45323b7560ec87c37c729b703c86ee65f136d75
+	2025/01/13 17:03"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=c45323b7560ec87c37c729b703c86ee65f136d75">c45323b7560e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0dce2409ff7389009070e025857c71f752d814e6">0dce2409</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=aadf89e2f6db86cc">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15b601f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=157ddcb0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-c45323b7.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/47ce0f260cc3/vmlinux-c45323b7.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/da61c348c83e/bzImage-c45323b7.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/14 07:20</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="c45323b7560ec87c37c729b703c86ee65f136d75
+	2025/01/13 17:03"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=c45323b7560ec87c37c729b703c86ee65f136d75">c45323b7560e</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/b1f1cd885392add389778baffd5cdafbeccb7934">b1f1cd88</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=aadf89e2f6db86cc">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14a8dcb0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11839bc4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-c45323b7.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/47ce0f260cc3/vmlinux-c45323b7.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/da61c348c83e/bzImage-c45323b7.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Write in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/12 12:21</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="b62cef9a5c673f1b8083159f5dc03c1c5daced2f
+	2025/01/11 19:42"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=b62cef9a5c673f1b8083159f5dc03c1c5daced2f">b62cef9a5c67</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6dbc6a9bc76e06852841ed5c5bdbb78409b17f53">6dbc6a9b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4ef22c4fce5135b4">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=128c31df980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=141fdef8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-b62cef9a.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b41aebe26f97/vmlinux-b62cef9a.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3ffdc0f63e63/bzImage-b62cef9a.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/11 11:18</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="77a903cd8e5a91d120ee014c8f8eae74d6c5d0f6
+	2025/01/11 01:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=77a903cd8e5a91d120ee014c8f8eae74d6c5d0f6">77a903cd8e5a</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6dbc6a9bc76e06852841ed5c5bdbb78409b17f53">6dbc6a9b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4ef22c4fce5135b4">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11be9ef8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10f74bc4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-77a903cd.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b9588ec42390/vmlinux-77a903cd.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0bd286ff351c/bzImage-77a903cd.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/11 09:49</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="77a903cd8e5a91d120ee014c8f8eae74d6c5d0f6
+	2025/01/11 01:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=77a903cd8e5a91d120ee014c8f8eae74d6c5d0f6">77a903cd8e5a</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6dbc6a9bc76e06852841ed5c5bdbb78409b17f53">6dbc6a9b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4ef22c4fce5135b4">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10d34bc4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10069ef8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-77a903cd.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b9588ec42390/vmlinux-77a903cd.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0bd286ff351c/bzImage-77a903cd.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/08 02:45</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="09a0fa92e5b45e99cf435b2fbf5ebcf889cf8780
+	2025/01/07 22:49"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=09a0fa92e5b45e99cf435b2fbf5ebcf889cf8780">09a0fa92e5b4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4ef22c4fce5135b4">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15e9e4b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11755c18580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-09a0fa92.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/71243ce2ee80/vmlinux-09a0fa92.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ff8be47c15fb/bzImage-09a0fa92.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/07 09:48</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="fbfd64d25c7af3b8695201ebc85efe90be28c5a3
+	2025/01/06 18:26"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=fbfd64d25c7af3b8695201ebc85efe90be28c5a3">fbfd64d25c7a</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4ef22c4fce5135b4">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1279a4b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17f955c4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-fbfd64d2.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ae42c226ccad/vmlinux-fbfd64d2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1fe6ec294113/bzImage-fbfd64d2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Write in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/07 06:30</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="fbfd64d25c7af3b8695201ebc85efe90be28c5a3
+	2025/01/06 18:26"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=fbfd64d25c7af3b8695201ebc85efe90be28c5a3">fbfd64d25c7a</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4ef22c4fce5135b4">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10e37418580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10f3f9c4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-fbfd64d2.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ae42c226ccad/vmlinux-fbfd64d2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1fe6ec294113/bzImage-fbfd64d2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/06 13:10</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9d89551994a430b50c4fffcb1e617a057fa76e20
+	2025/01/05 22:13"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9d89551994a430b50c4fffcb1e617a057fa76e20">9d89551994a4</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4ef22c4fce5135b4">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13e2c4b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10ff3418580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-9d895519.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/bcfa24563a7a/vmlinux-9d895519.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5bc14c94d0b7/bzImage-9d895519.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Write in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/06 03:40</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9244696b34f2a626d7468864420ab6a47289bf10
+	2025/01/05 18:52"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9244696b34f2a626d7468864420ab6a47289bf10">9244696b34f2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1c541fa8af5c9cc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1493eedf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=147b39c4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-9244696b.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f230eee485ee/vmlinux-9244696b.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/186cd7a0f30c/bzImage-9244696b.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">KASAN: use-after-free Write in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/05 23:24</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9244696b34f2a626d7468864420ab6a47289bf10
+	2025/01/05 18:52"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9244696b34f2a626d7468864420ab6a47289bf10">9244696b34f2</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1c541fa8af5c9cc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12fceedf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14fa39c4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-9244696b.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f230eee485ee/vmlinux-9244696b.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/186cd7a0f30c/bzImage-9244696b.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/13 17:07</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="7b4b9bf203da94fbeac75ed3116c84aa03e74578
+	2025/01/07 05:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578">7b4b9bf203da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6dbc6a9bc76e06852841ed5c5bdbb78409b17f53">6dbc6a9b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=63fa2c9d5e12faef">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13ef4a18580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15f21bc4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7fb083bf4a8816d7">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c179cc0c7a3c/disk-7b4b9bf2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fdea80f2ec16/vmlinux-7b4b9bf2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a277fcaff608/bzImage-7b4b9bf2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/13 14:52</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="7b4b9bf203da94fbeac75ed3116c84aa03e74578
+	2025/01/07 05:51"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=7b4b9bf203da94fbeac75ed3116c84aa03e74578">7b4b9bf203da</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6dbc6a9bc76e06852841ed5c5bdbb78409b17f53">6dbc6a9b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=63fa2c9d5e12faef">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10d01bc4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17727ef8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=79d125fcbeed494e">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c179cc0c7a3c/disk-7b4b9bf2.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fdea80f2ec16/vmlinux-7b4b9bf2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a277fcaff608/bzImage-7b4b9bf2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/07 03:57</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="8155b4ef3466f0e289e8fcc9e6e62f3f4dceeac2
+	2024/12/20 05:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=8155b4ef3466f0e289e8fcc9e6e62f3f4dceeac2">8155b4ef3466</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9c90bb7161a56c88">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=126676f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13495edf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=73595a70004e49ce">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/98a974fc662d/disk-8155b4ef.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2dea9b72f624/vmlinux-8155b4ef.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/593a42b9eb34/bzImage-8155b4ef.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/06 23:45</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="8155b4ef3466f0e289e8fcc9e6e62f3f4dceeac2
+	2024/12/20 05:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=8155b4ef3466f0e289e8fcc9e6e62f3f4dceeac2">8155b4ef3466</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9c90bb7161a56c88">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=167124b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16387418580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=c40ce9cf179d0747">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/98a974fc662d/disk-8155b4ef.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2dea9b72f624/vmlinux-8155b4ef.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/593a42b9eb34/bzImage-8155b4ef.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/06 22:07</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="8155b4ef3466f0e289e8fcc9e6e62f3f4dceeac2
+	2024/12/20 05:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=8155b4ef3466f0e289e8fcc9e6e62f3f4dceeac2">8155b4ef3466</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9c90bb7161a56c88">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=130fb418580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=170fb418580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=6138e5f685b3f658">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/98a974fc662d/disk-8155b4ef.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2dea9b72f624/vmlinux-8155b4ef.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/593a42b9eb34/bzImage-8155b4ef.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/06 19:55</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="8155b4ef3466f0e289e8fcc9e6e62f3f4dceeac2
+	2024/12/20 05:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=8155b4ef3466f0e289e8fcc9e6e62f3f4dceeac2">8155b4ef3466</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9c90bb7161a56c88">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16399edf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1441b6f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=eaaa1f7ec06c7ff">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/98a974fc662d/disk-8155b4ef.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2dea9b72f624/vmlinux-8155b4ef.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/593a42b9eb34/bzImage-8155b4ef.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/05 21:37</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="8155b4ef3466f0e289e8fcc9e6e62f3f4dceeac2
+	2024/12/20 05:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=8155b4ef3466f0e289e8fcc9e6e62f3f4dceeac2">8155b4ef3466</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9c90bb7161a56c88">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=132439c4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1766d418580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=a7d86fa5b6738844">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/98a974fc662d/disk-8155b4ef.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2dea9b72f624/vmlinux-8155b4ef.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/593a42b9eb34/bzImage-8155b4ef.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/05 19:23</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="8155b4ef3466f0e289e8fcc9e6e62f3f4dceeac2
+	2024/12/20 05:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=8155b4ef3466f0e289e8fcc9e6e62f3f4dceeac2">8155b4ef3466</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9c90bb7161a56c88">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17f4d418580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=114b56f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=8db7b4b16e9073ab">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/98a974fc662d/disk-8155b4ef.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2dea9b72f624/vmlinux-8155b4ef.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/593a42b9eb34/bzImage-8155b4ef.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/05 01:38</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="8155b4ef3466f0e289e8fcc9e6e62f3f4dceeac2
+	2024/12/20 05:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=8155b4ef3466f0e289e8fcc9e6e62f3f4dceeac2">8155b4ef3466</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=9c90bb7161a56c88">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=138209c4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=162d2edf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=815090ed25c81b97">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/98a974fc662d/disk-8155b4ef.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2dea9b72f624/vmlinux-8155b4ef.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/593a42b9eb34/bzImage-8155b4ef.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">UBSAN: array-index-out-of-bounds in dtSplitPage</td>
+		</tr>
+		
+		</tbody>
+</table>
+<i>* <s>Struck through</s> repros no longer work on HEAD.</i>
+
+
+</body>
+</html>

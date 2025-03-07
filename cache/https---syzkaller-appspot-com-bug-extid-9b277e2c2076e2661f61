@@ -1,0 +1,1963 @@
+
+
+<!doctype html>
+<html>
+<head>
+	
+	<link rel="stylesheet" href="/static/style.css"/>
+	<script src="/static/common.js"></script>
+	
+		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-116117799-1"></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag() { dataLayer.push(arguments); }
+			gtag('js', new Date());
+			gtag('config', 'UA-116117799-1');
+		</script>
+	
+
+	<title>BUG: sleeping function called from invalid context in synchronize_net</title>
+</head>
+<body>
+	
+	<header id="topbar">
+		<table class="position_table">
+			<tr>
+				<td>
+					<h1><a href="/upstream">syzbot</a></h1>
+				</td>
+				<td class="namespace_td">
+					<select class="namespace" onchange="window.location.href = '/' + this.value + '';">
+						
+							<option value="android-5-10" >Android 5.10</option>
+							<option value="android-5-15" >Android 5.15</option>
+							<option value="android-54" >Android 5.4</option>
+							<option value="android-6-1" >Android 6.1</option>
+							<option value="freebsd" >FreeBSD</option>
+							<option value="upstream" selected="1">Linux</option>
+							<option value="linux-5.15" >Linux 5.15</option>
+							<option value="linux-6.1" >Linux 6.1</option>
+							<option value="netbsd" >NetBSD</option>
+							<option value="openbsd" >OpenBSD</option>
+							<option value="gvisor" >gVisor</option></select>
+				</td>
+				<td class="search">
+					
+					
+						<a href="https://syzkaller.appspot.com/_ah/conflogin?continue=https://syzkaller.appspot.com/bug%3Fextid%3D9b277e2c2076e2661f61">sign-in</a> |
+					
+					<a href="https://groups.google.com/forum/#!forum/syzkaller" target="_blank">mailing list</a> |
+					<a href="https://github.com/google/syzkaller" target="_blank">source</a> |
+					<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md" target="_blank">docs</a>
+				</td>
+			</tr>
+		</table>
+		
+		<div class="navigation">
+			<div class="navigation_tab">
+				<a href='/upstream'><span style="color:DeepPink;">🐞</span> Open [1659]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/subsystems'><span style="color:DeepPink;">≡</span> Subsystems</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/fixed'><span style="color:ForestGreen;">🐞</span> Fixed [6081]</a>
+			</div>
+
+			<div class="navigation_tab" href='/upstream/invalid'>
+				<a href='/upstream/invalid'><span style="color:RoyalBlue;">🐞</span> Invalid [15101]</a>
+			</div>
+
+			
+			<div class="navigation_tab">
+				<a href='/upstream/backports'><span style="color:ForestGreen;">⬇</span> Missing Backports [157]</a>
+			</div>
+			
+
+			<div class="navigation_tab">
+				<a href='/upstream/graph/crashes'><span style="color:ForestGreen;">≡</span> Crashes</a>
+			</div>
+
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Graphs</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href='/upstream/graph/bugs'>Kernel&nbsp;Health</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/found-bugs'>Bugs/Month</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/lifetimes'>Bug&nbsp;Lifetimes</a>
+					<a class="navigation_tab"
+						href='/upstream/graph/fuzzing'>Fuzzing</a>
+				</div>
+			</div>
+
+			
+			<div class="dropdown navigation_tab">
+				<button class="dropbtn"><span style="color:DarkOrange;">📈</span>Coverage</button>
+				<div class="dropdown-content">
+					<a class="navigation_tab"
+						href="/upstream/graph/coverage?period=quarter">Total</a>
+					<a class="navigation_tab"
+						href="/upstream/coverage?period=month">Repo&nbsp;Heatmap</a>
+					
+						<a class="navigation_tab"
+							href="/upstream/coverage/subsystems?period=month">Subsystems&nbsp;Heatmap</a>
+					
+				</div>
+			</div>
+			
+			
+			<div class="navigation_tab navigation_right">
+				<a href='mailto:syzkaller@googlegroups.com'><span style="color:ForestGreen;">💬</span> Send us feedback</a>
+			</div>
+			
+		</div>
+		
+	</header>
+	<br>
+
+
+	<b>BUG: sleeping function called from invalid context in synchronize_net</b><br><br>
+	Status: <a href="https://groups.google.com/d/msgid/syzkaller-bugs/000000000000eb54bf061cfd666a%40google.com">upstream: reported C repro on 2024/07/11 19:02</a><br>
+	
+		
+			Subsystems: 
+				<span class="bug-label"><a href="/upstream/s/net">net</a></span>
+		<br>
+		
+	<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot.md#labels">[Documentation on labels]</a><br>
+	
+	
+	Reported-by: syzbot&#43;9b277e2c2076e2661f61@syzkaller.appspotmail.com<br>
+	
+	First crash: 237d, last: 36d<br>
+	
+	<div>
+		<div class="bug-bisection-info">
+
+	
+	
+	
+		
+			<b>Cause bisection: introduced by</b>
+		
+		<b>(<a href="https://syzkaller.appspot.com/x/bisect.txt?x=116d4a1d980000">bisect log</a>)</b> <span class="bad"></span>:<br>
+		<span class="mono">
+		
+		commit facd15dfd69122042502d99ab8c9f888b48ee994<br>
+		Author: Johannes Berg &lt;johannes.berg@intel.com&gt;<br>
+		Date:   Mon Dec 4 20:47:07 2023 &#43;0000<br>
+		<br>
+		&nbsp;&nbsp;<a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/commit/?id=facd15dfd69122042502d99ab8c9f888b48ee994">net: core: synchronize link-watch when carrier is queried</a><br>
+		</span><br>
+	
+	
+		Crash: <a href="https://syzkaller.appspot.com/x/report.txt?x=136d4a1d980000">BUG: sleeping function called from invalid context in synchronize_net</a> (<a href="https://syzkaller.appspot.com/x/log.txt?x=156d4a1d980000">log</a>)<br>
+		Repro: <a href="/text?tag=ReproC&x=10ec9585980000">C</a>
+		<a href="/text?tag=ReproSyz&x=148611e1980000">syz</a>
+		<a href="/text?tag=KernelConfig&x=98dd8c4bab5cdce">.config</a><br>
+	
+
+	
+	&nbsp;&nbsp;
+	
+
+</div>
+		
+		<div class="bug-bisection-stop"></div>
+	</div>
+
+	
+	<div class="collapsible collapsible-show">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Discussions (1)</span>
+		</div>
+		<div class="content">
+			
+			
+			
+
+<table class="list_table">
+	<thead>
+	<tr>
+		<th>Title</th>
+		<th>Replies (including bot)</th>
+		<th>Last reply</th>
+	</tr>
+	</thead>
+	<tbody>
+	
+		<tr>
+			<td><a href="https://lore.kernel.org/all/000000000000eb54bf061cfd666a@google.com/T/">[syzbot] [net?] BUG: sleeping function called from invalid context in synchronize_net</a></td>
+			<td class="stat">2 (6)</td>
+			<td class="stat">2024/07/20 21:26</td>
+		</tr>
+	
+	</tbody>
+</table>
+
+
+			
+			
+		</div>
+	</div>
+	
+	<div class="collapsible collapsible-hide">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Last patch testing requests (5)</span>
+		</div>
+		<div class="content">
+			
+			
+
+	<table class="list_table">
+		<caption id="jobs"><a class="plain" href="#jobs"></a></caption>
+		<thead>
+		<tr>
+			
+			<th>Created</th>
+			<th>Duration</th>
+			<th>User</th>
+			<th>Patch</th>
+			<th>Repo</th>
+			
+			<th>Result</th>
+		</tr>
+		</thead>
+		<tbody>
+		
+			<tr>
+				
+				<td class="time">2025/02/21 04:41</td>
+				<td class="time" title="started: 2025/02/21 04:41&#013;finished: 2025/02/21 04:55">
+					13m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="linux-next"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/commit/?id=50a0c754714aa3ea0b0e62f3765eb666a1579f24">linux-next</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/error.txt?x=1248d498580000">error</a>
+					
+					
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/12/13 03:12</td>
+				<td class="time" title="started: 2024/12/13 03:12&#013;finished: 2024/12/13 03:20">
+					7m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="linux-next"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/commit/?id=3e42dc9229c5950e84b1ed705f94ed75ed208228">linux-next</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/error.txt?x=15bdcd44580000">error</a>
+					
+					
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/10/03 22:17</td>
+				<td class="time" title="started: 2024/10/03 22:17&#013;finished: 2024/10/03 22:33">
+					16m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="linux-next"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/commit/?id=c02d24a5af66a9806922391493205a344749f2c4">linux-next</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=1016d3d0580000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=17e6d3d0580000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/07/25 21:57</td>
+				<td class="time" title="started: 2024/07/25 21:57&#013;finished: 2024/07/25 22:13">
+					16m
+				</td>
+				<td>
+					
+						retest repro
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="linux-next"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/commit/?id=864b1099d16fc7e332c3ad7823058c65f890486c">linux-next</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/report.txt?x=104216e3980000">report</a>
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=178216e3980000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/07/13 01:13</td>
+				<td class="time" title="started: 2024/07/13 01:20&#013;finished: 2024/07/13 02:00">
+					39m
+				</td>
+				<td>
+					
+						hdanton@sina.com
+					
+				</td>
+				<td><a href="/text?tag=Patch&x=15cdcd9e980000">patch</a></td>
+				<td class="kernel" title="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git 523b23f0bee3"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/commit/?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88">https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git 523b23f0bee3</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+					
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=10241c2d980000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+		</tbody>
+	</table>
+
+
+			
+			
+			
+		</div>
+	</div>
+	
+	<div class="collapsible collapsible-hide">
+		<div class="head">
+			<span class="show-icon">&#9654;</span>
+			<span class="hide-icon">&#9660;</span>
+			<span>Cause bisection attempts (2)</span>
+		</div>
+		<div class="content">
+			
+			
+
+	<table class="list_table">
+		<caption id="jobs"><a class="plain" href="#jobs"></a></caption>
+		<thead>
+		<tr>
+			
+			<th>Created</th>
+			<th>Duration</th>
+			<th>User</th>
+			<th>Patch</th>
+			<th>Repo</th>
+			
+			<th>Result</th>
+		</tr>
+		</thead>
+		<tbody>
+		
+			<tr>
+				
+				<td class="time">2024/07/20 09:46</td>
+				<td class="time" title="started: 2024/07/20 09:46&#013;finished: 2024/07/20 21:25">
+					11h38m
+				</td>
+				<td>
+					
+						bisect
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="linux-next"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/commit/?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88">linux-next</a></td>
+				
+				<td class="result">
+					
+						OK
+						
+							(1)
+						
+					
+					
+						<a href="https://syzkaller.appspot.com/x/bisect.txt?x=116d4a1d980000">job log</a>
+					
+					
+						<a href="https://syzkaller.appspot.com/x/log.txt?x=156d4a1d980000">log</a>
+					
+					
+					
+				</td>
+			</tr>
+		
+			<tr>
+				
+				<td class="time">2024/07/12 00:32</td>
+				<td class="time" title="started: 2024/07/12 00:32&#013;finished: 2024/07/12 12:32">
+					12h00m
+				</td>
+				<td>
+					
+						bisect
+					
+				</td>
+				<td></td>
+				<td class="kernel" title="linux-next"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/commit/?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88">linux-next</a></td>
+				
+				<td class="result">
+					
+						<a href="https://syzkaller.appspot.com/x/error.txt?x=1553a64e980000">error</a>
+					
+					
+						<a href="https://syzkaller.appspot.com/x/bisect.txt?x=1153a64e980000">job log</a>
+					
+					
+					
+						<br>marked invalid by nogikh@google.com
+					
+					
+				</td>
+			</tr>
+		
+		</tbody>
+	</table>
+
+
+			
+			
+			
+		</div>
+	</div>
+	
+
+	
+	<br><b>Sample crash report:</b><br>
+	<div id="crash_div"><pre>BUG: sleeping function called from invalid context at <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/net/core/dev.c?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n11239'>net/core/dev.c:11239</a>
+in_atomic(): 0, irqs_disabled(): 0, non_block: 0, pid: 1046, name: kworker/u8:5
+preempt_count: 0, expected: 0
+RCU nest depth: 1, expected: 0
+INFO: lockdep is turned off.
+CPU: 0 UID: 0 PID: 1046 Comm: kworker/u8:5 Not tainted 6.10.0-rc7-next-20240710-syzkaller #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 06/07/2024
+Workqueue: bond0 bond_mii_monitor
+Call Trace:
+ &lt;TASK&gt;
+ __dump_stack <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/lib/dump_stack.c?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n94'>lib/dump_stack.c:94</a> [inline]
+ dump_stack_lvl+0x241/0x360 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/lib/dump_stack.c?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n120'>lib/dump_stack.c:120</a>
+ __might_resched+0x5d4/0x780 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/sched/core.c?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n8526'>kernel/sched/core.c:8526</a>
+ synchronize_net+0x1b/0x50 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/net/core/dev.c?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n11239'>net/core/dev.c:11239</a>
+ dev_deactivate_many+0x4a7/0xb10 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/net/sched/sch_generic.c?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n1371'>net/sched/sch_generic.c:1371</a>
+ dev_deactivate+0x184/0x280 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/net/sched/sch_generic.c?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n1397'>net/sched/sch_generic.c:1397</a>
+ linkwatch_do_dev+0x10a/0x170 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/net/core/link_watch.c?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n175'>net/core/link_watch.c:175</a>
+ ethtool_op_get_link+0x15/0x60 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/net/ethtool/ioctl.c?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n62'>net/ethtool/ioctl.c:62</a>
+ bond_check_dev_link+0x1f1/0x3f0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/drivers/net/bonding/bond_main.c?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n757'>drivers/net/bonding/bond_main.c:757</a>
+ bond_miimon_inspect <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/drivers/net/bonding/bond_main.c?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n2604'>drivers/net/bonding/bond_main.c:2604</a> [inline]
+ bond_mii_monitor+0x49a/0x3170 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/drivers/net/bonding/bond_main.c?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n2826'>drivers/net/bonding/bond_main.c:2826</a>
+ process_one_work <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/workqueue.c?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n3228'>kernel/workqueue.c:3228</a> [inline]
+ process_scheduled_works+0xa2c/0x1830 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/workqueue.c?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n3309'>kernel/workqueue.c:3309</a>
+ worker_thread+0x86d/0xd40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/workqueue.c?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n3387'>kernel/workqueue.c:3387</a>
+ kthread+0x2f0/0x390 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/kthread.c?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n389'>kernel/kthread.c:389</a>
+ ret_from_fork+0x4b/0x80 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/arch/x86/kernel/process.c?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n147'>arch/x86/kernel/process.c:147</a>
+ ret_from_fork_asm+0x1a/0x30 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/arch/x86/entry/entry_64.S?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n244'>arch/x86/entry/entry_64.S:244</a>
+ &lt;/TASK&gt;
+------------[ cut here ]------------
+Voluntary context switch within RCU read-side critical section!
+WARNING: CPU: 1 PID: 1046 at <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/rcu/tree_plugin.h?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n330'>kernel/rcu/tree_plugin.h:330</a> rcu_note_context_switch+0xcf4/0xff0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/rcu/tree_plugin.h?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n330'>kernel/rcu/tree_plugin.h:330</a>
+Modules linked in:
+CPU: 1 UID: 0 PID: 1046 Comm: kworker/u8:5 Tainted: G        W          6.10.0-rc7-next-20240710-syzkaller #0
+Tainted: [W]=WARN
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 06/07/2024
+Workqueue: bond0 bond_mii_monitor
+RIP: 0010:rcu_note_context_switch+0xcf4/0xff0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/rcu/tree_plugin.h?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n330'>kernel/rcu/tree_plugin.h:330</a>
+Code: 00 ba 02 00 00 00 e8 bb 02 fe ff 4c 8b b4 24 80 00 00 00 eb 91 c6 05 a4 4f 1f 0e 01 90 48 c7 c7 e0 2d cc 8b e8 ad c5 da ff 90 &lt;0f&gt; 0b 90 90 e9 3b f4 ff ff 90 0f 0b 90 45 84 ed 0f 84 00 f4 ff ff
+RSP: 0018:ffffc900041cefc0 EFLAGS: 00010046
+RAX: 583d87a6c7750500 RBX: ffff88802123de44 RCX: ffff88802123da00
+RDX: 0000000000000000 RSI: 0000000000000000 RDI: 0000000000000000
+RBP: ffffc900041cf110 R08: ffffffff815583f2 R09: fffffbfff1c39f8c
+R10: dffffc0000000000 R11: fffffbfff1c39f8c R12: ffff88802123da00
+R13: 0000000000000000 R14: 1ffff92000839e10 R15: dffffc0000000000
+FS:  0000000000000000(0000) GS:ffff8880b9500000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 00007f5b6614bbe3 CR3: 0000000022676000 CR4: 00000000003506f0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+Call Trace:
+ &lt;TASK&gt;
+ __schedule+0x348/0x4a60 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/sched/core.c?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n6491'>kernel/sched/core.c:6491</a>
+ __schedule_loop <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/sched/core.c?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n6680'>kernel/sched/core.c:6680</a> [inline]
+ schedule+0x14b/0x320 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/sched/core.c?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n6695'>kernel/sched/core.c:6695</a>
+ schedule_preempt_disabled+0x13/0x30 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/sched/core.c?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n6752'>kernel/sched/core.c:6752</a>
+ __mutex_lock_common <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/locking/mutex.c?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n684'>kernel/locking/mutex.c:684</a> [inline]
+ __mutex_lock+0x6a4/0xd70 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/locking/mutex.c?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n752'>kernel/locking/mutex.c:752</a>
+ exp_funnel_lock <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/rcu/tree_exp.h?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n329'>kernel/rcu/tree_exp.h:329</a> [inline]
+ synchronize_rcu_expedited+0x451/0x830 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/rcu/tree_exp.h?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n967'>kernel/rcu/tree_exp.h:967</a>
+ dev_deactivate_many+0x4a7/0xb10 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/net/sched/sch_generic.c?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n1371'>net/sched/sch_generic.c:1371</a>
+ dev_deactivate+0x184/0x280 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/net/sched/sch_generic.c?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n1397'>net/sched/sch_generic.c:1397</a>
+ linkwatch_do_dev+0x10a/0x170 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/net/core/link_watch.c?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n175'>net/core/link_watch.c:175</a>
+ ethtool_op_get_link+0x15/0x60 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/net/ethtool/ioctl.c?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n62'>net/ethtool/ioctl.c:62</a>
+ bond_check_dev_link+0x1f1/0x3f0 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/drivers/net/bonding/bond_main.c?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n757'>drivers/net/bonding/bond_main.c:757</a>
+ bond_miimon_inspect <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/drivers/net/bonding/bond_main.c?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n2604'>drivers/net/bonding/bond_main.c:2604</a> [inline]
+ bond_mii_monitor+0x49a/0x3170 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/drivers/net/bonding/bond_main.c?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n2826'>drivers/net/bonding/bond_main.c:2826</a>
+ process_one_work <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/workqueue.c?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n3228'>kernel/workqueue.c:3228</a> [inline]
+ process_scheduled_works+0xa2c/0x1830 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/workqueue.c?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n3309'>kernel/workqueue.c:3309</a>
+ worker_thread+0x86d/0xd40 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/workqueue.c?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n3387'>kernel/workqueue.c:3387</a>
+ kthread+0x2f0/0x390 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/kernel/kthread.c?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n389'>kernel/kthread.c:389</a>
+ ret_from_fork+0x4b/0x80 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/arch/x86/kernel/process.c?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n147'>arch/x86/kernel/process.c:147</a>
+ ret_from_fork_asm+0x1a/0x30 <a href='https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/arch/x86/entry/entry_64.S?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88#n244'>arch/x86/entry/entry_64.S:244</a>
+ &lt;/TASK&gt;
+</pre></div><br>
+	
+
+	
+
+<table class="list_table">
+	<caption>Crashes (54):</caption>
+		<thead>
+		<tr>
+			<th><a onclick="return sortTable(this, 'Time', textSort, true)" href="#">Time</a></th>
+			<th><a onclick="return sortTable(this, 'Kernel', textSort)" href="#">Kernel</a></th>
+			<th><a onclick="return sortTable(this, 'Commit', textSort)" href="#">Commit</a></th>
+			<th><a onclick="return sortTable(this, 'Syzkaller', textSort)" href="#">Syzkaller</a></th>
+			<th><a onclick="return sortTable(this, 'Config', textSort)" href="#">Config</a></th>
+			<th><a onclick="return sortTable(this, 'Log', textSort)" href="#">Log</a></th>
+			<th><a onclick="return sortTable(this, 'Report', reproSort)" href="#">Report</a></th>
+			<th><a onclick="return sortTable(this, 'Syz repro', reproSort)" href="#">Syz repro</a></th>
+			<th><a onclick="return sortTable(this, 'C repro', textSort)" href="#">C repro</a></th>
+			<th><a onclick="return sortTable(this, 'VM info', textSort)" href="#">VM info</a></th>
+			<th><a onclick="return sortTable(this, 'Assets', textSort)" href="#">Assets</a> (<a href="https://github.com/google/syzkaller/blob/master/docs/syzbot_assets.md">help?</a>)</th>
+			<th><a onclick="return sortTable(this, 'Manager', textSort)" href="#">Manager</a></th>
+			<th><a onclick="return sortTable(this, 'Title', textSort)" href="#">Title</a></th>
+		</tr>
+		</thead>
+		<tbody>
+		
+		<tr>
+			<td class="time">2024/07/11 21:09</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="523b23f0bee3014a7a752c9bb9f5c54f0eddae88
+	2024/07/10 10:35"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88">523b23f0bee3</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c699c2eb05c8f8cc8d8e20c5a883689491a03ac0">c699c2eb</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=98dd8c4bab5cdce">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11b62585980000">strace log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15ee4f15980000">report</a></td>
+			<td class="repro">
+				<a href="/text?tag=ReproSyz&amp;x=148611e1980000">syz</a>
+				 / <a href="/text?tag=ReproLog&amp;x=172d2a49980000">log</a>
+			</td>
+			<td class="repro"><a href="/text?tag=ReproC&amp;x=10ec9585980000">C</a></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/345bcd25ed2f/disk-523b23f0.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a4508962d345/vmlinux-523b23f0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4ba5eb555639/bzImage-523b23f0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/21 23:50</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="62de6e1685269e1637a6c6684c8be58cc8d4ff38
+	2025/01/21 19:32"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=62de6e1685269e1637a6c6684c8be58cc8d4ff38">62de6e168526</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6e87cfa299c98d36e79e8b8718a4126899a3ba2f">6e87cfa2</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b34d979b03d5656f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=113e8ab0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17b6e824580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=360e282ff2ba637a">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/29a436629da9/disk-62de6e16.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a8c1a7d50f64/vmlinux-62de6e16.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3f29e7e7fd62/bzImage-62de6e16.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-smack-root</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/04 18:46</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="63676eefb7a026d04b51dcb7aaf54f358517a2ec
+	2025/01/03 23:09"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=63676eefb7a026d04b51dcb7aaf54f358517a2ec">63676eefb7a0</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1c541fa8af5c9cc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10d678b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11dbcedf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=991600af1065ad9d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e6237d5cc4da/disk-63676eef.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d151171f535b/vmlinux-63676eef.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8ce856ef5b28/bzImage-63676eef.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/03 21:42</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="0bc21e701a6ffacfdde7f04f87d664d82e8a13bf
+	2025/01/02 18:43"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=0bc21e701a6ffacfdde7f04f87d664d82e8a13bf">0bc21e701a6f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1c541fa8af5c9cc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12b756c4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11728edf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=2ac813c74657d347">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6990abb5f3fd/disk-0bc21e70.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8ac1e086ff34/vmlinux-0bc21e70.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a651c0a21f54/bzImage-0bc21e70.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/03 15:58</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="0bc21e701a6ffacfdde7f04f87d664d82e8a13bf
+	2025/01/02 18:43"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=0bc21e701a6ffacfdde7f04f87d664d82e8a13bf">0bc21e701a6f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f3558dbf032eab2b77c1cb11b9ce2baffe7838d3">f3558dbf</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1c541fa8af5c9cc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=159ca6f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13606418580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=e07145a2dd300d61">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6990abb5f3fd/disk-0bc21e70.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8ac1e086ff34/vmlinux-0bc21e70.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a651c0a21f54/bzImage-0bc21e70.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/03 09:07</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="0bc21e701a6ffacfdde7f04f87d664d82e8a13bf
+	2025/01/02 18:43"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=0bc21e701a6ffacfdde7f04f87d664d82e8a13bf">0bc21e701a6f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1c541fa8af5c9cc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14a996c4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14a1bd0f980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=95751282bfd7ef49">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6990abb5f3fd/disk-0bc21e70.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8ac1e086ff34/vmlinux-0bc21e70.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a651c0a21f54/bzImage-0bc21e70.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/02 14:27</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="56e6a3499e14716b9a28a307bb6d18c10e95301e
+	2025/01/01 19:22"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=56e6a3499e14716b9a28a307bb6d18c10e95301e">56e6a3499e14</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1c541fa8af5c9cc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=156218b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11557818580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=9529799590ed585e">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/51c21fa00e95/disk-56e6a349.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e54e49c263d0/vmlinux-56e6a349.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0390820ba3eb/bzImage-56e6a349.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/02 04:33</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="56e6a3499e14716b9a28a307bb6d18c10e95301e
+	2025/01/01 19:22"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=56e6a3499e14716b9a28a307bb6d18c10e95301e">56e6a3499e14</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1c541fa8af5c9cc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13e2e8b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17f536df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=801816a22d5b316c">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/51c21fa00e95/disk-56e6a349.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e54e49c263d0/vmlinux-56e6a349.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0390820ba3eb/bzImage-56e6a349.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/01 07:20</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ccb98ccef0e543c2bd4ef1a72270461957f3d8d0
+	2024/12/30 19:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0">ccb98ccef0e5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1c541fa8af5c9cc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16555af8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1571d818580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=983f9be059565fda">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/6e96673b1b94/disk-ccb98cce.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/528385411880/vmlinux-ccb98cce.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b061a4d50538/bzImage-ccb98cce.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/31 01:44</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ccb98ccef0e543c2bd4ef1a72270461957f3d8d0
+	2024/12/30 19:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0">ccb98ccef0e5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ba7cde9482d6bb6">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16a566df980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=138488b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=cd8f40a15110d652">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1347eb89e10b/disk-ccb98cce.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4e8c35bc53e5/vmlinux-ccb98cce.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5773659aa075/bzImage-ccb98cce.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-smack-root</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/30 04:39</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="4099a71718b056d16af5ba095c91016c3b107862
+	2024/12/29 18:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=4099a71718b056d16af5ba095c91016c3b107862">4099a71718b0</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d269ef41b9262400">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=178e26df980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16a92ac4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=a0b3cb8476eac96e">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0e3eaaedaee2/disk-4099a717.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5479120153c6/vmlinux-4099a717.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/00b0a47850f4/bzImage-4099a717.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/29 23:11</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="4099a71718b056d16af5ba095c91016c3b107862
+	2024/12/29 18:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=4099a71718b056d16af5ba095c91016c3b107862">4099a71718b0</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d269ef41b9262400">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16efcac4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10e8aaf8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=2b412c885da7a7db">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/0e3eaaedaee2/disk-4099a717.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5479120153c6/vmlinux-4099a717.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/00b0a47850f4/bzImage-4099a717.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/29 21:42</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="4099a71718b056d16af5ba095c91016c3b107862
+	2024/12/29 18:19"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=4099a71718b056d16af5ba095c91016c3b107862">4099a71718b0</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d269ef41b9262400">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17cdc6df980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12e070b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=73422c847067dc4f">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f7512e511bc1/disk-4099a717.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8c4098eb0920/vmlinux-4099a717.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/5b88864c1f52/bzImage-4099a717.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/28 05:34</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="8379578b11d5e073792b5db2690faa12effce8e0
+	2024/12/27 19:10"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=8379578b11d5e073792b5db2690faa12effce8e0">8379578b11d5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d269ef41b9262400">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=175952c4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10f190b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=a458476ea88dd3b5">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/bf625be52f12/disk-8379578b.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4c480777d45d/vmlinux-8379578b.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ec5c12228d93/bzImage-8379578b.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/27 10:06</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="d6ef8b40d075c425f548002d2f35ae3f06e9cf96
+	2024/12/26 18:49"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=d6ef8b40d075c425f548002d2f35ae3f06e9cf96">d6ef8b40d075</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d269ef41b9262400">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12f2c2c4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11965018580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=25ddd18289136ee3">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e695f9ff89ad/disk-d6ef8b40.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/28ff2bace4a0/vmlinux-d6ef8b40.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f25dce4c24ee/bzImage-d6ef8b40.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/27 02:55</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="d6ef8b40d075c425f548002d2f35ae3f06e9cf96
+	2024/12/26 18:49"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=d6ef8b40d075c425f548002d2f35ae3f06e9cf96">d6ef8b40d075</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d269ef41b9262400">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13ca42c4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10bc92f8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=3812ee8fc1e8373a">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e695f9ff89ad/disk-d6ef8b40.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/28ff2bace4a0/vmlinux-d6ef8b40.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f25dce4c24ee/bzImage-d6ef8b40.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/26 17:28</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9b2ffa6148b1e4468d08f7e0e7e371c43cac9ffe
+	2024/12/24 17:08"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9b2ffa6148b1e4468d08f7e0e7e371c43cac9ffe">9b2ffa6148b1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d269ef41b9262400">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=121520b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10455adf980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=8f3a06d8f7d7cf8d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9015cc2b19ac/disk-9b2ffa61.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3ddeabd5e7eb/vmlinux-9b2ffa61.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/36e13b0305d0/bzImage-9b2ffa61.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/26 07:32</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="9b2ffa6148b1e4468d08f7e0e7e371c43cac9ffe
+	2024/12/24 17:08"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=9b2ffa6148b1e4468d08f7e0e7e371c43cac9ffe">9b2ffa6148b1</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/444551c40edde85b5e4900ae27d432bd1da7079c">444551c4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d269ef41b9262400">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1669c0b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=106802c4580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=31356bca9fa27b18">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/73bb7d109a64/disk-9b2ffa61.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/001f7910aa4e/vmlinux-9b2ffa61.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/11e525a24c33/bzImage-9b2ffa61.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-root</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/27 23:20</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="8379578b11d5e073792b5db2690faa12effce8e0
+	2024/12/27 19:10"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=8379578b11d5e073792b5db2690faa12effce8e0">8379578b11d5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=d269ef41b9262400">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=134dd2f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13ffd018580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=1786bf585a4d11d7">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/86d2e3352aff/disk-8379578b.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/345570cd3573/vmlinux-8379578b.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/01da37a51505/bzImage-8379578b.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-386</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/21 14:15</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="499551201b5f4fd3c0618a3e95e3d0d15ea18f31
+	2024/12/20 22:10"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=499551201b5f4fd3c0618a3e95e3d0d15ea18f31">499551201b5f</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d7f584ee3c24504bb07d04526a23b7d8df38b8ed">d7f584ee</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=6a2b862bf4a5409f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1641efe8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=13af32df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=781fd5262a504dc2">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/96eec9dcf298/disk-49955120.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/e385d322bb0d/vmlinux-49955120.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9ff55ef8b8c7/bzImage-49955120.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-386</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/08/19 19:51</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="47ac09b91befbb6a235ab620c32af719f8208399
+	2024/08/18 20:17"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=47ac09b91befbb6a235ab620c32af719f8208399">47ac09b91bef</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9f0ab3fb8930510928e013275e4849b621d82efb">9f0ab3fb</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=df2f0ed7e30a639d">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=162229d5980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10015ad5980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=4aba0d9a0be1e6f4">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ad495291cb66/disk-47ac09b9.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7729954f4428/vmlinux-47ac09b9.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3706c4cedb41/bzImage-47ac09b9.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-kasan-gce-386</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/01 07:11</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="ccb98ccef0e543c2bd4ef1a72270461957f3d8d0
+	2024/12/30 19:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=ccb98ccef0e543c2bd4ef1a72270461957f3d8d0">ccb98ccef0e5</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=1c541fa8af5c9cc7">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14d1d818580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1549cd0f980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-ccb98cce.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/703c842459ce/vmlinux-ccb98cce.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1a8db4bb5dbb/bzImage-ccb98cce.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-snapshot-upstream-root</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/27 11:09</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="d6ef8b40d075c425f548002d2f35ae3f06e9cf96
+	2024/12/26 18:49"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=d6ef8b40d075c425f548002d2f35ae3f06e9cf96">d6ef8b40d075</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=aa8dc22aa6de51f5">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=179252f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17d1d90f980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=66fb67cb229b0978">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-d6ef8b40.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/fdc7bb9169c5/vmlinux-d6ef8b40.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d04f28579e9d/bzImage-d6ef8b40.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/19 13:07</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="fda5e3f284002ea55dac1c98c1498d6dd684046e
+	2025/01/18 21:22"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=fda5e3f284002ea55dac1c98c1498d6dd684046e">fda5e3f28400</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f2cb035c8f931efff4a020b164e657f16f51934b">f2cb035c</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=f5e182416a4b418f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1281e024580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1677e2b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=709496dc967e90b0">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-fda5e3f2.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ae15d5187e16/vmlinux-fda5e3f2.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/97e869c546ef/bzImage-fda5e3f2.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream-386</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/12 09:27</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="b62cef9a5c673f1b8083159f5dc03c1c5daced2f
+	2025/01/11 19:42"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=b62cef9a5c673f1b8083159f5dc03c1c5daced2f">b62cef9a5c67</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6dbc6a9bc76e06852841ed5c5bdbb78409b17f53">6dbc6a9b</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=ad08f7f48e13abcd">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1548bf0f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=116ddef8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=d78c3a50d21fb194">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-b62cef9a.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3ce757e95314/vmlinux-b62cef9a.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f272c70b70f9/bzImage-b62cef9a.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream-386</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/22 17:32</td>
+			<td class="kernel" title="upstream">upstream</td>
+			<td class="tag" title="48f506ad0b683d3e7e794efa60c5785c4fdc86fa
+	2024/12/21 23:45"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/?id=48f506ad0b683d3e7e794efa60c5785c4fdc86fa">48f506ad0b68</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/b4fbdbd43bfd6a8d0392238f019dc602335346d0">b4fbdbd4</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=c22efbd20f8da769">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11600adf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15517cf8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=38c9fb12018244e8">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-48f506ad.raw.xz">disk image (non-bootable)</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/79d0709ee148/vmlinux-48f506ad.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/60421bd7926c/bzImage-48f506ad.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-qemu-upstream-386</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/29 00:50</td>
+			<td class="kernel" title="net">net</td>
+			<td class="tag" title="b2aec4efe834130d190ed8052e3312761fb9e790
+	2025/01/28 00:16"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/log/?id=b2aec4efe834130d190ed8052e3312761fb9e790">b2aec4efe834</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/f5427d7cf8bff4a8e0647b95351bea3d20e0654e">f5427d7c</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=10540b63ea445831">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1700a924580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11a896b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7f6c88d759e9c4a1">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4f3525d7f8aa/disk-b2aec4ef.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/de4ecce5e564/vmlinux-b2aec4ef.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4099574a9fea/bzImage-b2aec4ef.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-this-kasan-gce</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/27 22:26</td>
+			<td class="kernel" title="net">net</td>
+			<td class="tag" title="05d91cdb1f9108426b14975ef4eeddf15875ca05
+	2025/01/27 09:20"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/log/?id=05d91cdb1f9108426b14975ef4eeddf15875ca05">05d91cdb1f91</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/180708967e9f2cb26bc15973d46e3cd9cf3d2d80">18070896</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=10540b63ea445831">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=161005f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10b95118580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=2faff91efdc9bf1e">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/bf659a470b53/disk-05d91cdb.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/899d441c4f4a/vmlinux-05d91cdb.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3a9df4889eda/bzImage-05d91cdb.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-this-kasan-gce</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/01 07:04</td>
+			<td class="kernel" title="net">net</td>
+			<td class="tag" title="4f619d518db9cd1a933c3a095a5f95d0c1584ae8
+	2024/12/31 02:00"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/log/?id=4f619d518db9cd1a933c3a095a5f95d0c1584ae8">4f619d518db9</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=6a2b862bf4a5409f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=129cfac4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=142456df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=55fa1a9d2745a158">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c7833c741299/disk-4f619d51.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d5ca349f6388/vmlinux-4f619d51.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d85b222c4799/bzImage-4f619d51.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-this-kasan-gce</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/31 00:47</td>
+			<td class="kernel" title="net">net</td>
+			<td class="tag" title="a024e377efed31ecfb39210bed562932321345b3
+	2024/12/27 19:23"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/log/?id=a024e377efed31ecfb39210bed562932321345b3">a024e377efed</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=6a2b862bf4a5409f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=113c1818580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=103166df980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=1f1406decd2713c7">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f2ea524d69fe/disk-a024e377.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b39d227b097d/vmlinux-a024e377.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8ee66636253f/bzImage-a024e377.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-this-kasan-gce</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/30 22:32</td>
+			<td class="kernel" title="net">net</td>
+			<td class="tag" title="a024e377efed31ecfb39210bed562932321345b3
+	2024/12/27 19:23"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/log/?id=a024e377efed31ecfb39210bed562932321345b3">a024e377efed</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=6a2b862bf4a5409f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14896ac4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15c308b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=f82b42611591a365">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f2ea524d69fe/disk-a024e377.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b39d227b097d/vmlinux-a024e377.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8ee66636253f/bzImage-a024e377.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-this-kasan-gce</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/29 04:00</td>
+			<td class="kernel" title="net">net</td>
+			<td class="tag" title="a024e377efed31ecfb39210bed562932321345b3
+	2024/12/27 19:23"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net.git/log/?id=a024e377efed31ecfb39210bed562932321345b3">a024e377efed</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=6a2b862bf4a5409f">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=125830b0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1013c818580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=53e2dac29a5ec15a">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f2ea524d69fe/disk-a024e377.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b39d227b097d/vmlinux-a024e377.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8ee66636253f/bzImage-a024e377.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-this-kasan-gce</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/27 12:32</td>
+			<td class="kernel" title="net-next">net-next</td>
+			<td class="tag" title="0ad9617c78acbc71373fb341a6f75d4012b01d69
+	2025/01/22 16:28"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/log/?id=0ad9617c78acbc71373fb341a6f75d4012b01d69">0ad9617c78ac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9fbd772e8b64ff0c8c90bdfb86237aefa530a06c">9fbd772e</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=10540b63ea445831">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10bf0ddf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=12a7ce24580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=270d1950ed57b048">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/43757b9a5b8e/disk-0ad9617c.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c9ba22ecaaea/vmlinux-0ad9617c.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/326a274c9165/bzImage-0ad9617c.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-kasan-gce</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/31 19:57</td>
+			<td class="kernel" title="net-next">net-next</td>
+			<td class="tag" title="9268abe611b09edc975aa27e6ce829f629352ff4
+	2024/12/23 18:58"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/log/?id=9268abe611b09edc975aa27e6ce829f629352ff4">9268abe611b0</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b087c24b921cdc16">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13969af8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=10ac5818580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=1bb918dfca65ab38">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8274f60b0163/disk-9268abe6.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f7b3fde537e7/vmlinux-9268abe6.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/db4cccf7caae/bzImage-9268abe6.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-kasan-gce</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/30 03:51</td>
+			<td class="kernel" title="net-next">net-next</td>
+			<td class="tag" title="9268abe611b09edc975aa27e6ce829f629352ff4
+	2024/12/23 18:58"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/log/?id=9268abe611b09edc975aa27e6ce829f629352ff4">9268abe611b0</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b087c24b921cdc16">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13be2ac4580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=14c46818580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=2366338de8f709eb">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8274f60b0163/disk-9268abe6.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f7b3fde537e7/vmlinux-9268abe6.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/db4cccf7caae/bzImage-9268abe6.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-kasan-gce</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/12/27 16:04</td>
+			<td class="kernel" title="net-next">net-next</td>
+			<td class="tag" title="9268abe611b09edc975aa27e6ce829f629352ff4
+	2024/12/23 18:58"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/davem/net-next.git/log/?id=9268abe611b09edc975aa27e6ce829f629352ff4">9268abe611b0</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/d3ccff6372e07c6aabd02b5da419aa6492b5f0ad">d3ccff63</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=b087c24b921cdc16">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16edbadf980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1387e0b0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=13c7a59f0c97d906">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/8274f60b0163/disk-9268abe6.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f7b3fde537e7/vmlinux-9268abe6.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/db4cccf7caae/bzImage-9268abe6.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-net-kasan-gce</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/28 14:38</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="f486c8aa16b8172f63bddc70116a0c897a7f3f02
+	2024/11/28 02:30"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=f486c8aa16b8172f63bddc70116a0c897a7f3f02">f486c8aa16b8</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/5df2386563cbffa1bbbb9d0b8ec1eebb98d051ae">5df23865</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e348a4873516af92">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=14e1f1e8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=15540d30580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=929b8d5a39216058">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/beb58ebb63cf/disk-f486c8aa.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/b241b5609e64/vmlinux-f486c8aa.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/c9d817f665f2/bzImage-f486c8aa.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/27 21:23</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="6f3d2b5299b0a8bcb8a9405a8d3fceb24f79c4f0
+	2024/11/27 03:06"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=6f3d2b5299b0a8bcb8a9405a8d3fceb24f79c4f0">6f3d2b5299b0</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/5df2386563cbffa1bbbb9d0b8ec1eebb98d051ae">5df23865</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=e348a4873516af92">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1303b530580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1067af5f980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=6cbb9f6f7e1bd09b">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/d4a681422617/disk-6f3d2b52.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/2d9b72395fc2/vmlinux-6f3d2b52.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9320837d1b3e/bzImage-6f3d2b52.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/11 14:41</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="929beafbe7acce3267c06115e13e03ff6e50548a
+	2024/11/08 07:59"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=929beafbe7acce3267c06115e13e03ff6e50548a">929beafbe7ac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/97fe551785f14d411943bf31c363c82a178cb7f0">97fe5517</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=75175323f2078363">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=109bd8c0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1694b4e8580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=52b6bdbe9096b11e">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9705ecb6a595/disk-929beafb.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dbdd1f64b9b8/vmlinux-929beafb.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3f70d07a929b/bzImage-929beafb.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/11 06:49</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="929beafbe7acce3267c06115e13e03ff6e50548a
+	2024/11/08 07:59"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=929beafbe7acce3267c06115e13e03ff6e50548a">929beafbe7ac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6b856513c13bbdf86191190923fb64438219ea68">6b856513</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=75175323f2078363">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=166a34e8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1472935f980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=91f26df7b7820ac6">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9705ecb6a595/disk-929beafb.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dbdd1f64b9b8/vmlinux-929beafb.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3f70d07a929b/bzImage-929beafb.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/10 07:16</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="929beafbe7acce3267c06115e13e03ff6e50548a
+	2024/11/08 07:59"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=929beafbe7acce3267c06115e13e03ff6e50548a">929beafbe7ac</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/6b856513c13bbdf86191190923fb64438219ea68">6b856513</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=75175323f2078363">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=165445f7980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1226de30580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=6119c77bc509f181">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9705ecb6a595/disk-929beafb.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dbdd1f64b9b8/vmlinux-929beafb.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/3f70d07a929b/bzImage-929beafb.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/30 12:57</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="86e3904dcdc7e70e3257fc1de294a1b75f3d8d04
+	2024/10/30 09:33"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=86e3904dcdc7e70e3257fc1de294a1b75f3d8d04">86e3904dcdc7</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/66aeb999f37ab41e95f08d1da821200313f71342">66aeb999</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=328572ed4d152be9">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=11a98630580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1612e540580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b866fdfa1eb15d65">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/f584828ac0fd/disk-86e3904d.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/09481d17f87a/vmlinux-86e3904d.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ebed9a1794c3/bzImage-86e3904d.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/10 00:54</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="33ce24234fca4c083e6685a18b460a18ebb5d5c1
+	2024/10/08 06:59"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=33ce24234fca4c083e6685a18b460a18ebb5d5c1">33ce24234fca</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0278d00484bfe8f49aa9a7ae5ef4c3bc5cc40cd4">0278d004</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4750ca93740b938d">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15a03780580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=153d8f07980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=4c73aa62ce3d90f6">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ee8dc2df0c57/disk-33ce2423.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dc473c0fa06e/vmlinux-33ce2423.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4671f1ca2e61/bzImage-33ce2423.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/09 18:58</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="33ce24234fca4c083e6685a18b460a18ebb5d5c1
+	2024/10/08 06:59"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=33ce24234fca4c083e6685a18b460a18ebb5d5c1">33ce24234fca</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0278d00484bfe8f49aa9a7ae5ef4c3bc5cc40cd4">0278d004</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4750ca93740b938d">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10b97f9f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=112ad780580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=7ef5ff16d60b854">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ee8dc2df0c57/disk-33ce2423.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dc473c0fa06e/vmlinux-33ce2423.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4671f1ca2e61/bzImage-33ce2423.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/09 18:58</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="33ce24234fca4c083e6685a18b460a18ebb5d5c1
+	2024/10/08 06:59"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=33ce24234fca4c083e6685a18b460a18ebb5d5c1">33ce24234fca</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/0278d00484bfe8f49aa9a7ae5ef4c3bc5cc40cd4">0278d004</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4750ca93740b938d">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=13397f9f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=17397f9f980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=b1bfb274ab4e0bda">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ee8dc2df0c57/disk-33ce2423.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dc473c0fa06e/vmlinux-33ce2423.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4671f1ca2e61/bzImage-33ce2423.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/09 03:32</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="33ce24234fca4c083e6685a18b460a18ebb5d5c1
+	2024/10/08 06:59"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=33ce24234fca4c083e6685a18b460a18ebb5d5c1">33ce24234fca</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/402f1df054ddb07ed5bb299d08c781354eb06607">402f1df0</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4750ca93740b938d">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=1558f707980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11c7e327980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=f62b5bf2252de87f">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ee8dc2df0c57/disk-33ce2423.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dc473c0fa06e/vmlinux-33ce2423.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4671f1ca2e61/bzImage-33ce2423.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/09 03:31</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="33ce24234fca4c083e6685a18b460a18ebb5d5c1
+	2024/10/08 06:59"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=33ce24234fca4c083e6685a18b460a18ebb5d5c1">33ce24234fca</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/402f1df054ddb07ed5bb299d08c781354eb06607">402f1df0</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4750ca93740b938d">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=15459780580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=1458f707980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=e93bd9b4c97a8950">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ee8dc2df0c57/disk-33ce2423.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dc473c0fa06e/vmlinux-33ce2423.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4671f1ca2e61/bzImage-33ce2423.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/08 11:45</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="33ce24234fca4c083e6685a18b460a18ebb5d5c1
+	2024/10/08 06:59"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=33ce24234fca4c083e6685a18b460a18ebb5d5c1">33ce24234fca</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/402f1df054ddb07ed5bb299d08c781354eb06607">402f1df0</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4750ca93740b938d">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=17c98f9f980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16431707980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=e238c5cc72acd1ed">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ee8dc2df0c57/disk-33ce2423.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dc473c0fa06e/vmlinux-33ce2423.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4671f1ca2e61/bzImage-33ce2423.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/10/08 11:45</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="33ce24234fca4c083e6685a18b460a18ebb5d5c1
+	2024/10/08 06:59"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=33ce24234fca4c083e6685a18b460a18ebb5d5c1">33ce24234fca</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/402f1df054ddb07ed5bb299d08c781354eb06607">402f1df0</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=4750ca93740b938d">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=101be780580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=11c98f9f980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=33306bf2424909e1">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/ee8dc2df0c57/disk-33ce2423.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/dc473c0fa06e/vmlinux-33ce2423.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4671f1ca2e61/bzImage-33ce2423.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/07/11 18:32</td>
+			<td class="kernel" title="linux-next">linux-next</td>
+			<td class="tag" title="523b23f0bee3014a7a752c9bb9f5c54f0eddae88
+	2024/07/10 10:35"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/log/?id=523b23f0bee3014a7a752c9bb9f5c54f0eddae88">523b23f0bee3</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/c699c2eb05c8f8cc8d8e20c5a883689491a03ac0">c699c2eb</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=98dd8c4bab5cdce">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=10d88fb9980000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=166a4535980000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=3a96c253e29e9e6">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/345bcd25ed2f/disk-523b23f0.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/a4508962d345/vmlinux-523b23f0.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/4ba5eb555639/bzImage-523b23f0.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-linux-next-kasan-gce-root</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2025/01/27 07:47</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="1950a0af2d55e0ecbcc574927bad495bfaddcec0
+	2025/01/17 14:10"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=1950a0af2d55e0ecbcc574927bad495bfaddcec0">1950a0af2d55</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/9fbd772e8b64ff0c8c90bdfb86237aefa530a06c">9fbd772e</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=cd5bb525e2b2bae">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=166379f8580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=111e3e24580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=d1da33edd2c0fb6e">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1ebe061fa55c/disk-1950a0af.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/943902875907/vmlinux-1950a0af.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9b5110e82096/Image-1950a0af.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/18 05:47</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="887407160d72d9f15dbb3da2739d8854230ccff3
+	2024/11/14 12:07"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=887407160d72d9f15dbb3da2739d8854230ccff3">887407160d72</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/cfe3a04a188eb9a2c407783d8d6e6f55a4b30886">cfe3a04a</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a1eb85a42cb8ccec">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=16400ac0580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=16493378580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=68a57e68999ca12d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1011f7c2c68d/disk-88740716.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9035dac2e5ad/vmlinux-88740716.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/55be49953149/Image-88740716.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		<tr>
+			<td class="time">2024/11/17 06:32</td>
+			<td class="kernel" title="git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci">git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci</td>
+			<td class="tag" title="887407160d72d9f15dbb3da2739d8854230ccff3
+	2024/11/14 12:07"><a href="https://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git/log/?id=887407160d72d9f15dbb3da2739d8854230ccff3">887407160d72</a></td>
+			<td class="tag"><a href="https://github.com/google/syzkaller/commits/cfe3a04a188eb9a2c407783d8d6e6f55a4b30886">cfe3a04a</a></td>
+			<td class="config"><a href="/text?tag=KernelConfig&amp;x=a1eb85a42cb8ccec">.config</a></td>
+			<td class="repro"><a href="/text?tag=CrashLog&amp;x=12b39378580000">console log</a></td>
+			<td class="repro"><a href="/text?tag=CrashReport&amp;x=172832c0580000">report</a></td>
+			<td class="repro">
+				
+				
+			</td>
+			<td class="repro"></td>
+			<td class="repro"><a href="/text?tag=MachineInfo&amp;x=68a57e68999ca12d">info</a></td>
+			<td class="assets">
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/1011f7c2c68d/disk-88740716.raw.xz">disk image</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/9035dac2e5ad/vmlinux-88740716.xz">vmlinux</a>]</span>
+			
+				<span class="no-break">[<a href="https://storage.googleapis.com/syzbot-assets/55be49953149/Image-88740716.gz.xz">kernel image</a>]</span>
+			</td>
+			<td class="manager">ci-upstream-gce-arm64</td>
+			<td class="manager">BUG: sleeping function called from invalid context in synchronize_net</td>
+		</tr>
+		
+		</tbody>
+</table>
+<i>* <s>Struck through</s> repros no longer work on HEAD.</i>
+
+
+</body>
+</html>
